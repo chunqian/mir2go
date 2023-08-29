@@ -1,0 +1,102 @@
+[@main]  
+#IF
+equal p2 0 
+#ACT
+mov p2 1
+goto @main-1
+#ELSESAY
+;寸脚篮 历客 富阑 吝埃俊 谗栏继瘤 臼嚼聪鳖? \  Why did you interupt my word? \
+;捞力 寸脚俊霸绰 林荤困甫 奔副荐 乐绰 扁雀甫 靛府扁档 饺嚼聪促. \  I don't want to give you even a opportuinty to throw dice. \
+;促矫 贸澜何磐 窍角妨搁 贸澜栏肺 啊技夸 \ \  If you want to begin again, go back to the starting point. \ \ 
+;<摧  扁/@Quit> <Close/@Quit>
+
+[@main-1]
+#IF
+;checkitem 捧菩 1  checkitem GambleChip 1
+#ACT
+goto @penalty
+#ELSESAY
+;<$USERNAME>丛, 捧菩啊 茄俺档 绝栏矫匙夸. \  <$USERNAME>, You don't have GambleChip at all. \
+;捞 霸烙阑 窍扁 困秦辑绰 捧菩啊 鞘夸 窍芭电夸 \ You need GambleChip to play this game \
+;捞 捧菩啊 绝栏搁 歹捞惑 柳青阑 且荐啊 绝匙夸.. \ Process could not go on without GambleChip .. \
+;捧菩啊 霖厚啊 登芭电 促矫 坷技夸.. \ \ Come again later with GambleChip.. \ \ 
+;<摧  扁/@Quit> <Close/@Quit>
+
+[@Quit]
+#IF
+#ACT
+map B011
+
+[@penalty]
+#IF
+check [799] 0
+#SAY
+;绢辑坷技夸! <$USERNAME>丛.\ Welcome <$USERNAME> ! \
+捞锅规篮 付规柳 36锅掳规, 鞠孺狼 规涝聪促. \
+鞠孺狼 规篮 绢栋茄 蝴档 唱瘤 臼绰 喉发圈 鞍篮 鞠孺栏肺 \
+笛矾阶咯 乐嚼聪促. 传栏肺 焊绰 葛电 巴篮 备加登瘤父, \
+寸脚狼 腊皑阑 捞侩窍寂辑 鞠孺狼 规阑 烹苞秦 坷矫扁 官而聪促. \ 
+力茄 矫埃篮 3盒 靛赋聪促. 3盒 郴俊 烹苞 秦辑 坷绞矫夸 \ \ 
+;<促  澜/@next> <Next/@next>
+#ELSESAY
+鞠孺狼规阑 烹苞甫 窍矫瘤 给窍继焙夸.. \ 
+救鸥 滨嚼聪促. 促矫 贸澜栏肺 倒酒 啊技夸.. \ \ 
+<摧  扁/@quit>
+
+[@next]
+#IF
+#ACT
+SET [799] 1
+mov p2 0
+TimeRecall 3
+map T2361
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

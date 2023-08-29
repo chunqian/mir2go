@@ -1,0 +1,97 @@
+;; 炮饭器飘 林贱荤
+[@main]
+#IF
+checkpkpoint 2
+#SAY
+;磊匙鞍捞 阂樊茄 荤恩俊霸 捞悼阑 矫难 临荐 绝绢夸.. \
+I don't want to move a bad person like you.. \
+;焊扁 饺栏聪鳖 弧府 荤扼廉 林技夸.. \ \
+I don't want to see you any more, Get out of here righ now.. \ \
+;<摧扁/@exit> 
+<Close/@exit>
+#ELSEACT
+goto @next
+
+[@next]
+#IF
+checklevel 22
+#SAY
+;促弗 付阑肺 啊绊 酵栏技夸? 厚侩捞 腹捞靛绰单档夸? \
+Do you want to move to other village ? It costs much 金币 \
+;弊犯促搁 酒贰俊辑 茄锅 茫酒 焊技夸.. \ \
+then look through the following list  .. \ \
+;厚玫泅(5000傈)栏肺 捞悼阑 <茄促/@move1> \
+<Move/@move1>to Bichon province(5000 gold) \
+;捞悼阑 窍瘤 <臼绰促/@exit>
+<Cancel/@exit>move
+#ELSESAY
+;饭骇捞 22捞窍登绰 盒篮 捞悼阑 矫难 靛副荐啊 绝嚼聪促. \ \
+I can't move the person who is level 22 or less. \ \ 
+;<摧  扁/@exit>
+<Close/@exit>
+
+[@move1]
+#IF
+checkgold 5000
+#ACT
+;take 捣 5000
+take 金币 5000
+mapmove 0 292 218
+#ELSESAY
+;<$USERNAME>丛 措窜 窍匙夸. 捣捞 绝栏搁辑 捞悼阑 矫难崔扼绊 \
+<$USERNAME>,You are kidding me. Why do you ask me to move without enough 金币 \
+;窍矫聪. 丛档 积阿秦 焊技夸. 颊秦 焊绰 厘荤 穿啊 窍唱夸? \ \
+Think about it. Who will do a nonpaying business? \ \
+;<摧  扁/@exit>
+<Close/@exit>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

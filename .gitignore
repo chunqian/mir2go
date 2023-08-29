@@ -1,0 +1,11 @@
+
+.DS_Store
+
+lib/
+units/
+
+Makefile
+!/Makefile
+
+LogDataServer
+!/source/LogDataServer

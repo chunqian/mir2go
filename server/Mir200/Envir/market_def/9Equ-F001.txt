@@ -1,0 +1,64 @@
+;拱啊
+
+[@main]
+#IF
+#ACT
+reset [200] 30
+set [204] 1
+#SAY
+;捞力 秦搬登菌匙...促矫 凯缴洒 霸烙窍霸唱\
+Finally everything is solved... Enjoy playing a game again \
+;弊烦 榴芭款 窍风 登辨 官扼匙...\ \
+Have a nice day... \ \
+ ;<摧扁/@exit> 
+<Close/@exit>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

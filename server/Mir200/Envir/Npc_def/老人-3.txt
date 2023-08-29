@@ -1,0 +1,17 @@
+;对话, '*' : 对话语言
+[@main]
+你想知道沙吧克最新的战役吗？?\ \
+
+<关于/@aboutwar>\
+
+[@aboutwar]
+你想知道关于最新功城的情况吗,\
+下一次战役记录在 <$CASTLEWARDATE>, 8PM cet.\ \
+
+<查看/@listwar>\
+<返回/@main>\
+
+
+[@listwar]
+<$LISTOFWAR>\
+<返回/@aboutwar>\

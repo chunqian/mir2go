@@ -1,0 +1,82 @@
+[@main]
+沙巴克是在<$OWNERGUILD>的管理下。并且受约束于<$LORD>.\
+城堡的总黄金是: <$CASTLEGOLD>.\
+今天的收入是: <$TODAYINCOME>\ \
+
+ <收回现金/@@withdrawal>\
+ <贮藏现金/@@receipts>\
+ <控制城门/@treatdoor>\
+ <修理城堡/@repaircastle>\
+ <租用弓箭手/@guardcmd>\
+ <租用守卫/@hireguardsno>\
+
+[@treatdoor]
+城堡门的门现再是的<$CASTLEDOORSTATE>的。\ \
+ <关闭大门/@closemaindoor>\
+ <打开大门/@openmaindoor>\
+ <返回/@main>\
+
+[@openmaindoor]
+现再打开大门.\ \
+ <返回/@treatdoor>\
+
+[@closemaindoor]
+现再关闭大门.\ \
+ <返回/@treatdoor>\
+
+[@repaircastle]
+你想要修复什么?\ \
+ <修理大门./@repairdoor>\
+ <修理城墙./@repairwalls>\
+ <返回/@main>\
+
+[@repairdoor]
+将要把<$REPAIRDOORGOLD>现金用于修理大门!\ \
+ <马上修复大门/@repairdoornow>\
+ <返回/@repaircastle>\
+
+[@repairwalls]
+将要把<$REPAIRWALLGOLD>现金用于修理城墙!\ \
+ <修理城墙./@repairwallnow1>\
+ <修理城墙./@repairwallnow2>\
+ <修理城墙./@repairwallnow3>\
+ <返回/@repaircastle>\
+
+[@guardcmd]
+你想你要租用弓箭手吗?\ \
+<租用弓箭手/@hirearchers>\
+<指定工做? /@commandorder>\
+<返回/@main>\
+
+[@hireguardsno]
+因为还未解决守卫攻击玩家的问题\
+所以不希望您租用守卫\
+如果您要租用\
+请点击下面的租用守卫\\
+ <租用守卫/@hireguards>\
+
+[@hireguards]
+你想租用守卫吗?\
+你要用<$GUARDFEE>现金来租用守卫.\ \
+可以是<守卫1/@hireguardnow1>, <守卫2/@hireguardnow2>\
+也可以<守卫3/@hireguardnow3>, <守卫4/@hireguardnow4>\
+<返回/@main>\
+
+[@hirearchers]
+你应该负一些租金给他们.\
+他们来去是自由的,他们每个要<$ARCHERFEE>现金.\ \
+租用<弓箭手1/@hirearchernow1>, <弓箭手/@hirearchernow2>, <弓箭手3/@hirearchernow3>\
+租用<弓箭手4/@hirearchernow4>, <弓箭手5/@hirearchernow5>, <弓箭手6/@hirearchernow6>\
+租用<弓箭手7/@hirearchernow7>, <弓箭手8/@hirearchernow8>\
+租用<弓箭手9/@hirearchernow9>, <弓箭手10/@hirearchernow10>\
+租用<弓箭手11/@hirearchernow11>, <弓箭手12/@hirearchernow12>\
+<返回/@main>\
+
+
+[@commandorder]
+守卫门正在进行<$GUARDRULE>的工做.\
+你想改变他?\ \
+ <守卫正常/@guardrule_normalnow>\
+ <进攻PK者/@guardrule_pkattack>\
+ <返回/@guardcmd>\
+
