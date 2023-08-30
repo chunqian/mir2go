@@ -1,4 +1,4 @@
-;拱啊
+;물가
 
 [@main]
 #IF
@@ -6,11 +6,11 @@
 reset [200] 30
 set [204] 1
 #SAY
-;捞力 秦搬登菌匙...促矫 凯缴洒 霸烙窍霸唱\
+;이제 해결되었네...다시 열심히 게임하게나\
 Finally everything is solved... Enjoy playing a game again \
-;弊烦 榴芭款 窍风 登辨 官扼匙...\ \
+;그럼 즐거운 하루 되길 바라네...\ \
 Have a nice day... \ \
- ;<摧扁/@exit> 
+ ;<닫기/@exit> 
 <Close/@exit>
 
 
