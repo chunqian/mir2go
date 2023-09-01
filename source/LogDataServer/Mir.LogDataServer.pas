@@ -61,7 +61,9 @@ var
   mr: Integer;
 begin
   if m_boRemoteClose then exit;
-  mr := MessageDlg('提示信息', '是否确认退出服务器?', mtConfirmation, [mbYes, mbNo], 0);
+  mr := MessageDlg( '提示信息',
+                    '是否确认退出服务器?',
+                    mtConfirmation, [mbYes, mbNo], 0);
 
   if mr = mrYes then
   begin
