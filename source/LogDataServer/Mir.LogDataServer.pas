@@ -15,10 +15,15 @@ uses
   Forms,
   Buttons,
   Controls,
-  Dialogs;
+  Dialogs,
+  ExtCtrls;
 
 type
   TFrmLogData = class(TForm)
+    protected
+      Timer1: TTimer;
+      procedure Timer1Timer(Sender: TObject);
+
     public
       constructor Create(TheOwner: TComponent); override;
       destructor Destroy(); override;
@@ -35,22 +40,26 @@ var
 // ******************** implementation ********************
 implementation
 
-// 
 constructor TFrmLogData.Create(TheOwner: TComponent);
 begin
   inherited CreateNew(TheOwner, 1);
-  Caption := 'LogDataServer';
+  Caption := '日志服务器';
   Width := 200;
   Height := 75;
   Left := 200;
   Top := 200;
+
+  // Timer1
+  Timer1 := TTimer.Create(Self);
+  Timer1.Interval := 3000;
+  Timer1.Enabled := True;
+  Timer1.OnTimer := @Timer1Timer;
 
   Constraints.MaxWidth:= 500;
 
   OnCloseQuery := @FormCloseQuery;
 end;
 
-// 
 destructor TFrmLogData.Destroy();
 begin
   inherited;
@@ -72,6 +81,11 @@ begin
   else begin
     CanClose := False;
   end;
+end;
+
+procedure TFrmLogData.Timer1Timer(Sender: TObject);
+begin
+  // 
 end;
 
 end.
