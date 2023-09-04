@@ -2687,72 +2687,81 @@ type
   pTPowerBlock = ^TPowerBlock;
   TPowerBlock = array[0..100 - 1] of Word; // Damian
 
-// function MakeDefaultMsg(msg: smallint; Recog: integer; param, tag, series: word): TDefaultMessage;
-// function APPRfeature(cfeature: integer): Word;
-// function RACEfeature(cfeature: integer): Byte;
-// function HAIRfeature(cfeature: integer): Byte;
-// function DRESSfeature(cfeature: integer): Byte;
-// function WEAPONfeature(cfeature: integer): Byte;
-// function Horsefeature(cfeature: integer): Byte;
-// function Effectfeature(cfeature: integer): Byte;
-// function MakeHumanFeature(btRaceImg, btDress, btWeapon, btHair: Byte): Integer;
-// function MakeMonsterFeature(btRaceImg, btWeapon: Byte; wAppr: Word): Integer;
+function MakeDefaultMsg(msg: smallint; Recog: integer; param, tag, series: word): TDefaultMessage;
+function APPRfeature(cfeature: integer): Word;
+function RACEfeature(cfeature: integer): Byte;
+function HAIRfeature(cfeature: integer): Byte;
+function DRESSfeature(cfeature: integer): Byte;
+function WEAPONfeature(cfeature: integer): Byte;
+function Horsefeature(cfeature: integer): Byte;
+function Effectfeature(cfeature: integer): Byte;
+function MakeHumanFeature(btRaceImg, btDress, btWeapon, btHair: Byte): Integer;
+function MakeMonsterFeature(btRaceImg, btWeapon: Byte; wAppr: Word): Integer;
 
 // ******************** implementation ********************
 implementation
 
-// function MakeDefaultMsg(msg: smallint; Recog: integer; param, tag, series: word): TDefaultMessage;
-// begin
-// result.Ident := Msg;
-// result.Param := Param;
-// result.Tag := Tag;
-// result.Series := Series;
-// result.Recog := Recog;
-// end;
+{
+  HiByte: 返回一个 16 位整数的高 8 位
+  LoByte: 返回一个 16 位整数的低 8 位
+  HiWord: 返回一个 32 位整数的高 16 位
+  LoWord: 返回一个 32 位整数的低 16 位
+  MakeLong: 使用两个 16 位整数创建一个 32 位整数. 低 16 位是第一个参数, 高 16 位是第二个参数
+  MakeWord: 使用两个 8 位整数创建一个 16 位整数. 低 8 位是第一个参数, 高 8 位是第二个参数
+}
 
-// function WEAPONfeature(cfeature: integer): Byte;
-// begin
-// Result := HiByte(cfeature);
-// end;
+function MakeDefaultMsg(msg: smallint; Recog: integer; param, tag, series: word): TDefaultMessage;
+begin
+  Result.Ident := Msg;
+  Result.Param := Param;
+  Result.Tag := Tag;
+  Result.Series := Series;
+  Result.Recog := Recog;
+end;
 
-// function DRESSfeature(cfeature: integer): Byte;
-// begin
-// Result := HiByte(HiWord(cfeature));
-// end;
+function WEAPONfeature(cfeature: integer): Byte;
+begin
+  Result := HiByte(cfeature);
+end;
 
-// function APPRfeature(cfeature: integer): Word;
-// begin
-// Result := HiWord(cfeature);
-// end;
+function DRESSfeature(cfeature: integer): Byte;
+begin
+  Result := HiByte(HiWord(cfeature));
+end;
 
-// function HAIRfeature(cfeature: integer): Byte;
-// begin
-// Result := HiWord(cfeature);
-// end;
+function APPRfeature(cfeature: integer): Word;
+begin
+  Result := HiWord(cfeature);
+end;
 
-// function RACEfeature(cfeature: integer): Byte;
-// begin
-// Result := cfeature;
-// end;
+function HAIRfeature(cfeature: integer): Byte;
+begin
+  Result := HiWord(cfeature);
+end;
 
-// function Horsefeature(cfeature: integer): Byte;
-// begin
-// Result := LoByte(LoWord(cfeature));
-// end;
+function RACEfeature(cfeature: integer): Byte;
+begin
+  Result := cfeature;
+end;
 
-// function Effectfeature(cfeature: integer): Byte;
-// begin
-// Result := HiByte(LoWord(cfeature));
-// end;
+function Horsefeature(cfeature: integer): Byte;
+begin
+  Result := LoByte(LoWord(cfeature));
+end;
 
-// function MakeHumanFeature(btRaceImg, btDress, btWeapon, btHair: Byte): Integer;
-// begin
-// Result := MakeLong(MakeWord(btRaceImg, btWeapon), MakeWord(btHair, btDress));
-// end;
+function Effectfeature(cfeature: integer): Byte;
+begin
+  Result := HiByte(LoWord(cfeature));
+end;
 
-// function MakeMonsterFeature(btRaceImg, btWeapon: Byte; wAppr: Word): Integer;
-// begin
-// Result := MakeLong(MakeWord(btRaceImg, btWeapon), wAppr);
-// end;
+function MakeHumanFeature(btRaceImg, btDress, btWeapon, btHair: Byte): Integer;
+begin
+  Result := MakeLong(MakeWord(btRaceImg, btWeapon), MakeWord(btHair, btDress));
+end;
+
+function MakeMonsterFeature(btRaceImg, btWeapon: Byte; wAppr: Word): Integer;
+begin
+  Result := MakeLong(MakeWord(btRaceImg, btWeapon), wAppr);
+end;
 
 end.
