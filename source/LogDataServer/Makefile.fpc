@@ -30,6 +30,7 @@ unitdir= \
 	$(FPCPKGDIR)/components/freetype/lib/$(CPU_TARGET)-$(OS_TARGET) \
 	$(FPCPKGDIR)/components/lazutils/lib/$(CPU_TARGET)-$(OS_TARGET) \
 	$(FPCPKGDIR)/packager/units/$(CPU_TARGET)-$(OS_TARGET) \
+	$(FPCPKGDIR)/synapse \
 	.
 
 [prerules]
