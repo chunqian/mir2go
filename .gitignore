@@ -11,3 +11,5 @@ LogDataServer
 !/source/LogDataServer
 
 liblcl.dylib
+
+Log-*.txt

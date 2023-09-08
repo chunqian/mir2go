@@ -120,7 +120,7 @@ func (f *TFrmLogData) OnFormCloseQuery(Sender vcl.IObject, CanClose *bool) {
 }
 
 func (f *TFrmLogData) OnTimer1Timer(object vcl.IObject) {
-	f.WriteLogFile()
+	f.writeLogFile()
 }
 
 func (f *TFrmLogData) dataReceived() {
@@ -138,7 +138,7 @@ func (f *TFrmLogData) dataReceived() {
 	}
 }
 
-func (f *TFrmLogData) WriteLogFile() {
+func (f *TFrmLogData) writeLogFile() {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
