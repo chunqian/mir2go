@@ -56,6 +56,7 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
 	f.SetCaption("登陆网关")
 	f.EnabledMaximize(false)
+	f.SetBorderStyle(types.BsSingle)
 	f.SetClientHeight(154)
 	f.SetClientWidth(308)
 	f.SetTop(215)
@@ -191,4 +192,11 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	spnl.SetWidth(70)
 	spnl = f.statusBar.Panels().Add()
 	spnl.SetWidth(50)
+}
+
+func (f *TFrmMain) OnFormCloseQuery(Sender vcl.IObject, CanClose *bool) {
+	*CanClose = vcl.MessageDlg("是否确认退出服务器?",
+		types.MtConfirmation,
+		types.MbYes,
+		types.MbNo) == types.IdYes
 }

@@ -13,6 +13,9 @@ LogDataServer
 LoginGate
 !/source/LoginGate
 
+LogDataServer.app
+LoginGate.app
+
 liblcl.dylib
 
 Log-*.txt
