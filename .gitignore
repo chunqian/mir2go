@@ -9,3 +9,5 @@ Makefile
 
 LogDataServer
 !/source/LogDataServer
+
+liblcl.dylib

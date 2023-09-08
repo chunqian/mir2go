@@ -18,8 +18,7 @@ uses
   Dialogs,
   ExtCtrls,
   StdCtrls,
-  IniFiles,
-  Mir.Global in '..\Common\Mir.Global.pas';
+  IniFiles;
 
 type
   TFrmLogData = class(TForm)
