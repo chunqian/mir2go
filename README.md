@@ -1,3 +1,3 @@
-# MIR2FPC
+# mir2go
 
-The Legend of Mir II, Free Pascal Source
+The Legend of Mir II, Golang Source
