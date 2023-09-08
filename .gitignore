@@ -10,6 +10,9 @@ Makefile
 LogDataServer
 !/source/LogDataServer
 
+LoginGate
+!/source/LoginGate
+
 liblcl.dylib
 
 Log-*.txt

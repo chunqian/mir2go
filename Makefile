@@ -30,3 +30,13 @@ clear-LogDataServer:
 
 run-LogDataServer:
 	$(call run-project, server/LogServer, LogDataServer)
+
+# ******************** LoginGate ********************
+build-LoginGate:
+	$(call build-project, server/LoginGate, source/LoginGate, LoginGate)
+
+clear-LoginGate:
+	$(call clear-project, server/LoginGate, LoginGate)
+
+run-LoginGate:
+	$(call run-project, server/LoginGate, LoginGate)
