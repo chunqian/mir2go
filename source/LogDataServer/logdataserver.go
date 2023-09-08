@@ -152,7 +152,7 @@ func (f *TFrmLogData) WriteLogFile() {
 	hour, min, _ := now.Clock()
 
 	// 构造目录和文件名
-	sLogDir := fmt.Sprintf("%d-%02d-%02d", year, month, day)
+	sLogDir := fmt.Sprintf("%s/%d-%02d-%02d", sBaseDir, year, month, day)
 	sLogFile := fmt.Sprintf("%s/Log-%02dh%02dm.txt", sLogDir, hour, (min/10)*2)
 
 	// 显示文件名
