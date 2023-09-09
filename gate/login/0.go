@@ -4,4 +4,4 @@
 
 package main
 
-import _ "github.com/ying32/govcl/pkgs/macapp"
+import _ "github.com/chunqian/mir2go/pkgs/macapp"
