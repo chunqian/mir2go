@@ -5,10 +5,11 @@
 // Licensed under Apache License 2.0
 //
 //----------------------------------------
+//go:build darwin
 // +build darwin
 
 /*
-  使用方法: 根据go同一个包中的执行顺序，创建一个最小文件名的go文件，然后在里面写入，如：
+  使用方法: 根据go同一个包中的执行顺序, 创建一个最小文件名的go文件, 然后在里面写入, 如:
 
 package main
 
@@ -41,7 +42,7 @@ type pkgFile struct {
 }
 
 const (
-	defaultPkgName = "apppkg.conf" // 打包的文件，一个json格式的。
+	defaultPkgName = "apppkg.conf" // 打包的文件, 一个json格式的。
 )
 
 func copyFile(src, dest string) error {
@@ -89,7 +90,7 @@ func init() {
 }
 
 // 以一个Mac下的app形式运行
-// 调试下使用，正式发布的时候虽然可 以不用去掉，但也不咋好
+// 调试下使用, 正式发布的时候虽然可 以不用去掉, 但也不咋好
 func runWithMacOSApp() {
 
 	if strings.Contains(os.Args[0], ".app/Contents/MacOS") {
@@ -117,14 +118,14 @@ func runWithMacOSApp() {
 	}
 
 	liblclFileName := macOSDir + "/liblcl.dylib"
-	// 文件不存在，复制
+	// 文件不存在, 复制
 	if !fileExists(liblclFileName) {
 		libFileName := getdylib()
 		if fileExists(libFileName) {
 			copyFile(libFileName, liblclFileName)
 		}
 	} else {
-		// 文件存在，对比后更新
+		// 文件存在, 对比后更新
 		libFileName := getdylib()
 		if fileExists(libFileName) {
 			f1, _ := os.Stat(libFileName)
