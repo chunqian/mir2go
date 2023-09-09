@@ -3,48 +3,65 @@
 package main
 
 import (
+	"net"
+	"sync"
+
 	"github.com/ying32/govcl/vcl"
 	"github.com/ying32/govcl/vcl/types"
 	"github.com/ying32/govcl/vcl/types/colors"
+
+	"github.com/chunqian/mir2go/source/Common"
 )
 
 type TFrmMain struct {
 	*vcl.TForm
 
-    memoLog *vcl.TMemo
-    panel *vcl.TPanel
-    statusBar *vcl.TStatusBar
-    mainMenu *vcl.TMainMenu
+	memoLog   *vcl.TMemo
+	panel     *vcl.TPanel
+	statusBar *vcl.TStatusBar
+	mainMenu  *vcl.TMainMenu
 
-    lbHold *vcl.TLabel
-    lbLack *vcl.TLabel
-    label2 *vcl.TLabel
-    
-    startTimer *vcl.TTimer
-    sendTimer *vcl.TTimer
-    decodeTimer *vcl.TTimer
+	lbHold *vcl.TLabel
+	lbLack *vcl.TLabel
+	label2 *vcl.TLabel
 
-    menuControl *vcl.TMenuItem
-    menuControlStart *vcl.TMenuItem
-    menuControlStop *vcl.TMenuItem
-    menuControlReconnect *vcl.TMenuItem
-    menuControlClearLog *vcl.TMenuItem
-    menuControlExit *vcl.TMenuItem
+	startTimer  *vcl.TTimer
+	sendTimer   *vcl.TTimer
+	decodeTimer *vcl.TTimer
 
-    menuView *vcl.TMenuItem
-    menuViewLogMsg *vcl.TMenuItem
+	menuControl          *vcl.TMenuItem
+	menuControlStart     *vcl.TMenuItem
+	menuControlStop      *vcl.TMenuItem
+	menuControlReconnect *vcl.TMenuItem
+	menuControlClearLog  *vcl.TMenuItem
+	menuControlExit      *vcl.TMenuItem
 
-    menuOption *vcl.TMenuItem
-    menuOptionGeneral *vcl.TMenuItem
-    menuOptionIpFilter *vcl.TMenuItem
+	menuView       *vcl.TMenuItem
+	menuViewLogMsg *vcl.TMenuItem
 
-    n1 *vcl.TMenuItem
-    n2 *vcl.TMenuItem
-    n3 *vcl.TMenuItem
-    n4 *vcl.TMenuItem
+	menuOption         *vcl.TMenuItem
+	menuOptionGeneral  *vcl.TMenuItem
+	menuOptionIpFilter *vcl.TMenuItem
 
-    // clientSocket *vcl.TClientSocket
-    // serverSocket *vcl.TServerSocket
+	n1 *vcl.TMenuItem
+	n2 *vcl.TMenuItem
+	n3 *vcl.TMenuItem
+	n4 *vcl.TMenuItem
+
+	clientSocket *net.TCPConn
+	serverSocket *net.TCPConn
+
+	dwShowMainLogTick     uint32           // LongWord, 显示主日志的时间戳
+	boShowLocked          bool             // Boolean, 是否锁定显示
+	tempLogList           *vcl.TStringList // 暂存日志列表
+	nSessionCount         int              // Integer, 会话数量
+	stringList30C         *vcl.TStringList // 特定的字符串列表
+	dwSendKeepAliveTick   uint32           // LongWord, 发送心跳包的时间戳
+	boServerReady         bool             // Boolean, 服务器是否准备好
+	stringList318         *vcl.TStringList // 特定的字符串列表
+	dwDecodeMsgTime       uint32           // LongWord, 解码消息所需时间
+	dwReConnectServerTick uint32           // LongWord, 重新连接服务器的时间戳
+	mutex                 sync.Mutex       // 用于并发场景下安全访问TStringList
 }
 
 var (
@@ -192,6 +209,8 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	spnl.SetWidth(70)
 	spnl = f.statusBar.Panels().Add()
 	spnl.SetWidth(50)
+
+	// ******************** Other ********************
 }
 
 func (f *TFrmMain) OnFormCloseQuery(Sender vcl.IObject, CanClose *bool) {
@@ -199,4 +218,8 @@ func (f *TFrmMain) OnFormCloseQuery(Sender vcl.IObject, CanClose *bool) {
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.IdYes
+}
+
+func (f *TFrmMain) sendUserMsg(UserSession *common.TSessionArray, sSendMsg string) int {
+	return 0
 }
