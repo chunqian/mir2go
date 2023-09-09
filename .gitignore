@@ -7,14 +7,14 @@ units/
 Makefile
 !/Makefile
 
-LogDataServer
-!/source/LogDataServer
+logdataserver
+!/bin/logdataserver
 
-LoginGate
-!/source/LoginGate
+logingate
+!/bin/logingate
 
-LogDataServer.app
-LoginGate.app
+logdataserver.app
+logingate.app
 
 liblcl.dylib
 

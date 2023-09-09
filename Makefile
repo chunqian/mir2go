@@ -16,27 +16,29 @@ define run-project
 endef
 
 build-all: \
-	build-LogDataServer
+	build-logdataserver \
+	build-logingate
 
 clear-all: \
-	clear-LogDataServer
+	clear-logdataserver \
+	clear-logingate
 
-# ******************** LogDataServer ********************
-build-LogDataServer:
-	$(call build-project, server/LogServer, source/LogDataServer, LogDataServer)
+# ******************** logdataserver ********************
+build-logdataserver:
+	$(call build-project, bin/logdataserver, server/logdata, logdataserver)
 
-clear-LogDataServer:
-	$(call clear-project, server/LogServer, LogDataServer)
+clear-logdataserver:
+	$(call clear-project, bin/logdataserver, logdataserver)
 
-run-LogDataServer:
-	$(call run-project, server/LogServer, LogDataServer)
+run-logdataserver:
+	$(call run-project, bin/logdataserver, logdataserver)
 
-# ******************** LoginGate ********************
-build-LoginGate:
-	$(call build-project, server/LoginGate, source/LoginGate, LoginGate)
+# ******************** logingate ********************
+build-logingate:
+	$(call build-project, bin/logingate, gate/login, logingate)
 
-clear-LoginGate:
-	$(call clear-project, server/LoginGate, LoginGate)
+clear-logingate:
+	$(call clear-project, bin/logingate, logingate)
 
-run-LoginGate:
-	$(call run-project, server/LoginGate, LoginGate)
+run-logingate:
+	$(call run-project, bin/logingate, logingate)

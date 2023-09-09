@@ -10,7 +10,7 @@ import (
 	"github.com/ying32/govcl/vcl/types"
 	"github.com/ying32/govcl/vcl/types/colors"
 
-	"github.com/chunqian/mir2go/source/Common"
+	"github.com/chunqian/mir2go/common"
 )
 
 type TFrmMain struct {
