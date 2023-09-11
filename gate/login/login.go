@@ -51,21 +51,27 @@ type TFrmMain struct {
 	clientSocket *net.TCPConn
 	serverSocket *net.TCPConn
 
-	dwShowMainLogTick     uint32           // LongWord, 显示主日志的时间戳
-	boShowLocked          bool             // Boolean, 是否锁定显示
-	tempLogList           *vcl.TStringList // 暂存日志列表
-	nSessionCount         int              // Integer, 会话数量
-	stringList30C         *vcl.TStringList // 特定的字符串列表
-	dwSendKeepAliveTick   uint32           // LongWord, 发送心跳包的时间戳
-	boServerReady         bool             // Boolean, 服务器是否准备好
-	stringList318         *vcl.TStringList // 特定的字符串列表
-	dwDecodeMsgTime       uint32           // LongWord, 解码消息所需时间
-	dwReConnectServerTick uint32           // LongWord, 重新连接服务器的时间戳
-	mutex                 sync.Mutex       // 用于并发场景下安全访问TStringList
+	dwShowMainLogTick     uint32     // LongWord, 显示主日志的时间戳
+	boShowLocked          bool       // Boolean, 是否锁定显示
+	tempLogList           []string   // 暂存日志列表
+	nSessionCount         int        // Integer, 会话数量
+	stringList30C         []string   // 特定的字符串列表
+	dwSendKeepAliveTick   uint32     // LongWord, 发送心跳包的时间戳
+	boServerReady         bool       // Boolean, 服务器是否准备好
+	stringList318         []string   // 特定的字符串列表
+	dwDecodeMsgTime       uint32     // LongWord, 解码消息所需时间
+	dwReConnectServerTick uint32     // LongWord, 重新连接服务器的时间戳
+	mutex_stringList      sync.Mutex // 用于并发场景下安全访问TStringList
 }
 
 var (
 	frmMain *TFrmMain
+
+	g_SessionArray     *common.TSessionArray
+	mutex_SessionArray sync.Mutex
+
+	clientSockeMsgList *vcl.TStringList
+	sProcMsg           string
 )
 
 // ******************** TFrmMain ********************
@@ -148,8 +154,11 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
 	// ******************** TMemo ********************
 	f.memoLog = vcl.NewMemo(f)
+	f.memoLog.SetName("MemoLog")
+	f.memoLog.SetText("")
 	f.memoLog.SetParent(f)
 	f.memoLog.SetColor(colors.ClMenuText)
+	f.memoLog.Font().SetColor(colors.ClLimegreen)
 	f.memoLog.SetTop(119)
 	f.memoLog.SetLeft(0)
 	f.memoLog.SetHeight(18)
@@ -210,7 +219,17 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	spnl = f.statusBar.Panels().Add()
 	spnl.SetWidth(50)
 
-	// ******************** Other ********************
+	// ******************** TTimer ********************
+
+	f.startTimer = vcl.NewTimer(f)
+	f.startTimer.SetInterval(200)
+	f.startTimer.SetEnabled(true)
+	f.startTimer.SetOnTimer(f.StartTimerTimer)
+
+	f.decodeTimer = vcl.NewTimer(f)
+	f.decodeTimer.SetInterval(1)
+	f.decodeTimer.SetEnabled(true)
+	f.decodeTimer.SetOnTimer(f.DecodeTimerTimer)
 }
 
 func (f *TFrmMain) OnFormCloseQuery(Sender vcl.IObject, CanClose *bool) {
@@ -220,6 +239,82 @@ func (f *TFrmMain) OnFormCloseQuery(Sender vcl.IObject, CanClose *bool) {
 		types.MbNo) == types.IdYes
 }
 
+func RGB(r, g, b uint32) types.TColor {
+	return types.TColor(r | (g << 8) | (b << 16))
+}
+
 func (f *TFrmMain) sendUserMsg(UserSession *common.TSessionArray, sSendMsg string) int {
 	return 0
+}
+
+func (f *TFrmMain) IniUserSessionArray() {
+	mutex_SessionArray.Lock()
+	defer mutex_SessionArray.Unlock()
+
+	for i := 0; i < common.GATEMAXSESSION; i++ {
+		session := &g_SessionArray[i]
+		session.Socket = nil
+		session.SRemoteIPaddr = ""
+		session.NSendMsgLen = 0
+		session.Bo0C = false
+		session.Dw10Tick = GetTickCount()
+		session.NCheckSendLength = 0
+		session.BoSendAvailable = true
+		session.BoSendCheck = false
+		session.N20 = 0
+		session.DwUserTimeOutTick = GetTickCount()
+		session.SocketHandle = -1
+		session.MsgList = make([]string, 0)
+	}
+}
+
+func (f *TFrmMain) StartTimerTimer(sender vcl.IObject) {
+	startTimer := vcl.AsTimer(sender) // 将传入的 IObject 转型为 Timer
+	if boStarted {
+		startTimer.SetEnabled(false) // 禁用定时器
+		f.StopService()
+		boClose = true
+		vcl.Application.Terminate() // 关闭应用程序
+	} else {
+		f.MenuViewLogMsgClick(sender)
+		boStarted = true
+		startTimer.SetEnabled(false) // 禁用定时器
+		f.StartService()
+	}
+}
+
+func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
+	ShowMainLogMsg(f)
+}
+
+func (f *TFrmMain) StopService() {
+	// 在这里添加关闭服务的逻辑
+}
+
+func (f *TFrmMain) StartService() {
+	// 在这里添加启动服务的逻辑
+
+	// 初始化变量和状态
+	MainOutMessage("正在启动服务...", 3)
+}
+
+func (f *TFrmMain) MenuViewLogMsgClick(sender vcl.IObject) {
+	// 在这里添加与菜单项点击相关的逻辑
+	f.menuViewLogMsg.SetChecked(!f.menuViewLogMsg.Checked())
+	f.ShowLogMsg(f.menuViewLogMsg.Checked())
+}
+
+// ShowLogMsg 对应于 Delphi 中的 ShowLogMsg
+func (f *TFrmMain) ShowLogMsg(boFlag bool) {
+	var nHeight int32
+	if boFlag {
+		nHeight = f.panel.Height()
+		f.panel.SetHeight(0)
+		f.memoLog.SetHeight(nHeight)
+		f.memoLog.SetTop(f.panel.Top())
+	} else {
+		nHeight = f.memoLog.Height()
+		f.memoLog.SetHeight(0)
+		f.panel.SetHeight(nHeight)
+	}
 }
