@@ -155,6 +155,7 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	// ******************** TMemo ********************
 	f.memoLog = vcl.NewMemo(f)
 	f.memoLog.SetName("MemoLog")
+	f.memoLog.SetAlign(types.AlClient)
 	f.memoLog.SetText("")
 	f.memoLog.SetParent(f)
 	f.memoLog.SetColor(colors.ClMenuText)
@@ -163,6 +164,7 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	f.memoLog.SetLeft(0)
 	f.memoLog.SetHeight(18)
 	f.memoLog.SetWidth(308)
+	f.memoLog.SetWordWrap(false)
 	f.memoLog.SetScrollBars(types.SsHorizontal)
 
 	// ******************** TPanel ********************
@@ -204,6 +206,10 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	f.statusBar = vcl.NewStatusBar(f)
 	f.statusBar.SetParent(f)
 	f.statusBar.SetSimplePanel(false)
+	f.statusBar.SetTop(137)
+	f.statusBar.SetLeft(0)
+	f.statusBar.SetHeight(17)
+	f.statusBar.SetWidth(308)
 	spnl := f.statusBar.Panels().Add()
 	spnl.SetAlignment(types.TaCenter)
 	spnl.SetText("7100")
