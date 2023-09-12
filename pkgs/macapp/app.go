@@ -1,15 +1,9 @@
-//----------------------------------------
-//
-// Copyright © ying32. All Rights Reserved.
-//
-// Licensed under Apache License 2.0
-//
-//----------------------------------------
+// Copyright (C) 2023 ying32. All rights reserved.
 //go:build darwin
 // +build darwin
 
 /*
-  使用方法: 根据go同一个包中的执行顺序, 创建一个最小文件名的go文件, 然后在里面写入, 如:
+使用方法: 根据go同一个包中的执行顺序, 创建一个最小文件名的go文件, 然后在里面写入, 如:
 
 package main
 
@@ -22,7 +16,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -90,7 +83,7 @@ func init() {
 }
 
 // 以一个Mac下的app形式运行
-// 调试下使用, 正式发布的时候虽然可 以不用去掉, 但也不咋好
+// 调试下使用, 正式发布的时候虽然可以不用去掉, 但也不咋好
 func runWithMacOSApp() {
 
 	if strings.Contains(os.Args[0], ".app/Contents/MacOS") {
@@ -114,7 +107,7 @@ func runWithMacOSApp() {
 
 	resName := fmt.Sprintf("%s/%s.icns", macResources, execName)
 	if !fileExists(resName) {
-		ioutil.WriteFile(resName, macOSAppIcon, 0666)
+		os.WriteFile(resName, macOSAppIcon, 0666)
 	}
 
 	liblclFileName := macOSDir + "/liblcl.dylib"
@@ -148,12 +141,12 @@ func runWithMacOSApp() {
 		tmp := template.New("file")
 		tmp.Parse(infoplist)
 		tmp.Execute(buff, datas)
-		ioutil.WriteFile(plistFileName, buff.Bytes(), 0666)
+		os.WriteFile(plistFileName, buff.Bytes(), 0666)
 	}
 
 	pkgInfoFileName := macContentsDir + "/PkgInfo"
 	if !fileExists(pkgInfoFileName) {
-		ioutil.WriteFile(pkgInfoFileName, pkgInfo, 0666)
+		os.WriteFile(pkgInfoFileName, pkgInfo, 0666)
 	}
 
 	if copyFile(os.Args[0], execFile) == nil {

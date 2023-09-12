@@ -1,10 +1,4 @@
-//----------------------------------------
-//
-// Copyright © ying32. All Rights Reserved.
-//
-// Licensed under Apache License 2.0
-//
-//----------------------------------------
+// Copyright (C) 2023 ying32. All rights reserved.
 //go:build darwin
 // +build darwin
 
@@ -26,8 +20,8 @@ const (
 	<string>{{.execName}}</string>
 	<key>CFBundleLocalizations</key>
 	<array>
-       <string>{{.locale}}</string>
-    </array>
+		<string>{{.locale}}</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>{{.execName}}</string>
 	<key>CFBundleIdentifier</key>
@@ -65,7 +59,7 @@ const (
 	</array>
 	<key>NSHighResolutionCapable</key>
 	<true/>
-    <key>NSHumanReadableCopyright</key>
+	<key>NSHumanReadableCopyright</key>
 	<string>{{.copyright}}></string>
 </dict>
 </plist>`
