@@ -17,60 +17,59 @@ import (
 type TBlockIPMethod int
 
 const (
-	MDisconnect TBlockIPMethod = iota // 断开连接
-	MBlock                            // 阻塞
-	MBlockList                        // 阻塞列表
+	Disconnect TBlockIPMethod = iota // 断开连接
+	Block                            // 阻塞
+	BlockList                        // 阻塞列表
 )
 
 // ******************** Type ********************
 // TSockaddr 存储与 IP 地址相关的信息.
 type TSockaddr struct {
-	NIPaddr        int
-	NCount         int
-	DwIPCountTick1 uint32
-	NIPCount1      int
-	DwIPCountTick2 uint32
-	NIPCount2      int
-	DwDenyTick     uint32
-	NIPDenyCount   int
+	IPaddr       int
+	Count        int
+	IPCountTick1 uint32
+	IPCount1     int
+	IPCountTick2 uint32
+	IPCount2     int
+	DenyTick     uint32
+	IPDenyCount  int
 }
 
 // ******************** Var ********************
 var (
 	BlockIPList          []TSockaddr // 阻塞 IP 列表
 	BlockIPListMutex     sync.Mutex
-	BlockMethod          = MDisconnect // 默认的阻塞方法
-	BoClose              = false
-	BoDecodeLock         bool
-	BoGateReady          = false
-	BoKeepAliveTimeOut   = false
-	BoSendHoldTimeOut    bool
-	BoServiceStart       = false
-	BoShowMessage        = false
-	BoStarted            = false
+	BlockMethod          = Disconnect // 默认的阻塞方法
+	Close                = false
+	DecodeLock           bool
+	GateReady            = false
+	KeepAliveTimeOut     = false
+	SendHoldTimeOut      bool
+	ServiceStart         = false
+	ShowMessage          = false
+	Started              = false
 	CurrIPaddrList       []TSockaddr // 当前 IP 地址列表
 	CurrIPaddrListMutex  sync.Mutex
-	DwKeepAliveTick      uint32
-	DwKeepConnectTimeOut uint32 = 60 * 1000 // 保持连接的超时时间
-	DwSendHoldTick       uint32
+	KeepAliveTick        uint32
+	KeepConnectTimeOut   uint32 = 60 * 1000 // 保持连接的超时时间
+	SendHoldTick         uint32
 	GateAddr             = "0.0.0.0"
 	GateClass            = "LoginGate"
 	GateName             = "登录网关"
 	GatePort             = 7000
-	GboDynamicIPDisMode = false  // 动态 IP 分发模式
+	DynamicIPDisMode     = false  // 动态 IP 分发模式
 	MainLogMsgList       []string // 存储日志信息的列表
 	MainLogMsgListMutex  sync.Mutex
-	N456A2C              int
-	N456A30              int
-	NIPCountLimit1       = 20 // IP 限制次数
-	NIPCountLimit2       = 40
-	NMaxConnOfIPaddr     = 10 // IP 地址的最大连接数
-	NSendMsgCount        int
-	NShowLogLevel        = 3              // 显示日志等级
+	TotalMsgListCount    int
+	ActiveConnections    int
+	IPCountLimit1        = 20 // IP 限制次数
+	IPCountLimit2        = 40
+	MaxConnOfIPaddr      = 10 // IP 地址的最大连接数
+	SendMsgCount         int
+	ShowLogLevel         = 3              // 显示日志等级
 	PosFile              = "./Config.ini" // 配置文件路径
 	ServerAddr           = "127.0.0.1"
 	ServerPort           = 5500
-	StringList456A14     []string
 	TempBlockIPList      []TSockaddr // 临时阻塞 IP 列表
 	TempBlockIPListMutex sync.Mutex
 	TitleName            = "热血传奇"
@@ -127,7 +126,7 @@ func LoadBlockIPFile() {
 		}
 
 		// 将 IP 地址加入 BlockIPList
-		BlockIPList = append(BlockIPList, TSockaddr{NIPaddr: int(ipToInteger(ip))})
+		BlockIPList = append(BlockIPList, TSockaddr{IPaddr: int(ipToInteger(ip))})
 	}
 
 	// 错误处理
@@ -149,7 +148,7 @@ func SaveBlockIPList() {
 
 	for _, sockaddr := range BlockIPList {
 		// 使用 integerToIP 自定义函数将整数转换为 net.IP 类型, 再转换为字符串
-		ipString := integerToIP(uint32(sockaddr.NIPaddr)).String()
+		ipString := integerToIP(uint32(sockaddr.IPaddr)).String()
 
 		// 将 IP 写入文件
 		writer.WriteString(ipString + "\n")

@@ -22,23 +22,21 @@ const (
 type TFrmMain struct {
 	*vcl.TForm
 
-	boServerReady         bool
-	boShowLocked          bool
-	dwDecodeMsgTime       uint32
-	dwReConnectServerTick uint32
-	dwSendKeepAliveTick   uint32
-	dwShowMainLogTick     uint32
-	nSessionCount         int
-	stringList30C         []string
-	stringList318         []string
-	tempLogList           []string
-	tempLogListMutex      sync.Mutex
+	serverReady         bool
+	showLocked          bool
+	decodeMsgTime       uint32
+	reConnectServerTick uint32
+	sendKeepAliveTick   uint32
+	showMainLogTick     uint32
+	sessionCount        int
+	tempLogList         []string
+	tempLogListMutex    sync.Mutex
 
 	ClientSocket         *net.TCPConn
 	DecodeTimer          *vcl.TTimer
 	Label2               *vcl.TLabel
-	LbHold               *vcl.TLabel
-	LbLack               *vcl.TLabel
+	Hold                 *vcl.TLabel
+	Lack                 *vcl.TLabel
 	MainMenu             *vcl.TMainMenu
 	MemoLog              *vcl.TMemo
 	MenuControl          *vcl.TMenuItem
@@ -65,22 +63,21 @@ type TFrmMain struct {
 }
 
 type TUserSession struct {
-	Socket            *net.Conn // 0x00
-	SRemoteIPaddr     string    // 0x04
-	NSendMsgLen       int       // 0x08
-	Bo0C              bool      // 0x0C
-	Dw10Tick          uint32    // 0x10
-	NCheckSendLength  int       // 0x14
-	BoSendAvailable   bool      // 0x18
-	BoSendCheck       bool      // 0x19
-	DwSendLockTimeOut uint32    // 0x1C
-	N20               int       // 0x20
-	DwUserTimeOutTick uint32    // 0x24
-	SocketHandle      int       // 0x28
-	SIP               string    // 0x2C
-	MsgList           []string  // 0x30
-	MsgListMutex      sync.Mutex
-	DwConnctCheckTick uint32 // 连接数据传输空闲超时检测
+	Socket          *net.Conn
+	RemoteIPaddr    string
+	SendMsgLen      int
+	SendLock        bool
+	CheckSendLength int
+	SendAvailable   bool
+	SendCheck       bool
+	SendLockTimeOut uint32
+	ReceiveLength   int
+	UserTimeOutTick uint32
+	SocketHandle    int
+	IP              string
+	MsgList         []string
+	MsgListMutex    sync.Mutex
+	ConnctCheckTick uint32 // 连接数据传输空闲超时检测
 }
 
 type TSessionArray [GATEMAXSESSION]TUserSession
@@ -88,45 +85,44 @@ type TSessionArray [GATEMAXSESSION]TUserSession
 // ******************** Var ********************
 var (
 	ClientSockeMsgList      []string
-	FrmMain                 *TFrmMain
-	GSessionArray           *TSessionArray
-	SProcMsg                string
 	ClientSockeMsgListMutex sync.Mutex
-	GSessionArrayMutex      sync.Mutex
+	FrmMain                 *TFrmMain
+	SessionArray            *TSessionArray
+	SessionArrayMutex       sync.Mutex
+	ProcMsg                 string
 )
 
 // ******************** TFrmMain ********************
-func (f *TFrmMain) closeSocket(nSocketHandle int) {
+func (f *TFrmMain) closeSocket(socketHandle int) {
 	//
 }
 
 func (f *TFrmMain) iniUserSessionArray() {
-	GSessionArrayMutex.Lock()
-	defer GSessionArrayMutex.Unlock()
+	SessionArrayMutex.Lock()
+	defer SessionArrayMutex.Unlock()
 
 	for i := 0; i < GATEMAXSESSION; i++ {
-		session := &GSessionArray[i]
+		session := &SessionArray[i]
 		session.Socket = nil
-		session.SRemoteIPaddr = ""
-		session.NSendMsgLen = 0
-		session.Bo0C = false
-		session.Dw10Tick = GetTickCount()
-		session.NCheckSendLength = 0
-		session.BoSendAvailable = true
-		session.BoSendCheck = false
-		session.N20 = 0
-		session.DwUserTimeOutTick = GetTickCount()
+		session.RemoteIPaddr = ""
+		session.SendMsgLen = 0
+		session.SendLock = false
+		session.CheckSendLength = 0
+		session.SendAvailable = true
+		session.SendCheck = false
+		session.ReceiveLength = 0
+		session.UserTimeOutTick = GetTickCount()
 		session.SocketHandle = -1
 		session.MsgList = make([]string, 0)
 	}
 }
 
-func (f *TFrmMain) isBlockIP(sIPaddr string) bool {
+func (f *TFrmMain) isBlockIP(ipaddr string) bool {
 	//
 	return false
 }
 
-func (f *TFrmMain) isConnLimited(sIPaddr string) bool {
+func (f *TFrmMain) isConnLimited(ipaddr string) bool {
 	//
 	return false
 }
@@ -162,13 +158,13 @@ func (f *TFrmMain) showMainLogMsg() {
 	MainLogMsgListMutex.Lock()
 	defer MainLogMsgListMutex.Unlock()
 
-	if GetTickCount()-f.dwShowMainLogTick < 200 {
+	if GetTickCount()-f.showMainLogTick < 200 {
 		return
 	}
-	f.dwShowMainLogTick = GetTickCount()
+	f.showMainLogTick = GetTickCount()
 
-	f.boShowLocked = true
-	defer func() { f.boShowLocked = false }()
+	f.showLocked = true
+	defer func() { f.showLocked = false }()
 
 	// 获取和清空主日志列表
 	f.tempLogList = append(f.tempLogList, MainLogMsgList...)
@@ -189,20 +185,20 @@ func (f *TFrmMain) startService() {
 
 	// 初始化变量和状态
 	MainOutMessage("正在启动服务...", 3)
-	BoServiceStart = true
-	BoGateReady = true
-	BoServiceStart = true
-	f.nSessionCount = 0
+	ServiceStart = true
+	GateReady = true
+	ServiceStart = true
+	f.sessionCount = 0
 	f.MenuControlStart.SetEnabled(false)
 	f.MenuControlStop.SetEnabled(true)
 
-	f.dwReConnectServerTick = GetTickCount() - 25*1000
-	BoKeepAliveTimeOut = false
-	NSendMsgCount = 0
-	N456A2C = 0
-	f.dwSendKeepAliveTick = GetTickCount()
-	BoSendHoldTimeOut = false
-	DwSendHoldTick = GetTickCount()
+	f.reConnectServerTick = GetTickCount() - 25*1000
+	KeepAliveTimeOut = false
+	SendMsgCount = 0
+	TotalMsgListCount = 0
+	f.sendKeepAliveTick = GetTickCount()
+	SendHoldTimeOut = false
+	SendHoldTick = GetTickCount()
 
 	CurrIPaddrList = make([]TSockaddr, 0)
 	BlockIPList = make([]TSockaddr, 0)
@@ -226,7 +222,7 @@ func (f *TFrmMain) stopService() {
 	//
 }
 
-func (f *TFrmMain) CloseConnect(sIPaddr string) {
+func (f *TFrmMain) CloseConnect(ipaddr string) {
 	//
 }
 
@@ -238,7 +234,7 @@ func (f *TFrmMain) ClientSocketDisconnect(sender vcl.IObject, socket net.TCPConn
 	//
 }
 
-func (f *TFrmMain) ClientSocketError(sender vcl.IObject, socket net.TCPConn, errorEvent error) {
+func (f *TFrmMain) ClientSocketError(sender vcl.IObject, socket net.TCPConn, err error) {
 	//
 }
 
@@ -367,21 +363,21 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	f.Label2.SetHeight(13)
 	f.Label2.SetWidth(42)
 
-	f.LbLack = vcl.NewLabel(f)
-	f.LbLack.SetParent(f.Panel)
-	f.LbLack.SetCaption("0/0")
-	f.LbLack.SetTop(33)
-	f.LbLack.SetLeft(195)
-	f.LbLack.SetHeight(13)
-	f.LbLack.SetWidth(21)
+	f.Lack = vcl.NewLabel(f)
+	f.Lack.SetParent(f.Panel)
+	f.Lack.SetCaption("0/0")
+	f.Lack.SetTop(33)
+	f.Lack.SetLeft(195)
+	f.Lack.SetHeight(13)
+	f.Lack.SetWidth(21)
 
-	f.LbHold = vcl.NewLabel(f)
-	f.LbHold.SetParent(f.Panel)
-	f.LbHold.SetCaption("")
-	f.LbHold.SetTop(10)
-	f.LbHold.SetLeft(106)
-	f.LbHold.SetHeight(13)
-	f.LbHold.SetWidth(7)
+	f.Hold = vcl.NewLabel(f)
+	f.Hold.SetParent(f.Panel)
+	f.Hold.SetCaption("")
+	f.Hold.SetTop(10)
+	f.Hold.SetLeft(106)
+	f.Hold.SetHeight(13)
+	f.Hold.SetWidth(7)
 
 	// ******************** TStatusBar ********************
 	f.StatusBar = vcl.NewStatusBar(f)
@@ -476,7 +472,7 @@ func (f *TFrmMain) ServerSocketClientDisconnect(sender vcl.IObject, socket net.T
 	//
 }
 
-func (f *TFrmMain) ServerSocketClientError(sender vcl.IObject, socket net.TCPConn, errorEvent error) {
+func (f *TFrmMain) ServerSocketClientError(sender vcl.IObject, socket net.TCPConn, err error) {
 	//
 }
 
@@ -486,14 +482,14 @@ func (f *TFrmMain) ServerSocketClientRead(sender vcl.IObject, socket net.TCPConn
 
 func (f *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 	startTimer := vcl.AsTimer(sender) // 将传入的 IObject 转型为 Timer
-	if BoStarted {
+	if Started {
 		startTimer.SetEnabled(false) // 禁用定时器
 		f.stopService()
-		BoClose = true
+		Close = true
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
 		f.MenuViewLogMsgClick(sender)
-		BoStarted = true
+		Started = true
 		startTimer.SetEnabled(false) // 禁用定时器
 		f.startService()
 	}
@@ -507,16 +503,16 @@ func RGB(r, g, b uint32) types.TColor {
 	return types.TColor(r | (g << 8) | (b << 16))
 }
 
-func MainLogOutMessage(sMsg string) {
+func MainLogOutMessage(msg string) {
 	//
 }
 
-func MainOutMessage(sMsg string, nMsgLevel int) {
+func MainOutMessage(msg string, msgLevel int) {
 	MainLogMsgListMutex.Lock()
 	defer MainLogMsgListMutex.Unlock()
 
-	if nMsgLevel <= NShowLogLevel {
-		tMsg := fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05"), sMsg)
+	if msgLevel <= ShowLogLevel {
+		tMsg := fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05"), msg)
 		MainLogMsgList = append(MainLogMsgList, tMsg)
 	}
 }
