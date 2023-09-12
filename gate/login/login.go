@@ -499,10 +499,6 @@ func (f *TFrmMain) TimerTimer(sender vcl.IObject) {
 	//
 }
 
-func RGB(r, g, b uint32) types.TColor {
-	return types.TColor(r | (g << 8) | (b << 16))
-}
-
 func MainLogOutMessage(msg string) {
 	//
 }
@@ -515,4 +511,8 @@ func MainOutMessage(msg string, msgLevel int) {
 		tMsg := fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05"), msg)
 		MainLogMsgList = append(MainLogMsgList, tMsg)
 	}
+}
+
+func RGB(r, g, b uint32) types.TColor {
+	return types.TColor(r | (g << 8) | (b << 16))
 }

@@ -41,6 +41,13 @@ var (
 )
 
 // ******************** TFrmLogData ********************
+func (f *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
+	*canClose = vcl.MessageDlg("是否确认退出服务器?",
+		types.MtConfirmation,
+		types.MbYes,
+		types.MbNo) == types.IdYes
+}
+
 func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
 	f.SetCaption("日志服务器")
@@ -61,7 +68,7 @@ func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	f.Timer1 = vcl.NewTimer(f)
 	f.Timer1.SetInterval(3000)
 	f.Timer1.SetEnabled(true)
-	f.Timer1.SetOnTimer(f.OnTimer1Timer)
+	f.Timer1.SetOnTimer(f.Timer1Timer)
 
 	f.Memo1 = vcl.NewMemo(f)
 	f.Memo1.SetParent(f)
@@ -106,25 +113,14 @@ func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	}
 
 	// 启动一个goroutine来接收UDP消息
-	go f.dataReceived()
+	go f.UDPDataReceived()
 }
 
-func (f *TFrmLogData) OnFormDestroy(Sender vcl.IObject) {
+func (f *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
 	f.logMsgList.Free()
 }
 
-func (f *TFrmLogData) OnFormCloseQuery(Sender vcl.IObject, CanClose *bool) {
-	*CanClose = vcl.MessageDlg("是否确认退出服务器?",
-		types.MtConfirmation,
-		types.MbYes,
-		types.MbNo) == types.IdYes
-}
-
-func (f *TFrmLogData) OnTimer1Timer(object vcl.IObject) {
-	f.writeLogFile()
-}
-
-func (f *TFrmLogData) dataReceived() {
+func (f *TFrmLogData) UDPDataReceived() {
 	buffer := make([]byte, 2048) // 最大2048个字节
 	for {
 		numberBytes, _, err := f.UdpConn.ReadFromUDP(buffer)
@@ -139,7 +135,11 @@ func (f *TFrmLogData) dataReceived() {
 	}
 }
 
-func (f *TFrmLogData) writeLogFile() {
+func (f *TFrmLogData) Timer1Timer(object vcl.IObject) {
+	f.WriteLogFile()
+}
+
+func (f *TFrmLogData) WriteLogFile() {
 	f.logMsgListMutex.Lock()
 	defer f.logMsgListMutex.Unlock()
 
