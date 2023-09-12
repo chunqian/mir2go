@@ -5,105 +5,75 @@ package main
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
 	"net"
 	"os"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/ying32/govcl/vcl"
 )
 
+// ******************** Enum ********************
 // TBlockIPMethod 是处理 IP 阻塞的方法枚举.
 type TBlockIPMethod int
 
 const (
-	mDisconnect TBlockIPMethod = iota // 断开连接
-	mBlock                            // 阻塞
-	mBlockList                        // 阻塞列表
+	MDisconnect TBlockIPMethod = iota // 断开连接
+	MBlock                            // 阻塞
+	MBlockList                        // 阻塞列表
 )
 
+// ******************** Type ********************
 // TSockaddr 存储与 IP 地址相关的信息.
 type TSockaddr struct {
-	nIPaddr        int
-	nCount         int
-	dwIPCountTick1 uint32
-	nIPCount1      int
-	dwIPCountTick2 uint32
-	nIPCount2      int
-	dwDenyTick     uint32
-	nIPDenyCount   int
+	NIPaddr        int
+	NCount         int
+	DwIPCountTick1 uint32
+	NIPCount1      int
+	DwIPCountTick2 uint32
+	NIPCount2      int
+	DwDenyTick     uint32
+	NIPDenyCount   int
 }
 
+// ******************** Var ********************
 var (
-	// 全局的互斥锁
-	CSMainLog   sync.Mutex
-	CSFilterMsg sync.Mutex
-
-	// 存储日志信息的列表
-	MainLogMsgList       []string
-	mutex_MainLogMsgList sync.Mutex
-
-	// 阻塞 IP 列表
-	BlockIPList []TSockaddr
-	// 临时阻塞 IP 列表
-	TempBlockIPList []TSockaddr
-	// 当前 IP 地址列表
-	CurrIPaddrList []TSockaddr
-
-	// IP 限制次数
-	nIPCountLimit1 = 20
-	nIPCountLimit2 = 40
-
-	// 显示日志等级
-	nShowLogLevel = 3
-
-	// 其他变量
-	StringList456A14 []string
-
-	// 服务器相关设置
-	GateClass  = "LoginGate"
-	GateName   = "登录网关"
-	TitleName  = "热血传奇"
-	ServerPort = 5500
-	ServerAddr = "127.0.0.1"
-	GatePort   = 7000
-	GateAddr   = "0.0.0.0"
-
-	// 服务器状态相关
-	boGateReady        = false
-	boShowMessage      = false
-	boStarted          = false
-	boClose            = false
-	boServiceStart     = false
-	dwKeepAliveTick    uint32
-	boKeepAliveTimeOut = false
-	nSendMsgCount      int
-	n456A2C            int
-	n456A30            int
-	boSendHoldTimeOut  bool
-	dwSendHoldTick     uint32
-	boDecodeLock       bool
-
-	// IP 地址的最大连接数
-	nMaxConnOfIPaddr = 10
-
-	// 默认的阻塞方法
-	BlockMethod = mDisconnect
-
-	// 保持连接的超时时间
-	dwKeepConnectTimeOut uint32 = 60 * 1000
-
-	// 动态 IP 分发模式
-	g_boDynamicIPDisMode = false
-
-	// 启动消息
-	g_sNowStartGate = "正在启动登录前置服务器..."
-	g_sNowStartOK   = "启动登录前置服务器完成..."
-
-	// 配置文件路径
-	PosFile = "./Config.ini"
+	BlockIPList          []TSockaddr // 阻塞 IP 列表
+	BlockIPListMutex     sync.Mutex
+	BlockMethod          = MDisconnect // 默认的阻塞方法
+	BoClose              = false
+	BoDecodeLock         bool
+	BoGateReady          = false
+	BoKeepAliveTimeOut   = false
+	BoSendHoldTimeOut    bool
+	BoServiceStart       = false
+	BoShowMessage        = false
+	BoStarted            = false
+	CurrIPaddrList       []TSockaddr // 当前 IP 地址列表
+	CurrIPaddrListMutex  sync.Mutex
+	DwKeepAliveTick      uint32
+	DwKeepConnectTimeOut uint32 = 60 * 1000 // 保持连接的超时时间
+	DwSendHoldTick       uint32
+	GateAddr             = "0.0.0.0"
+	GateClass            = "LoginGate"
+	GateName             = "登录网关"
+	GatePort             = 7000
+	GboDynamicIPDisMode = false  // 动态 IP 分发模式
+	MainLogMsgList       []string // 存储日志信息的列表
+	MainLogMsgListMutex  sync.Mutex
+	N456A2C              int
+	N456A30              int
+	NIPCountLimit1       = 20 // IP 限制次数
+	NIPCountLimit2       = 40
+	NMaxConnOfIPaddr     = 10 // IP 地址的最大连接数
+	NSendMsgCount        int
+	NShowLogLevel        = 3              // 显示日志等级
+	PosFile              = "./Config.ini" // 配置文件路径
+	ServerAddr           = "127.0.0.1"
+	ServerPort           = 5500
+	StringList456A14     []string
+	TempBlockIPList      []TSockaddr // 临时阻塞 IP 列表
+	TempBlockIPListMutex sync.Mutex
+	TitleName            = "热血传奇"
 )
 
 func ipToInteger(ip net.IP) uint32 {
@@ -157,7 +127,7 @@ func LoadBlockIPFile() {
 		}
 
 		// 将 IP 地址加入 BlockIPList
-		BlockIPList = append(BlockIPList, TSockaddr{nIPaddr: int(ipToInteger(ip))})
+		BlockIPList = append(BlockIPList, TSockaddr{NIPaddr: int(ipToInteger(ip))})
 	}
 
 	// 错误处理
@@ -179,7 +149,7 @@ func SaveBlockIPList() {
 
 	for _, sockaddr := range BlockIPList {
 		// 使用 integerToIP 自定义函数将整数转换为 net.IP 类型, 再转换为字符串
-		ipString := integerToIP(uint32(sockaddr.nIPaddr)).String()
+		ipString := integerToIP(uint32(sockaddr.NIPaddr)).String()
 
 		// 将 IP 写入文件
 		writer.WriteString(ipString + "\n")
@@ -192,39 +162,4 @@ func SaveBlockIPList() {
 func GetTickCount() uint32 {
 	// 当前时间的毫秒数
 	return uint32(time.Now().UnixNano() / 1e6)
-}
-
-func MainOutMessage(sMsg string, nMsgLevel int) {
-	mutex_MainLogMsgList.Lock()
-	defer mutex_MainLogMsgList.Unlock()
-
-	if nMsgLevel <= nShowLogLevel {
-		tMsg := fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05"), sMsg)
-		MainLogMsgList = append(MainLogMsgList, tMsg)
-	}
-}
-
-func ShowMainLogMsg(f *TFrmMain) {
-	if GetTickCount()-f.dwShowMainLogTick < 200 {
-		return
-	}
-	f.dwShowMainLogTick = GetTickCount()
-
-	f.boShowLocked = true
-	defer func() { f.boShowLocked = false }()
-
-	// 获取和清空主日志列表
-	mutex_MainLogMsgList.Lock()
-	f.tempLogList = append(f.tempLogList, MainLogMsgList...)
-	MainLogMsgList = MainLogMsgList[:0]
-	mutex_MainLogMsgList.Unlock()
-
-	// 在 GUI 中显示日志
-	memoLog := vcl.AsMemo(f.FindComponent("MemoLog"))
-	for _, logMsg := range f.tempLogList {
-		vcl.ThreadSync(func() {
-			memoLog.Lines().Add(logMsg)
-		})
-	}
-	f.tempLogList = f.tempLogList[:0]
 }
