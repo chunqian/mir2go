@@ -2,4 +2,4 @@
 root = true
 
 [*.go]
-tab_width = 2
+tab_width = 4
