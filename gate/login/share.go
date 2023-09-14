@@ -14,7 +14,7 @@ import (
 
 // ******************** Enum ********************
 // TBlockIPMethod 是处理 IP 阻塞的方法枚举.
-type TBlockIPMethod int
+type TBlockIPMethod int32
 
 const (
 	Disconnect TBlockIPMethod = iota // 断开连接
@@ -51,12 +51,12 @@ var (
 	CurrIPaddrList       []TSockaddr // 当前 IP 地址列表
 	CurrIPaddrListMutex  sync.Mutex
 	KeepAliveTick        uint32
-	KeepConnectTimeOut   uint32 = 60 * 1000 // 保持连接的超时时间
+	KeepConnectTimeOut   int32 = 60 * 1000 // 保持连接的超时时间
 	SendHoldTick         uint32
 	GateAddr             = "0.0.0.0"
-	GateClass            = "LoginGate"
+	GateClass            = "Setup"
 	GateName             = "登录网关"
-	GatePort             = 7000
+	GatePort             int32 = 7000
 	DynamicIPDisMode     = false  // 动态 IP 分发模式
 	MainLogMsgList       []string // 存储日志信息的列表
 	MainLogMsgListMutex  sync.Mutex
@@ -64,12 +64,12 @@ var (
 	ActiveConnections    int
 	IPCountLimit1        = 20 // IP 限制次数
 	IPCountLimit2        = 40
-	MaxConnOfIPaddr      = 10 // IP 地址的最大连接数
+	MaxConnOfIPaddr      int32 = 10 // IP 地址的最大连接数
 	SendMsgCount         int
-	ShowLogLevel         = 3              // 显示日志等级
-	PosFile              = "./Config.ini" // 配置文件路径
+	ShowLogLevel         int32 = 3              // 显示日志等级
+	ConfigFile           = "./Config.ini" // 配置文件路径
 	ServerAddr           = "127.0.0.1"
-	ServerPort           = 5500
+	ServerPort           int32 = 5500
 	TempBlockIPList      []TSockaddr // 临时阻塞 IP 列表
 	TempBlockIPListMutex sync.Mutex
 	TitleName            = "热血传奇"
