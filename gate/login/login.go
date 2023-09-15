@@ -270,7 +270,10 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 }
 
 func (f *TFrmMain) OnFormDestroy(sender vcl.IObject) {
-	//
+	f.tempLogList = f.tempLogList[:0]
+	for i := range SessionArray {
+		SessionArray[i] = nil
+	}
 }
 
 func (f *TFrmMain) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
@@ -280,8 +283,13 @@ func (f *TFrmMain) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
 		types.MbNo) == types.IdYes
 }
 
-func (f *TFrmMain) closeSocket(socketHandle int) {
-	//
+func (f *TFrmMain) closeSocket(socketHandle uintptr) {
+	for i := range SessionArray {
+		userSession := SessionArray[i]
+		if userSession.Socket != nil && userSession.SocketHandle == socketHandle {
+			userSession.Socket.Close()
+		}
+	}
 }
 
 func (f *TFrmMain) initUserSessionArray() {
