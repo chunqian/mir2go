@@ -41,13 +41,6 @@ var (
 )
 
 // ******************** TFrmLogData ********************
-func (f *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
-	*canClose = vcl.MessageDlg("是否确认退出服务器?",
-		types.MtConfirmation,
-		types.MbYes,
-		types.MbNo) == types.IdYes
-}
-
 func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
 	f.SetCaption("日志服务器")
@@ -112,12 +105,19 @@ func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 		return
 	}
 
-	// 启动一个goroutine来接收UDP消息
+	// 启动goroutine来接收UDP消息
 	go f.UDPDataReceived()
 }
 
 func (f *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
 	f.logMsgList.Free()
+}
+
+func (f *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
+	*canClose = vcl.MessageDlg("是否确认退出服务器?",
+		types.MtConfirmation,
+		types.MbYes,
+		types.MbNo) == types.IdYes
 }
 
 func (f *TFrmLogData) UDPDataReceived() {

@@ -3,7 +3,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -56,14 +58,14 @@ type TFrmMain struct {
 	N4                   *vcl.TMenuItem
 	Panel                *vcl.TPanel
 	SendTimer            *vcl.TTimer
-	ServerSocket         *net.TCPConn
+	ServerSocket         *net.TCPListener
 	StartTimer           *vcl.TTimer
 	StatusBar            *vcl.TStatusBar
 	Timer                *vcl.TTimer
 }
 
 type TUserSession struct {
-	Socket          *net.TCPConn
+	Socket          *TServerSocket
 	RemoteIPaddr    string
 	SendMsgLen      int
 	SendLock        bool
@@ -73,7 +75,7 @@ type TUserSession struct {
 	SendLockTimeOut uint32
 	ReceiveLength   int
 	UserTimeOutTick uint32
-	SocketHandle    int
+	SocketHandle    uintptr
 	IP              string
 	MsgList         []string
 	MsgListMutex    sync.Mutex
@@ -294,7 +296,7 @@ func (f *TFrmMain) initUserSessionArray() {
 		session.CheckSendLength = 0
 		session.ReceiveLength = 0
 		session.UserTimeOutTick = GetTickCount()
-		session.SocketHandle = -1
+		session.SocketHandle = uintptr(0)
 		session.MsgList = make([]string, 0)
 		SessionArray[i] = &session
 	}
@@ -337,7 +339,7 @@ func (f *TFrmMain) resUserSessionArray() {
 		userSession := SessionArray[i]
 		userSession.Socket = nil
 		userSession.RemoteIPaddr = ""
-		userSession.SocketHandle = -1
+		userSession.SocketHandle = uintptr(0)
 		userSession.MsgList = userSession.MsgList[:0]
 	}
 }
@@ -429,8 +431,10 @@ func (f *TFrmMain) startService() {
 	}
 
 	// ClientSocket
+	f.ClientSocketCreate()
 
 	// ServerSocket
+	f.ServerSocketCreate()
 
 	f.SendTimer.SetEnabled(true)
 	MainOutMessage("启动服务完成...", 3)
@@ -460,6 +464,7 @@ func (f *TFrmMain) stopService() {
 	CurrIPaddrList = CurrIPaddrList[:0]
 	BlockIPList = BlockIPList[:0]
 	TempBlockIPList = TempBlockIPList[:0]
+	ClientSockeMsgList = ClientSockeMsgList[:0]
 
 	MainOutMessage("停止服务完成...", 3)
 }
@@ -468,19 +473,30 @@ func (f *TFrmMain) CloseConnect(ipaddr string) {
 	//
 }
 
-func (f *TFrmMain) ClientSocketConnect(sender vcl.IObject, socket net.TCPConn) {
+func (f *TFrmMain) ClientSocketCreate() {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
+	if err != nil {
+		panic("无法解析 Client 地址: " + err.Error())
+	}
+	f.ClientSocket, err = net.DialTCP("tcp", nil, addr)
+	if err != nil {
+		panic("无法监听 Client 地址: " + err.Error())
+	}
+}
+
+func (f *TFrmMain) ClientSocketConnect(socket net.TCPConn) {
 	//
 }
 
-func (f *TFrmMain) ClientSocketDisconnect(sender vcl.IObject, socket net.TCPConn) {
+func (f *TFrmMain) ClientSocketDisconnect(socket net.TCPConn) {
 	//
 }
 
-func (f *TFrmMain) ClientSocketError(sender vcl.IObject, socket net.TCPConn, err error) {
+func (f *TFrmMain) ClientSocketError(socket net.TCPConn, err error) {
 	//
 }
 
-func (f *TFrmMain) ClientSocketRead(sender vcl.IObject, socket net.TCPConn) {
+func (f *TFrmMain) ClientSocketRead(socket net.TCPConn) {
 	//
 }
 
@@ -515,8 +531,8 @@ func (f *TFrmMain) MenuControlStopClick(sender vcl.IObject) {
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.IdYes {
-			f.stopService()
-		}
+		f.stopService()
+	}
 }
 
 func (f *TFrmMain) MenuOptionGeneralClick(sender vcl.IObject) {
@@ -542,20 +558,184 @@ func (f *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	//
 }
 
-func (f *TFrmMain) ServerSocketClientConnect(sender vcl.IObject, socket net.TCPConn) {
+func (f *TFrmMain) ServerSocketCreate() {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", GateAddr, GatePort))
+	if err != nil {
+		panic("无法解析 Server 地址: " + err.Error())
+	}
+	f.ServerSocket, err = net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic("无法监听 Server 地址: " + err.Error())
+	}
+
+	// 启动goroutine来接收Client Connect连接
+}
+
+func (f *TFrmMain) ServerSocketClientConnect(socket *TServerSocket) {
+	var remoteIPaddr, localIPaddr string
+	var ipAddr TSockaddr
+
+	socket.Index = -1
+	remoteIPaddr = socket.RemoteAddr().String()
+
+	if DynamicIPDisMode {
+		localIPaddr = f.ClientSocket.RemoteAddr().String()
+	} else {
+		localIPaddr = socket.LocalAddr().String()
+	}
+
+	if f.isBlockIP(remoteIPaddr) {
+		MainOutMessage("过滤连接: "+remoteIPaddr, 1)
+		socket.Close()
+		return
+	}
+
+	if f.isConnLimited(remoteIPaddr) {
+		switch BlockMethod {
+		case Disconnect:
+			socket.Close()
+		case Block:
+			ip := net.ParseIP(remoteIPaddr)
+			ipAddr = TSockaddr{}
+			ipAddr.IPaddr = int(ipToInteger(ip))
+			TempBlockIPList = append(TempBlockIPList, ipAddr)
+			f.CloseConnect(remoteIPaddr)
+		case BlockList:
+			ip := net.ParseIP(remoteIPaddr)
+			ipAddr = TSockaddr{}
+			ipAddr.IPaddr = int(ipToInteger(ip))
+			BlockIPList = append(BlockIPList, ipAddr)
+			f.CloseConnect(remoteIPaddr)
+		}
+		MainOutMessage("端口攻击: "+remoteIPaddr, 1)
+	}
+
+	if GateReady {
+		for i := 0; i < GATEMAXSESSION; i++ {
+			userSession := SessionArray[i]
+			if userSession == nil {
+				userSession.Socket = socket
+				userSession.RemoteIPaddr = remoteIPaddr
+				userSession.SendMsgLen = 0
+				userSession.SendLock = false
+				userSession.ConnctCheckTick = GetTickCount()
+				userSession.SendAvailable = true
+				userSession.SendCheck = false
+				userSession.CheckSendLength = 0
+				userSession.ReceiveLength = 0
+				userSession.UserTimeOutTick = GetTickCount()
+				userSession.SocketHandle = socket.SocketHandle
+				userSession.IP = remoteIPaddr
+				userSession.MsgList = make([]string, 0)
+
+				socket.Index = i
+				f.sessionCount++
+			}
+		}
+
+		if socket.Index >= 0 {
+			// 发送字符串
+			message := fmt.Sprintf("%%O%d/%s/%s$", socket.SocketHandle, remoteIPaddr, localIPaddr)
+			f.ClientSocket.Write([]byte(message))
+			MainOutMessage("Connect: "+remoteIPaddr, 5)
+		} else {
+			socket.Close()
+			MainOutMessage("Kick Off: "+remoteIPaddr, 1)
+		}
+	} else {
+		socket.Close()
+		MainOutMessage("Kick Off: "+remoteIPaddr, 1)
+	}
+}
+
+func (f *TFrmMain) ServerSocketClientDisconnect(conn *TServerSocket) {
+	remoteIPaddr := conn.RemoteAddr().String()
+	ip := net.ParseIP(remoteIPaddr)
+	sockIndex := conn.Index
+
+	for i := 0; i < len(CurrIPaddrList); i++ {
+		ipAddr := CurrIPaddrList[i]
+		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+			ipAddr.Count--
+			if ipAddr.Count <= 0 {
+				CurrIPaddrList = append(CurrIPaddrList[:i], CurrIPaddrList[i+1:]...)
+			}
+		}
+	}
+
+	if sockIndex >= 0 && sockIndex < GATEMAXSESSION {
+		userSession := SessionArray[sockIndex]
+		userSession.Socket = nil
+		userSession.RemoteIPaddr = ""
+		userSession.SocketHandle = uintptr(0)
+		userSession.MsgList = userSession.MsgList[:0]
+		f.sessionCount--
+		if GateReady {
+			message := fmt.Sprintf("%%X%d$", conn.SocketHandle)
+			f.ClientSocket.Write([]byte(message))
+			MainOutMessage("DisConnect: "+remoteIPaddr, 5)
+		}
+	}
+}
+
+func (f *TFrmMain) ServerSocketClientError(conn *TServerSocket, err error) {
 	//
 }
 
-func (f *TFrmMain) ServerSocketClientDisconnect(sender vcl.IObject, socket net.TCPConn) {
-	//
-}
+func (f *TFrmMain) ServerSocketClientRead(conn *TServerSocket) {
+	defer conn.Close()
 
-func (f *TFrmMain) ServerSocketClientError(sender vcl.IObject, socket net.TCPConn, err error) {
-	//
-}
+	buffer := make([]byte, 1024)
+	var dataBuffer bytes.Buffer
+	reading := false
 
-func (f *TFrmMain) ServerSocketClientRead(sender vcl.IObject, socket net.TCPConn) {
-	//
+	sockIndex := conn.Index
+	if sockIndex >= 0 && sockIndex < GATEMAXSESSION {
+		userSession := SessionArray[sockIndex]
+		for {
+			n, err := conn.Read(buffer)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Println("Read error:", err)
+				}
+				f.ServerSocketClientDisconnect(conn)
+			}
+
+			for i := 0; i < n; i++ {
+				if buffer[i] == '%' {
+					reading = true
+					dataBuffer.Reset()
+					continue
+				}
+
+				if buffer[i] == '$' {
+					reading = false
+					fmt.Println("Message Received:", dataBuffer.String())
+					if f.serverReady {
+						userSession.SendAvailable = true
+						userSession.SendCheck = false
+						userSession.CheckSendLength = 0
+						if GateReady && !KeepAliveTimeOut {
+							userSession.ConnctCheckTick = GetTickCount()
+							if (GetTickCount() - userSession.UserTimeOutTick) < 1000 {
+								userSession.ReceiveLength += dataBuffer.Len()
+							} else {
+								userSession.ReceiveLength = dataBuffer.Len()
+							}
+							message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle, dataBuffer.String())
+							f.ClientSocket.Write([]byte(message))
+						}
+					}
+					dataBuffer.Reset()
+					continue
+				}
+
+				if reading {
+					dataBuffer.WriteByte(buffer[i])
+				}
+			}
+		}
+	}
 }
 
 func (f *TFrmMain) StartTimerTimer(sender vcl.IObject) {

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 // ******************** Enum ********************
@@ -35,6 +36,13 @@ type TSockaddr struct {
 	IPDenyCount  int
 }
 
+type TServerSocket struct {
+	*net.TCPConn
+
+	SocketHandle uintptr
+	Index        int
+}
+
 // ******************** Var ********************
 var (
 	BlockIPList          []TSockaddr // 阻塞 IP 列表
@@ -53,23 +61,23 @@ var (
 	KeepAliveTick        uint32
 	KeepConnectTimeOut   int32 = 60 * 1000 // 保持连接的超时时间
 	SendHoldTick         uint32
-	GateAddr             = "0.0.0.0"
-	GateClass            = "Setup"
-	GateName             = "登录网关"
-	GatePort             int32 = 7000
-	DynamicIPDisMode     = false  // 动态 IP 分发模式
-	MainLogMsgList       []string // 存储日志信息的列表
+	GateAddr                      = "0.0.0.0"
+	GateClass                     = "Setup"
+	GateName                      = "登录网关"
+	GatePort             int32    = 7000
+	DynamicIPDisMode              = false // 动态 IP 分发模式
+	MainLogMsgList       []string         // 存储日志信息的列表
 	MainLogMsgListMutex  sync.Mutex
 	TotalMsgListCount    int
 	ActiveConnections    int
-	IPCountLimit1        = 20 // IP 限制次数
-	IPCountLimit2        = 40
+	IPCountLimit1              = 20 // IP 限制次数
+	IPCountLimit2              = 40
 	MaxConnOfIPaddr      int32 = 10 // IP 地址的最大连接数
 	SendMsgCount         int
-	ShowLogLevel         int32 = 3              // 显示日志等级
-	ConfigFile           = "./Config.ini" // 配置文件路径
-	ServerAddr           = "127.0.0.1"
-	ServerPort           int32 = 5500
+	ShowLogLevel         int32       = 3              // 显示日志等级
+	ConfigFile                       = "./Config.ini" // 配置文件路径
+	ServerAddr                       = "127.0.0.1"
+	ServerPort           int32       = 5500
 	TempBlockIPList      []TSockaddr // 临时阻塞 IP 列表
 	TempBlockIPListMutex sync.Mutex
 	TitleName            = "热血传奇"
@@ -161,4 +169,8 @@ func SaveBlockIPList() {
 func GetTickCount() uint32 {
 	// 当前时间的毫秒数
 	return uint32(time.Now().UnixNano() / 1e6)
+}
+
+func GetSocketHandle(conn *net.TCPConn) uintptr {
+	return uintptr(unsafe.Pointer(conn))
 }
