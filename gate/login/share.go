@@ -36,11 +36,19 @@ type TSockaddr struct {
 	IPDenyCount  int
 }
 
-type TServerSocket struct {
+type TClientSocket struct {
 	*net.TCPConn
 
 	SocketHandle uintptr
 	Index        int
+}
+
+type TServerSocket struct {
+	*net.TCPListener
+
+	Active bool
+	ActiveConnections int
+	Connections []*TClientSocket
 }
 
 // ******************** Var ********************

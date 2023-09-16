@@ -34,7 +34,7 @@ type TFrmMain struct {
 	tempLogList         []string
 	tempLogListMutex    sync.Mutex
 
-	ClientSocket         *net.TCPConn
+	ClientSocket         *TClientSocket
 	DecodeTimer          *vcl.TTimer
 	Label2               *vcl.TLabel
 	Hold                 *vcl.TLabel
@@ -58,14 +58,14 @@ type TFrmMain struct {
 	N4                   *vcl.TMenuItem
 	Panel                *vcl.TPanel
 	SendTimer            *vcl.TTimer
-	ServerSocket         *net.TCPListener
+	ServerSocket         *TServerSocket
 	StartTimer           *vcl.TTimer
 	StatusBar            *vcl.TStatusBar
 	Timer                *vcl.TTimer
 }
 
 type TUserSession struct {
-	Socket          *TServerSocket
+	Socket          *TClientSocket
 	RemoteIPaddr    string
 	SendMsgLen      int
 	SendLock        bool
@@ -311,13 +311,61 @@ func (f *TFrmMain) initUserSessionArray() {
 }
 
 func (f *TFrmMain) isBlockIP(ipaddr string) bool {
-	//
+	ip := net.ParseIP(ipaddr)
+	for i := range TempBlockIPList {
+		ipAddr := TempBlockIPList[i]
+		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+			return true
+		}
+	}
+	for i := range BlockIPList {
+		ipAddr := BlockIPList[i]
+		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+			return true
+		}
+	}
 	return false
 }
 
 func (f *TFrmMain) isConnLimited(ipaddr string) bool {
-	//
-	return false
+	denyConnect := false
+	ip := net.ParseIP(ipaddr)
+	for i := range CurrIPaddrList {
+		ipAddr := CurrIPaddrList[i]
+		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+			ipAddr.Count ++
+			if (GetTickCount() - ipAddr.IPCountTick1) < 1000 {
+				ipAddr.IPCount1 ++
+				if ipAddr.IPCount1 >= IPCountLimit1 {
+					denyConnect = true
+				}
+			} else {
+				ipAddr.IPCountTick1 = GetTickCount()
+				ipAddr.IPCount1 = 0
+			}
+
+			if (GetTickCount() - ipAddr.IPCountTick2) < 3000 {
+				ipAddr.IPCount2 ++
+				if ipAddr.IPCount2 >= IPCountLimit2 {
+					denyConnect = true
+				}
+			} else {
+				ipAddr.IPCountTick2 = GetTickCount()
+				ipAddr.IPCount2 = 0
+			}
+
+			if ipAddr.Count > int(MaxConnOfIPaddr) {
+				denyConnect = true
+			}
+		}
+	}
+
+	sockAddr := TSockaddr{
+		IPaddr: int(ipToInteger(ip)),
+		Count: 1,
+	}
+	CurrIPaddrList = append(CurrIPaddrList, sockAddr)
+	return denyConnect
 }
 
 func (f *TFrmMain) loadConfig() {
@@ -352,21 +400,52 @@ func (f *TFrmMain) resUserSessionArray() {
 	}
 }
 
-func (f *TFrmMain) sendUserMsg(userSession *TUserSession, sSendMsg string) int32 {
-	return -1
+func (f *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
+	result := -1
+	if userSession.Socket != nil {
+		if !userSession.SendLock {
+			if userSession.SendAvailable && GetTickCount() > userSession.SendLockTimeOut {
+				userSession.SendAvailable = true
+				userSession.CheckSendLength = 0
+				SendHoldTimeOut = true
+				SendHoldTick = GetTickCount()
+			}
+			if userSession.SendAvailable {
+				if userSession.CheckSendLength >= 250 {
+					if !userSession.SendCheck {
+						userSession.SendCheck = true
+						sendMsg = "*" + sendMsg
+					}
+					if userSession.CheckSendLength >= 512 {
+						userSession.SendAvailable = false
+						userSession.SendLockTimeOut = GetTickCount() + 3*1000
+					}
+				}
+				userSession.Socket.Write([]byte(sendMsg))
+				userSession.SendMsgLen += len(sendMsg)
+				userSession.CheckSendLength += len(sendMsg)
+				result = 1
+			}
+		} else {
+			result = 0
+		}
+	} else {
+		result = 0
+	}
+	return result
 }
 
-func (f *TFrmMain) showLogMsg(boFlag bool) {
-	var nHeight int32
-	if boFlag {
-		nHeight = f.Panel.Height()
+func (f *TFrmMain) showLogMsg(flag bool) {
+	var height int32
+	if flag {
+		height = f.Panel.Height()
 		f.Panel.SetHeight(0)
-		f.MemoLog.SetHeight(nHeight)
+		f.MemoLog.SetHeight(height)
 		f.MemoLog.SetTop(f.Panel.Top())
 	} else {
-		nHeight = f.MemoLog.Height()
+		height = f.MemoLog.Height()
 		f.MemoLog.SetHeight(0)
-		f.Panel.SetHeight(nHeight)
+		f.Panel.SetHeight(height)
 	}
 }
 
@@ -478,7 +557,22 @@ func (f *TFrmMain) stopService() {
 }
 
 func (f *TFrmMain) CloseConnect(ipaddr string) {
-	//
+	if f.ServerSocket.Active {
+		for {
+			check := false
+			for i := 0; i < f.ServerSocket.ActiveConnections; i++ {
+				remoteAddr := f.ServerSocket.Connections[i].RemoteAddr().String()
+				if ipaddr == remoteAddr {
+					f.ServerSocket.Connections[i].Close()
+					check = true
+					break
+				}
+			}
+			if !check {
+				break
+			}
+		}
+	}
 }
 
 func (f *TFrmMain) ClientSocketCreate() {
@@ -486,25 +580,28 @@ func (f *TFrmMain) ClientSocketCreate() {
 	if err != nil {
 		panic("无法解析 Client 地址: " + err.Error())
 	}
-	f.ClientSocket, err = net.DialTCP("tcp", nil, addr)
+	conn, err := net.DialTCP("tcp", nil, addr)
+	f.ClientSocket = &TClientSocket{
+		TCPConn: conn,
+	}
 	if err != nil {
 		panic("无法监听 Client 地址: " + err.Error())
 	}
 }
 
-func (f *TFrmMain) ClientSocketConnect(socket net.TCPConn) {
+func (f *TFrmMain) ClientSocketConnect(socket TClientSocket) {
 	//
 }
 
-func (f *TFrmMain) ClientSocketDisconnect(socket net.TCPConn) {
+func (f *TFrmMain) ClientSocketDisconnect(socket TClientSocket) {
 	//
 }
 
-func (f *TFrmMain) ClientSocketError(socket net.TCPConn, err error) {
+func (f *TFrmMain) ClientSocketError(socket TClientSocket, err error) {
 	//
 }
 
-func (f *TFrmMain) ClientSocketRead(socket net.TCPConn) {
+func (f *TFrmMain) ClientSocketRead(socket TClientSocket) {
 	//
 }
 
@@ -571,7 +668,10 @@ func (f *TFrmMain) ServerSocketCreate() {
 	if err != nil {
 		panic("无法解析 Server 地址: " + err.Error())
 	}
-	f.ServerSocket, err = net.ListenTCP("tcp", addr)
+	listener, err := net.ListenTCP("tcp", addr)
+	f.ServerSocket = &TServerSocket{
+		TCPListener: listener,
+	}
 	if err != nil {
 		panic("无法监听 Server 地址: " + err.Error())
 	}
@@ -579,7 +679,7 @@ func (f *TFrmMain) ServerSocketCreate() {
 	// 启动goroutine来接收Client Connect连接
 }
 
-func (f *TFrmMain) ServerSocketClientConnect(socket *TServerSocket) {
+func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	var remoteIPaddr, localIPaddr string
 	var ipAddr TSockaddr
 
@@ -656,7 +756,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TServerSocket) {
 	}
 }
 
-func (f *TFrmMain) ServerSocketClientDisconnect(conn *TServerSocket) {
+func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket) {
 	remoteIPaddr := conn.RemoteAddr().String()
 	ip := net.ParseIP(remoteIPaddr)
 	sockIndex := conn.Index
@@ -686,11 +786,11 @@ func (f *TFrmMain) ServerSocketClientDisconnect(conn *TServerSocket) {
 	}
 }
 
-func (f *TFrmMain) ServerSocketClientError(conn *TServerSocket, err error) {
+func (f *TFrmMain) ServerSocketClientError(conn *TClientSocket, err error) {
 	//
 }
 
-func (f *TFrmMain) ServerSocketClientRead(conn *TServerSocket) {
+func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket) {
 	defer conn.Close()
 
 	buffer := make([]byte, 1024)
