@@ -3,9 +3,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -519,8 +517,9 @@ func (f *TFrmMain) startService() {
 		f.SetCaption(GateName)
 	}
 
-	f.ClientSocketCreate() // ClientSocket
-	f.ServerSocketCreate() // ServerSocket
+	// go f.ClientSocketCreate() // ClientSocket
+
+	f.ServerSocket = CreateServerSocket(f, GateAddr, GatePort) // ServerSocket
 
 	f.SendTimer.SetEnabled(true)
 	MainOutMessage("启动服务完成...", 3)
@@ -680,40 +679,6 @@ func (f *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	//
 }
 
-func (f *TFrmMain) ServerSocketCreate() {
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", GateAddr, GatePort))
-	if err != nil {
-		panic("无法解析 Server 地址: " + err.Error())
-	}
-	listener, err := net.ListenTCP("tcp", addr)
-	f.ServerSocket = &TServerSocket{
-		TCPListener: listener,
-	}
-	if err != nil {
-		panic("无法监听 Server 地址: " + err.Error())
-	}
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		tcpConn, ok := conn.(*net.TCPConn)
-		if !ok {
-			fmt.Println("Not a TCP connection")
-			return
-		}
-		clientSocket := &TClientSocket{
-			TCPConn: tcpConn,
-		}
-
-		f.ServerSocketClientConnect(clientSocket)
-
-		go f.ServerSocketClientRead(clientSocket)
-	}
-}
-
 func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	var remoteIPaddr, localIPaddr string
 	var ipAddr TSockaddr
@@ -826,59 +791,23 @@ func (f *TFrmMain) ServerSocketClientError(conn *TClientSocket, err error) {
 	conn.Close()
 }
 
-func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket) {
-	defer conn.Close()
-
-	buffer := make([]byte, 1024)
-	var dataBuffer bytes.Buffer
-	reading := false
-
+func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) {
 	sockIndex := conn.Index
 	if sockIndex >= 0 && sockIndex < GATEMAXSESSION {
 		userSession := SessionArray[sockIndex]
-		for {
-			n, err := conn.Read(buffer)
-			if err != nil {
-				if err != io.EOF {
-					f.ServerSocketClientError(conn, err)
+		if f.serverReady {
+			userSession.SendAvailable = true
+			userSession.SendCheck = false
+			userSession.CheckSendLength = 0
+			if GateReady && !KeepAliveTimeOut {
+				userSession.ConnctCheckTick = GetTickCount()
+				if (GetTickCount() - userSession.UserTimeOutTick) < 1000 {
+					userSession.ReceiveLength += len(message)
+				} else {
+					userSession.ReceiveLength = len(message)
 				}
-
-				conn.Close()
-				f.ServerSocketClientDisconnect(conn)
-			}
-
-			for i := 0; i < n; i++ {
-				if buffer[i] == '%' {
-					reading = true
-					dataBuffer.Reset()
-					continue
-				}
-
-				if buffer[i] == '$' {
-					reading = false
-					fmt.Println("Message Received:", dataBuffer.String())
-					if f.serverReady {
-						userSession.SendAvailable = true
-						userSession.SendCheck = false
-						userSession.CheckSendLength = 0
-						if GateReady && !KeepAliveTimeOut {
-							userSession.ConnctCheckTick = GetTickCount()
-							if (GetTickCount() - userSession.UserTimeOutTick) < 1000 {
-								userSession.ReceiveLength += dataBuffer.Len()
-							} else {
-								userSession.ReceiveLength = dataBuffer.Len()
-							}
-							message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle, dataBuffer.String())
-							f.ClientSocket.Write([]byte(message))
-						}
-					}
-					dataBuffer.Reset()
-					continue
-				}
-
-				if reading {
-					dataBuffer.WriteByte(buffer[i])
-				}
+				message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle, message)
+				f.ClientSocket.Write([]byte(message))
 			}
 		}
 	}

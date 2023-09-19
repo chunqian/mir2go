@@ -4,7 +4,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
+	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -49,6 +52,21 @@ type TServerSocket struct {
 	Active            bool
 	ActiveConnections int
 	Connections       []*TClientSocket
+}
+
+// ******************** Interface ********************
+type IServerSocket interface {
+	ServerSocketClientConnect(s *TClientSocket)
+	ServerSocketClientDisconnect(conn *TClientSocket)
+	ServerSocketClientError(conn *TClientSocket, err error)
+	ServerSocketClientRead(conn *TClientSocket, message string)
+}
+
+type IClientSocket interface {
+	ClientSocketConnect(socket TClientSocket)
+	ClientSocketDisconnect(socket TClientSocket)
+	ClientSocketError(socket TClientSocket, err error)
+	ClientSocketRead(socket TClientSocket)
 }
 
 // ******************** Var ********************
@@ -181,4 +199,99 @@ func GetTickCount() uint32 {
 
 func GetSocketHandle(conn *net.TCPConn) uintptr {
 	return uintptr(unsafe.Pointer(conn))
+}
+
+func CreateServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSocket {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", addr, port))
+	if err != nil {
+		panic("无法解析 Server 地址: " + err.Error())
+	}
+	listener, err := net.ListenTCP("tcp", tcpAddr)
+	if err != nil {
+		panic("无法监听 Server 地址: " + err.Error())
+	}
+
+	sockChan := make(chan *TClientSocket)
+
+	msgProducer := func(iSocket IServerSocket, conn *TClientSocket) {
+		defer conn.Close()
+
+		buffer := make([]byte, 1024)
+		var dataBuffer bytes.Buffer
+		reading := false
+
+		for {
+			n, err := conn.Read(buffer)
+			if err != nil {
+				if err != io.EOF {
+					iSocket.ServerSocketClientError(conn, err)
+				}
+
+				conn.Close()
+				iSocket.ServerSocketClientDisconnect(conn)
+				break
+			}
+
+			for i := 0; i < n; i++ {
+				if buffer[i] == '%' {
+					reading = true
+					dataBuffer.Reset()
+					continue
+				}
+
+				if buffer[i] == '$' {
+					reading = false
+					fmt.Println("Message Received:", dataBuffer.String())
+					message := dataBuffer.String()
+					iSocket.ServerSocketClientRead(conn, message)
+					dataBuffer.Reset()
+					continue
+				}
+
+				if reading {
+					dataBuffer.WriteByte(buffer[i])
+				}
+			}
+		}
+	}
+
+	sockProducer := func(ch chan *TClientSocket) {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			tcpConn, ok := conn.(*net.TCPConn)
+			if !ok {
+				fmt.Println("Not a TCP connection")
+				return
+			}
+			clientSocket := &TClientSocket{
+				TCPConn: tcpConn,
+			}
+
+			iSocket.ServerSocketClientConnect(clientSocket)
+
+			ch <- clientSocket
+		}
+	}
+
+	sockConsumer := func(ch chan *TClientSocket) {
+		for {
+			select {
+			case sock := <-ch:
+				go msgProducer(iSocket, sock)
+			// default:
+			// 	fmt.Println("Could not read from sockChan")
+			}
+		}
+	}
+
+	go sockProducer(sockChan)
+	go sockConsumer(sockChan)
+
+	return &TServerSocket{
+		TCPListener: listener,
+	}
 }
