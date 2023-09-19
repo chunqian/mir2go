@@ -46,9 +46,9 @@ type TClientSocket struct {
 type TServerSocket struct {
 	*net.TCPListener
 
-	Active bool
+	Active            bool
 	ActiveConnections int
-	Connections []*TClientSocket
+	Connections       []*TClientSocket
 }
 
 // ******************** Var ********************

@@ -79,7 +79,7 @@ type TUserSession struct {
 	IP              string
 	MsgList         []string
 	MsgListMutex    sync.Mutex
-	ConnctCheckTick uint32 // 连接数据传输空闲超时检测
+	ConnctCheckTick uint32
 }
 
 type TSessionArray [GATEMAXSESSION]*TUserSession
@@ -333,9 +333,9 @@ func (f *TFrmMain) isConnLimited(ipaddr string) bool {
 	for i := range CurrIPaddrList {
 		ipAddr := CurrIPaddrList[i]
 		if ipAddr.IPaddr == int(ipToInteger(ip)) {
-			ipAddr.Count ++
+			ipAddr.Count++
 			if (GetTickCount() - ipAddr.IPCountTick1) < 1000 {
-				ipAddr.IPCount1 ++
+				ipAddr.IPCount1++
 				if ipAddr.IPCount1 >= IPCountLimit1 {
 					denyConnect = true
 				}
@@ -345,7 +345,7 @@ func (f *TFrmMain) isConnLimited(ipaddr string) bool {
 			}
 
 			if (GetTickCount() - ipAddr.IPCountTick2) < 3000 {
-				ipAddr.IPCount2 ++
+				ipAddr.IPCount2++
 				if ipAddr.IPCount2 >= IPCountLimit2 {
 					denyConnect = true
 				}
@@ -362,7 +362,7 @@ func (f *TFrmMain) isConnLimited(ipaddr string) bool {
 
 	sockAddr := TSockaddr{
 		IPaddr: int(ipToInteger(ip)),
-		Count: 1,
+		Count:  1,
 	}
 	CurrIPaddrList = append(CurrIPaddrList, sockAddr)
 	return denyConnect
@@ -386,7 +386,9 @@ func (f *TFrmMain) loadConfig() {
 	MaxConnOfIPaddr = conf.ReadInteger(GateClass, "MaxConnOfIPaddr", MaxConnOfIPaddr)
 	KeepConnectTimeOut = conf.ReadInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
 	DynamicIPDisMode = conf.ReadBool(GateClass, "DynamicIPDisMode", DynamicIPDisMode)
+
 	conf.Free()
+
 	LoadBlockIPFile()
 }
 
@@ -517,11 +519,8 @@ func (f *TFrmMain) startService() {
 		f.SetCaption(GateName)
 	}
 
-	// ClientSocket
-	f.ClientSocketCreate()
-
-	// ServerSocket
-	f.ServerSocketCreate()
+	f.ClientSocketCreate() // ClientSocket
+	f.ServerSocketCreate() // ServerSocket
 
 	f.SendTimer.SetEnabled(true)
 	MainOutMessage("启动服务完成...", 3)
@@ -590,15 +589,33 @@ func (f *TFrmMain) ClientSocketCreate() {
 }
 
 func (f *TFrmMain) ClientSocketConnect(socket TClientSocket) {
-	//
+	GateReady = true
+	f.sessionCount = 0
+	KeepAliveTick = GetTickCount()
+	f.resUserSessionArray()
+	f.serverReady = true
 }
 
 func (f *TFrmMain) ClientSocketDisconnect(socket TClientSocket) {
-	//
+	for i := 0; i < GATEMAXSESSION; i++ {
+		userSession := SessionArray[i]
+		if userSession.Socket != nil {
+			userSession.Socket.Close()
+		}
+		userSession.Socket = nil
+		userSession.RemoteIPaddr = ""
+		userSession.Socket.SocketHandle = uintptr(0)
+	}
+
+	f.resUserSessionArray()
+	ClientSockeMsgList = ClientSockeMsgList[:0]
+	GateReady = false
+	f.sessionCount = 0
 }
 
 func (f *TFrmMain) ClientSocketError(socket TClientSocket, err error) {
-	//
+	socket.Close()
+	f.serverReady = false
 }
 
 func (f *TFrmMain) ClientSocketRead(socket TClientSocket) {
@@ -676,7 +693,25 @@ func (f *TFrmMain) ServerSocketCreate() {
 		panic("无法监听 Server 地址: " + err.Error())
 	}
 
-	// 启动goroutine来接收Client Connect连接
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		tcpConn, ok := conn.(*net.TCPConn)
+		if !ok {
+			fmt.Println("Not a TCP connection")
+			return
+		}
+		clientSocket := &TClientSocket{
+			TCPConn: tcpConn,
+		}
+
+		f.ServerSocketClientConnect(clientSocket)
+
+		go f.ServerSocketClientRead(clientSocket)
+	}
 }
 
 func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
@@ -787,7 +822,8 @@ func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket) {
 }
 
 func (f *TFrmMain) ServerSocketClientError(conn *TClientSocket, err error) {
-	//
+	fmt.Println("Read error:", err)
+	conn.Close()
 }
 
 func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket) {
@@ -804,8 +840,10 @@ func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket) {
 			n, err := conn.Read(buffer)
 			if err != nil {
 				if err != io.EOF {
-					fmt.Println("Read error:", err)
+					f.ServerSocketClientError(conn, err)
 				}
+
+				conn.Close()
 				f.ServerSocketClientDisconnect(conn)
 			}
 
