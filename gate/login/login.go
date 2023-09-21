@@ -5,12 +5,15 @@ package main
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/ying32/govcl/vcl"
 	"github.com/ying32/govcl/vcl/types"
 	"github.com/ying32/govcl/vcl/types/colors"
+
+	"github.com/chunqian/mir2go/common"
 )
 
 // ******************** Const ********************
@@ -588,7 +591,6 @@ func (f *TFrmMain) ClientSocketDisconnect(socket *TClientSocket) {
 		}
 		userSession.Socket = nil
 		userSession.RemoteIPaddr = ""
-		// userSession.Socket.SocketHandle = uintptr(0)
 	}
 
 	f.resUserSessionArray()
@@ -607,7 +609,142 @@ func (f *TFrmMain) ClientSocketRead(socket *TClientSocket, message string) {
 }
 
 func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
+	var processMsg, socketMsg string
+
 	f.showMainLogMsg()
+
+	if DecodeLock || !GateReady {
+		return
+	}
+
+	decodeTick := GetTickCount()
+	DecodeLock = true
+	processMsg = ""
+
+	for {
+		if len(ClientSockeMsgList) <= 0 {
+			break
+		}
+		processMsg = ProcMsg + ClientSockeMsgList[0]
+		ProcMsg = ""
+		ClientSockeMsgList = append(ClientSockeMsgList[:0], ClientSockeMsgList[1:]...)
+		for {
+			if common.TagCount(processMsg, '$') < 1 {
+				break
+			}
+			processMsg, socketMsg = common.ArrestStringEx(processMsg, "%", "$")
+			if socketMsg == "" {
+				break
+			}
+			if socketMsg[1] == '+' {
+				if socketMsg[2] == '-' {
+					f.closeSocket(
+						uintptr(
+							common.StrToInt(socketMsg[2:len(socketMsg)-2], 0),
+						),
+					)
+					continue
+				} else {
+					KeepAliveTick = GetTickCount()
+					KeepAliveTimeOut = false
+					continue
+				}
+			}
+			socketMsg, socketHandleStr := common.GetValidStr3(socketMsg, []rune{'/'})
+			socketHandle := uintptr(common.StrToInt(socketHandleStr, 0))
+			if socketHandle <= 0 {
+				continue
+			}
+			for i := 0; i < GATEMAXSESSION; i++ {
+				if SessionArray[i].Socket.SocketHandle == socketHandle {
+					SessionArray[i].MsgList = append(SessionArray[i].MsgList, socketMsg)
+					break
+				}
+			}
+		}
+	}
+
+	if processMsg != "" {
+		ProcMsg = processMsg
+	}
+
+	SendMsgCount = 0
+	TotalMsgListCount = 0
+
+	for i := 0; i < GATEMAXSESSION; i++ {
+		if SessionArray[i].Socket.SocketHandle <= 0 {
+			continue
+		}
+		// 踢除超时无数据传输连接
+		if GetTickCount() - SessionArray[i].ConnctCheckTick > uint32(KeepConnectTimeOut) {
+			remoteIPaddr := SessionArray[i].RemoteIPaddr
+			switch BlockMethod {
+			case Disconnect:
+				SessionArray[i].Socket.Close()
+			case Block:
+				ip := net.ParseIP(remoteIPaddr)
+				ipAddr := TSockaddr{}
+				ipAddr.IPaddr = int(ipToInteger(ip))
+				TempBlockIPList = append(TempBlockIPList, ipAddr)
+				f.CloseConnect(remoteIPaddr)
+			case BlockList:
+				ip := net.ParseIP(remoteIPaddr)
+				ipAddr := TSockaddr{}
+				ipAddr.IPaddr = int(ipToInteger(ip))
+				BlockIPList = append(BlockIPList, ipAddr)
+				f.CloseConnect(remoteIPaddr)
+			}
+			MainOutMessage("端口空连接攻击: " + remoteIPaddr, 1)
+			continue
+		}
+
+		for {
+			if len(SessionArray[i].MsgList) <= 0 {
+				break
+			}
+			userSession := SessionArray[i]
+
+			sendRetCode := f.sendUserMsg(userSession, userSession.MsgList[0])
+			if sendRetCode >= 0 {
+				if sendRetCode == 1 {
+					userSession.ConnctCheckTick = GetTickCount()
+					userSession.MsgList = append(userSession.MsgList[:0], userSession.MsgList[1:]...)
+					continue
+				}
+				if len(userSession.MsgList) > 100 {
+					msgCount := 0
+					for msgCount != 51 {
+						userSession.MsgList = userSession.MsgList[1:]
+						msgCount ++
+					}
+				}
+				TotalMsgListCount += len(userSession.MsgList)
+				MainOutMessage(userSession.IP + " : " + strconv.Itoa(len(userSession.MsgList)), 5)
+				SendMsgCount ++
+			} else {
+				userSession.Socket = nil
+				userSession.MsgList = userSession.MsgList[:0]
+			}
+		}
+	}
+	if GetTickCount() - f.sendKeepAliveTick > 2*1000 {
+		f.sendKeepAliveTick = GetTickCount()
+		if GateReady {
+			f.ClientSocket.Write([]byte("%--$"))
+		}
+	}
+	if GetTickCount() - KeepAliveTick > 10*1000 {
+		KeepAliveTimeOut = true
+		f.ClientSocket.Close()
+	}
+
+	decodeTime := GetTickCount() - decodeTick
+	if f.decodeMsgTime < decodeTime {
+		f.decodeMsgTime = decodeTime
+	}
+	if f.decodeMsgTime > 50 {
+		f.decodeMsgTime -= 50
+	}
 }
 
 func (f *TFrmMain) MemoLogChange(sender vcl.IObject) {
