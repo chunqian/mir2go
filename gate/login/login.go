@@ -517,9 +517,8 @@ func (f *TFrmMain) startService() {
 		f.SetCaption(GateName)
 	}
 
-	// go f.ClientSocketCreate() // ClientSocket
-
-	f.ServerSocket = CreateServerSocket(f, GateAddr, GatePort) // ServerSocket
+	f.ClientSocket = NewClientSocket(f, ServerAddr, ServerPort) // ClientSocket
+	f.ServerSocket = NewServerSocket(f, GateAddr, GatePort) // ServerSocket
 
 	f.SendTimer.SetEnabled(true)
 	MainOutMessage("启动服务完成...", 3)
@@ -559,7 +558,7 @@ func (f *TFrmMain) CloseConnect(ipaddr string) {
 		for {
 			check := false
 			for i := 0; i < f.ServerSocket.ActiveConnections; i++ {
-				remoteAddr := f.ServerSocket.Connections[i].RemoteAddr().String()
+				remoteAddr := getIPaddr(f.ServerSocket.Connections[i].RemoteAddr())
 				if ipaddr == remoteAddr {
 					f.ServerSocket.Connections[i].Close()
 					check = true
@@ -573,21 +572,7 @@ func (f *TFrmMain) CloseConnect(ipaddr string) {
 	}
 }
 
-func (f *TFrmMain) ClientSocketCreate() {
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
-	if err != nil {
-		panic("无法解析 Client 地址: " + err.Error())
-	}
-	conn, err := net.DialTCP("tcp", nil, addr)
-	f.ClientSocket = &TClientSocket{
-		TCPConn: conn,
-	}
-	if err != nil {
-		panic("无法监听 Client 地址: " + err.Error())
-	}
-}
-
-func (f *TFrmMain) ClientSocketConnect(socket TClientSocket) {
+func (f *TFrmMain) ClientSocketConnect(socket *TClientSocket) {
 	GateReady = true
 	f.sessionCount = 0
 	KeepAliveTick = GetTickCount()
@@ -595,7 +580,7 @@ func (f *TFrmMain) ClientSocketConnect(socket TClientSocket) {
 	f.serverReady = true
 }
 
-func (f *TFrmMain) ClientSocketDisconnect(socket TClientSocket) {
+func (f *TFrmMain) ClientSocketDisconnect(socket *TClientSocket) {
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := SessionArray[i]
 		if userSession.Socket != nil {
@@ -603,7 +588,7 @@ func (f *TFrmMain) ClientSocketDisconnect(socket TClientSocket) {
 		}
 		userSession.Socket = nil
 		userSession.RemoteIPaddr = ""
-		userSession.Socket.SocketHandle = uintptr(0)
+		// userSession.Socket.SocketHandle = uintptr(0)
 	}
 
 	f.resUserSessionArray()
@@ -612,13 +597,13 @@ func (f *TFrmMain) ClientSocketDisconnect(socket TClientSocket) {
 	f.sessionCount = 0
 }
 
-func (f *TFrmMain) ClientSocketError(socket TClientSocket, err error) {
+func (f *TFrmMain) ClientSocketError(socket *TClientSocket, err error) {
 	socket.Close()
 	f.serverReady = false
 }
 
-func (f *TFrmMain) ClientSocketRead(socket TClientSocket) {
-	//
+func (f *TFrmMain) ClientSocketRead(socket *TClientSocket, message string) {
+	ClientSockeMsgList = append(ClientSockeMsgList, message)
 }
 
 func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
@@ -684,12 +669,12 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	var ipAddr TSockaddr
 
 	socket.Index = -1
-	remoteIPaddr = socket.RemoteAddr().String()
+	remoteIPaddr = getIPaddr(socket.RemoteAddr())
 
 	if DynamicIPDisMode {
-		localIPaddr = f.ClientSocket.RemoteAddr().String()
+		localIPaddr = getIPaddr(f.ClientSocket.RemoteAddr())
 	} else {
-		localIPaddr = socket.LocalAddr().String()
+		localIPaddr = getIPaddr(socket.LocalAddr())
 	}
 
 	if f.isBlockIP(remoteIPaddr) {
@@ -721,7 +706,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	if GateReady {
 		for i := 0; i < GATEMAXSESSION; i++ {
 			userSession := SessionArray[i]
-			if userSession == nil {
+			if userSession.Socket == nil {
 				userSession.Socket = socket
 				userSession.RemoteIPaddr = remoteIPaddr
 				userSession.SendMsgLen = 0
@@ -757,7 +742,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 }
 
 func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket) {
-	remoteIPaddr := conn.RemoteAddr().String()
+	remoteIPaddr := getIPaddr(conn.RemoteAddr())
 	ip := net.ParseIP(remoteIPaddr)
 	sockIndex := conn.Index
 

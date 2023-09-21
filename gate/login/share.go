@@ -63,10 +63,10 @@ type IServerSocket interface {
 }
 
 type IClientSocket interface {
-	ClientSocketConnect(socket TClientSocket)
-	ClientSocketDisconnect(socket TClientSocket)
-	ClientSocketError(socket TClientSocket, err error)
-	ClientSocketRead(socket TClientSocket)
+	ClientSocketConnect(socket *TClientSocket)
+	ClientSocketDisconnect(socket *TClientSocket)
+	ClientSocketError(socket *TClientSocket, err error)
+	ClientSocketRead(socket *TClientSocket, message string)
 }
 
 // ******************** Var ********************
@@ -126,6 +126,12 @@ func integerToIP(integer uint32) net.IP {
 
 	// 将字节转换为 net.IP 类型
 	return net.IP(bytes)
+}
+
+func getIPaddr(n net.Addr) string {
+	addr := n.String()
+	ipaddr, _, _ := net.SplitHostPort(addr)
+	return ipaddr
 }
 
 func LoadBlockIPFile() {
@@ -201,7 +207,7 @@ func GetSocketHandle(conn *net.TCPConn) uintptr {
 	return uintptr(unsafe.Pointer(conn))
 }
 
-func CreateServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSocket {
+func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSocket {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
 		panic("无法解析 Server 地址: " + err.Error())
@@ -269,6 +275,7 @@ func CreateServerSocket(iSocket IServerSocket, addr string, port int32) *TServer
 			}
 			clientSocket := &TClientSocket{
 				TCPConn: tcpConn,
+				SocketHandle: GetSocketHandle(tcpConn),
 			}
 
 			iSocket.ServerSocketClientConnect(clientSocket)
@@ -294,4 +301,68 @@ func CreateServerSocket(iSocket IServerSocket, addr string, port int32) *TServer
 	return &TServerSocket{
 		TCPListener: listener,
 	}
+}
+
+func NewClientSocket(iSocket IClientSocket, addr string, port int32) *TClientSocket {
+	var socket *TClientSocket
+
+	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", addr, port))
+	if err != nil {
+		panic("无法解析 Client 地址: " + err.Error())
+	}
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		panic("无法监听 Client 地址: " + err.Error())
+	}
+
+	msgProducer := func(iSocket IClientSocket, conn *TClientSocket) {
+		defer conn.Close()
+
+		buffer := make([]byte, 1024)
+		var dataBuffer bytes.Buffer
+		reading := false
+
+		for {
+			n, err := conn.Read(buffer)
+			if err != nil {
+				if err != io.EOF {
+					iSocket.ClientSocketError(conn, err)
+				}
+
+				conn.Close()
+				iSocket.ClientSocketDisconnect(conn)
+				break
+			}
+
+			for i := 0; i < n; i++ {
+				if buffer[i] == '%' {
+					reading = true
+					dataBuffer.Reset()
+					continue
+				}
+
+				if buffer[i] == '$' {
+					reading = false
+					fmt.Println("Message Received:", dataBuffer.String())
+					message := dataBuffer.String()
+					iSocket.ClientSocketRead(conn, message)
+					dataBuffer.Reset()
+					continue
+				}
+
+				if reading {
+					dataBuffer.WriteByte(buffer[i])
+				}
+			}
+		}
+	}
+
+	socket = &TClientSocket{
+		TCPConn: conn,
+		SocketHandle: GetSocketHandle(conn),
+	}
+
+	go msgProducer(iSocket, socket)
+
+	return socket
 }
