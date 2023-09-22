@@ -257,7 +257,7 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
 	f.DecodeTimer = vcl.NewTimer(f)
 	f.DecodeTimer.SetInterval(1)
-	f.DecodeTimer.SetEnabled(true)
+	f.DecodeTimer.SetEnabled(false)
 	f.DecodeTimer.SetOnTimer(f.DecodeTimerTimer)
 
 	f.SendTimer = vcl.NewTimer(f)
@@ -524,6 +524,7 @@ func (f *TFrmMain) startService() {
 	f.ClientSocket = NewClientSocket(f, ServerAddr, ServerPort) // ClientSocket
 	f.ServerSocket = NewServerSocket(f, GateAddr, GatePort)     // ServerSocket
 
+	f.DecodeTimer.SetEnabled(true)
 	f.SendTimer.SetEnabled(true)
 	MainOutMessage("启动服务完成...", 3)
 }
@@ -655,7 +656,6 @@ func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 					continue
 				} else {
 					KeepAliveTick = GetTickCount()
-					log.Info("KeepAliveTick: {}", KeepAliveTick)
 					KeepAliveTimeOut = false
 					continue
 				}
