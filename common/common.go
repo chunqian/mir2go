@@ -43,16 +43,16 @@ func ArrestStringEx(source, searchAfter, arrestBefore string) (string, string) {
 		n := strings.Index(source, arrestBefore)
 		if n >= 0 {
 			arrestStr = source[:n]
-			return arrestStr, source[n+len(arrestBefore):]
+			return source[n+len(arrestBefore):], arrestStr
 		} else {
-			return arrestStr, searchAfter + source
+			return searchAfter + source, arrestStr
 		}
 	} else {
 		n := strings.Index(source, searchAfter)
 		if n >= 0 {
-			return arrestStr, source[n:]
+			return source[n:], arrestStr
 		}
-		return arrestStr, ""
+		return "", arrestStr
 	}
 }
 

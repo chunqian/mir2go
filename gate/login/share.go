@@ -57,14 +57,14 @@ type TServerSocket struct {
 // ******************** Interface ********************
 type IServerSocket interface {
 	ServerSocketClientConnect(s *TClientSocket)
-	ServerSocketClientDisconnect(conn *TClientSocket)
+	ServerSocketClientDisconnect(conn *TClientSocket, err error)
 	ServerSocketClientError(conn *TClientSocket, err error)
 	ServerSocketClientRead(conn *TClientSocket, message string)
 }
 
 type IClientSocket interface {
 	ClientSocketConnect(socket *TClientSocket)
-	ClientSocketDisconnect(socket *TClientSocket)
+	ClientSocketDisconnect(socket *TClientSocket, err error)
 	ClientSocketError(socket *TClientSocket, err error)
 	ClientSocketRead(socket *TClientSocket, message string)
 }
@@ -231,10 +231,10 @@ func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSoc
 			if err != nil {
 				if err != io.EOF {
 					iSocket.ServerSocketClientError(conn, err)
+				} else {
+					conn.Close()
+					iSocket.ServerSocketClientDisconnect(conn, err)
 				}
-
-				conn.Close()
-				iSocket.ServerSocketClientDisconnect(conn)
 				break
 			}
 
@@ -274,7 +274,7 @@ func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSoc
 				return
 			}
 			clientSocket := &TClientSocket{
-				TCPConn: tcpConn,
+				TCPConn:      tcpConn,
 				SocketHandle: GetSocketHandle(tcpConn),
 			}
 
@@ -289,8 +289,8 @@ func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSoc
 			select {
 			case sock := <-ch:
 				go msgProducer(iSocket, sock)
-			// default:
-			// 	fmt.Println("Could not read from sockChan")
+				// default:
+				// 	fmt.Println("Could not read from sockChan")
 			}
 		}
 	}
@@ -327,10 +327,10 @@ func NewClientSocket(iSocket IClientSocket, addr string, port int32) *TClientSoc
 			if err != nil {
 				if err != io.EOF {
 					iSocket.ClientSocketError(conn, err)
+				} else {
+					conn.Close()
+					iSocket.ClientSocketDisconnect(conn, err)
 				}
-
-				conn.Close()
-				iSocket.ClientSocketDisconnect(conn)
 				break
 			}
 
@@ -338,12 +338,14 @@ func NewClientSocket(iSocket IClientSocket, addr string, port int32) *TClientSoc
 				if buffer[i] == '%' {
 					reading = true
 					dataBuffer.Reset()
+					dataBuffer.WriteByte(buffer[i])
 					continue
 				}
 
 				if buffer[i] == '$' {
 					reading = false
-					fmt.Println("Message Received:", dataBuffer.String())
+					dataBuffer.WriteByte(buffer[i])
+					// fmt.Println("Message Received:", dataBuffer.String())
 					message := dataBuffer.String()
 					iSocket.ClientSocketRead(conn, message)
 					dataBuffer.Reset()
@@ -358,9 +360,11 @@ func NewClientSocket(iSocket IClientSocket, addr string, port int32) *TClientSoc
 	}
 
 	socket = &TClientSocket{
-		TCPConn: conn,
+		TCPConn:      conn,
 		SocketHandle: GetSocketHandle(conn),
 	}
+
+	iSocket.ClientSocketConnect(socket)
 
 	go msgProducer(iSocket, socket)
 
