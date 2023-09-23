@@ -235,7 +235,17 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 		for {
 			n, err := conn.Read(buffer)
 			if err != nil {
+				for i := 0; i < s.activeConnections; {
+					socketHandle := s.connections[i].SocketHandle()
+					if conn.socketHandle == socketHandle {
+						s.connections = append(s.connections[:i], s.connections[i+1:]...)
+						break
+					} else {
+						i++
+					}
+				}
 				s.activeConnections--
+
 				if err != io.EOF {
 					iSocket.ServerSocketClientError(conn, err)
 				} else {
@@ -286,6 +296,7 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 			}
 
 			s.activeConnections++
+			s.connections = append(s.connections, clientSocket)
 			iSocket.ServerSocketClientConnect(clientSocket)
 
 			ch <- clientSocket

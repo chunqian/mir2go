@@ -295,6 +295,7 @@ func (f *TFrmMain) closeSocket(socketHandle uintptr) {
 		userSession := SessionArray[i]
 		if userSession.Socket != nil && userSession.SocketHandle == socketHandle {
 			userSession.Socket.Close()
+			break
 		}
 	}
 }
@@ -915,6 +916,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 
 				socket.Index = i
 				f.sessionCount++
+				break
 			}
 		}
 
@@ -946,6 +948,7 @@ func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error) 
 			if ipAddr.Count <= 0 {
 				CurrIPaddrList = append(CurrIPaddrList[:i], CurrIPaddrList[i+1:]...)
 			}
+			break
 		}
 	}
 
@@ -1015,9 +1018,13 @@ func (f *TFrmMain) TimerTimer(sender vcl.IObject) {
 			port = getAddrPort(f.ServerSocket.Addr())
 			f.StatusBar.Panels().Items(0).SetText(port)
 			if SendHoldTimeOut {
-				f.StatusBar.Panels().Items(2).SetText(strconv.Itoa(f.sessionCount) + "/#" + strconv.Itoa(f.ServerSocket.ActiveConnections()))
+				f.StatusBar.Panels().Items(2).SetText(
+					strconv.Itoa(f.sessionCount) + "/#" + strconv.Itoa(f.ServerSocket.ActiveConnections()),
+				)
 			} else {
-				f.StatusBar.Panels().Items(2).SetText(strconv.Itoa(f.sessionCount) + "/" + strconv.Itoa(f.ServerSocket.ActiveConnections()))
+				f.StatusBar.Panels().Items(2).SetText(
+					strconv.Itoa(f.sessionCount) + "/" + strconv.Itoa(f.ServerSocket.ActiveConnections()),
+				)
 			}
 		} else {
 			f.StatusBar.Panels().Items(0).SetText("????")
