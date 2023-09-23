@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+
+	log "github.com/chunqian/tinylog"
 )
 
 // ******************** Enum ********************
@@ -42,16 +44,16 @@ type TSockaddr struct {
 type TClientSocket struct {
 	*net.TCPConn
 
-	SocketHandle uintptr
+	socketHandle uintptr
 	Index        int
 }
 
 type TServerSocket struct {
 	*net.TCPListener
 
-	Active            bool
-	ActiveConnections int
-	Connections       []*TClientSocket
+	active            bool
+	activeConnections int
+	connections       []*TClientSocket
 }
 
 // ******************** Interface ********************
@@ -128,10 +130,16 @@ func integerToIP(integer uint32) net.IP {
 	return net.IP(bytes)
 }
 
-func getIPaddr(n net.Addr) string {
+func getAddrHost(n net.Addr) string {
 	addr := n.String()
-	ipaddr, _, _ := net.SplitHostPort(addr)
-	return ipaddr
+	host, _, _ := net.SplitHostPort(addr)
+	return host
+}
+
+func getAddrPort(n net.Addr) string {
+	addr := n.String()
+	_, port, _ := net.SplitHostPort(addr)
+	return port
 }
 
 func LoadBlockIPFile() {
@@ -203,18 +211,16 @@ func GetTickCount() uint32 {
 	return uint32(time.Now().UnixNano() / 1e6)
 }
 
-func GetSocketHandle(conn *net.TCPConn) uintptr {
-	return uintptr(unsafe.Pointer(conn))
-}
-
-func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSocket {
+func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
-		panic("无法解析 Server 地址: " + err.Error())
+		log.Error("无法解析 Server 地址: " + err.Error())
+		return
 	}
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
-		panic("无法监听 Server 地址: " + err.Error())
+		log.Error("无法监听 Server 地址: " + err.Error())
+		return
 	}
 
 	sockChan := make(chan *TClientSocket)
@@ -229,6 +235,7 @@ func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSoc
 		for {
 			n, err := conn.Read(buffer)
 			if err != nil {
+				s.activeConnections--
 				if err != io.EOF {
 					iSocket.ServerSocketClientError(conn, err)
 				} else {
@@ -247,7 +254,7 @@ func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSoc
 
 				if buffer[i] == '$' {
 					reading = false
-					fmt.Println("Message Received:", dataBuffer.String())
+					// fmt.Println("Message Received:", dataBuffer.String())
 					message := dataBuffer.String()
 					iSocket.ServerSocketClientRead(conn, message)
 					dataBuffer.Reset()
@@ -275,9 +282,10 @@ func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSoc
 			}
 			clientSocket := &TClientSocket{
 				TCPConn:      tcpConn,
-				SocketHandle: GetSocketHandle(tcpConn),
+				socketHandle: uintptr(unsafe.Pointer(tcpConn)),
 			}
 
+			s.activeConnections++
 			iSocket.ServerSocketClientConnect(clientSocket)
 
 			ch <- clientSocket
@@ -295,24 +303,40 @@ func NewServerSocket(iSocket IServerSocket, addr string, port int32) *TServerSoc
 		}
 	}
 
+	s.TCPListener = listener
+	s.active = true
+	s.activeConnections = 0
+
 	go sockProducer(sockChan)
 	go sockConsumer(sockChan)
-
-	return &TServerSocket{
-		TCPListener: listener,
-	}
 }
 
-func NewClientSocket(iSocket IClientSocket, addr string, port int32) *TClientSocket {
-	var socket *TClientSocket
+func (s *TServerSocket) Active() bool {
+	return s.active
+}
 
+func (s *TServerSocket) ActiveConnections() int {
+	return s.activeConnections
+}
+
+func (s *TServerSocket) Connections() []*TClientSocket {
+	return s.connections
+}
+
+func (c *TClientSocket) SocketHandle() uintptr {
+	return c.socketHandle
+}
+
+func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
-		panic("无法解析 Client 地址: " + err.Error())
+		log.Error("无法解析 Client 地址: " + err.Error())
+		return
 	}
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	tcpConn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
-		panic("无法监听 Client 地址: " + err.Error())
+		log.Error("无法监听 Client 地址: " + err.Error())
+		return
 	}
 
 	msgProducer := func(iSocket IClientSocket, conn *TClientSocket) {
@@ -359,14 +383,22 @@ func NewClientSocket(iSocket IClientSocket, addr string, port int32) *TClientSoc
 		}
 	}
 
-	socket = &TClientSocket{
-		TCPConn:      conn,
-		SocketHandle: GetSocketHandle(conn),
+	c.TCPConn = tcpConn
+	c.socketHandle = uintptr(unsafe.Pointer(tcpConn))
+
+	iSocket.ClientSocketConnect(c)
+
+	go msgProducer(iSocket, c)
+}
+
+func (c *TClientSocket) Close() {
+	if c.TCPConn != nil {
+		c.TCPConn.Close()
 	}
+}
 
-	iSocket.ClientSocketConnect(socket)
-
-	go msgProducer(iSocket, socket)
-
-	return socket
+func (c *TClientSocket) Write(message []byte) {
+	if c.TCPConn != nil {
+		c.TCPConn.Write(message)
+	}
 }

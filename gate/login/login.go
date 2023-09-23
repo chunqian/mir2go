@@ -265,6 +265,11 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	f.SendTimer.SetEnabled(false)
 	f.SendTimer.SetOnTimer(f.SendTimerTimer)
 
+	f.Timer = vcl.NewTimer(f)
+	f.Timer.SetInterval(1000)
+	f.Timer.SetEnabled(true)
+	f.Timer.SetOnTimer(f.TimerTimer)
+
 	// ******************** Non Visual ********************
 	f.tempLogList = make([]string, 0)
 	f.decodeMsgTime = 0
@@ -494,7 +499,7 @@ func (f *TFrmMain) startService() {
 	MainOutMessage("正在启动服务...", 3)
 	ServiceStart = true
 	GateReady = true
-	ServiceStart = true
+	f.serverReady = false
 	f.sessionCount = 0
 	f.MenuControlStart.SetEnabled(false)
 	f.MenuControlStop.SetEnabled(true)
@@ -521,8 +526,11 @@ func (f *TFrmMain) startService() {
 		f.SetCaption(GateName)
 	}
 
-	f.ClientSocket = NewClientSocket(f, ServerAddr, ServerPort) // ClientSocket
-	f.ServerSocket = NewServerSocket(f, GateAddr, GatePort)     // ServerSocket
+	f.ClientSocket = &TClientSocket{}
+	f.ClientSocket.Dial(f, ServerAddr, ServerPort)
+
+	f.ServerSocket = &TServerSocket{}
+	f.ServerSocket.Listen(f, GateAddr, GatePort)
 
 	f.DecodeTimer.SetEnabled(true)
 	f.SendTimer.SetEnabled(true)
@@ -559,13 +567,13 @@ func (f *TFrmMain) stopService() {
 }
 
 func (f *TFrmMain) CloseConnect(ipaddr string) {
-	if f.ServerSocket.Active {
+	if f.ServerSocket.Active() {
 		for {
 			check := false
-			for i := 0; i < f.ServerSocket.ActiveConnections; i++ {
-				remoteAddr := getIPaddr(f.ServerSocket.Connections[i].RemoteAddr())
+			for i := 0; i < f.ServerSocket.ActiveConnections(); i++ {
+				remoteAddr := getAddrHost(f.ServerSocket.Connections()[i].RemoteAddr())
 				if ipaddr == remoteAddr {
-					f.ServerSocket.Connections[i].Close()
+					f.ServerSocket.Connections()[i].Close()
 					check = true
 					break
 				}
@@ -666,7 +674,7 @@ func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 				continue
 			}
 			for i := 0; i < GATEMAXSESSION; i++ {
-				if SessionArray[i].Socket.SocketHandle == socketHandle {
+				if SessionArray[i].Socket.SocketHandle() == socketHandle {
 					SessionArray[i].MsgList = append(SessionArray[i].MsgList, socketMsg)
 					break
 				}
@@ -811,7 +819,41 @@ func (f *TFrmMain) N4Click(sender vcl.IObject) {
 }
 
 func (f *TFrmMain) SendTimerTimer(sender vcl.IObject) {
-	//
+	if f.ServerSocket.Active() {
+		ActiveConnections = f.ServerSocket.ActiveConnections()
+	}
+	// 更新UI
+	vcl.ThreadSync(func() {
+		if SendHoldTimeOut {
+			f.Hold.SetCaption(strconv.Itoa(ActiveConnections) + "#")
+			if GetTickCount()-SendHoldTick > 3*1000 {
+				SendHoldTimeOut = false
+			}
+		} else {
+			f.Hold.SetCaption(strconv.Itoa(ActiveConnections))
+		}
+	})
+
+	if GateReady && !KeepAliveTimeOut {
+		for i := 0; i < GATEMAXSESSION; i++ {
+			userSession := SessionArray[i]
+			if userSession.Socket != nil {
+				if GetTickCount()-userSession.UserTimeOutTick > 60*60*1000 {
+					userSession.Socket.Close()
+					userSession.Socket = nil
+					userSession.SocketHandle = uintptr(0)
+					userSession.MsgList = userSession.MsgList[:0]
+					userSession.RemoteIPaddr = ""
+				}
+			}
+		}
+	}
+	if !GateReady && ServiceStart {
+		if GetTickCount()-f.reConnectServerTick > 1000 /* 30*1000 */ {
+			f.reConnectServerTick = GetTickCount()
+			f.ClientSocket.Dial(f, ServerAddr, ServerPort)
+		}
+	}
 }
 
 func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
@@ -819,12 +861,12 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	var ipAddr TSockaddr
 
 	socket.Index = -1
-	remoteIPaddr = getIPaddr(socket.RemoteAddr())
+	remoteIPaddr = getAddrHost(socket.RemoteAddr())
 
 	if DynamicIPDisMode {
-		localIPaddr = getIPaddr(f.ClientSocket.RemoteAddr())
+		localIPaddr = getAddrHost(f.ClientSocket.RemoteAddr())
 	} else {
-		localIPaddr = getIPaddr(socket.LocalAddr())
+		localIPaddr = getAddrHost(socket.LocalAddr())
 	}
 
 	if f.isBlockIP(remoteIPaddr) {
@@ -867,7 +909,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 				userSession.CheckSendLength = 0
 				userSession.ReceiveLength = 0
 				userSession.UserTimeOutTick = GetTickCount()
-				userSession.SocketHandle = socket.SocketHandle
+				userSession.SocketHandle = socket.SocketHandle()
 				userSession.IP = remoteIPaddr
 				userSession.MsgList = make([]string, 0)
 
@@ -878,7 +920,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 
 		if socket.Index >= 0 {
 			// 发送字符串
-			message := fmt.Sprintf("%%O%d/%s/%s$", socket.SocketHandle, remoteIPaddr, localIPaddr)
+			message := fmt.Sprintf("%%O%d/%s/%s$", socket.SocketHandle(), remoteIPaddr, localIPaddr)
 			f.ClientSocket.Write([]byte(message))
 			MainOutMessage("Connect: "+remoteIPaddr, 5)
 		} else {
@@ -893,7 +935,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 
 func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error) {
 	log.Info("ServerSocketClientDisconnect: {}", err.Error())
-	remoteIPaddr := getIPaddr(conn.RemoteAddr())
+	remoteIPaddr := getAddrHost(conn.RemoteAddr())
 	ip := net.ParseIP(remoteIPaddr)
 	sockIndex := conn.Index
 
@@ -915,7 +957,7 @@ func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error) 
 		userSession.MsgList = userSession.MsgList[:0]
 		f.sessionCount--
 		if GateReady {
-			message := fmt.Sprintf("%%X%d$", conn.SocketHandle)
+			message := fmt.Sprintf("%%X%d$", conn.SocketHandle())
 			f.ClientSocket.Write([]byte(message))
 			MainOutMessage("DisConnect: "+remoteIPaddr, 5)
 		}
@@ -943,7 +985,7 @@ func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) {
 				} else {
 					userSession.ReceiveLength = len(message)
 				}
-				message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle, message)
+				message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle(), message)
 				f.ClientSocket.Write([]byte(message))
 			}
 		}
@@ -966,7 +1008,33 @@ func (f *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 }
 
 func (f *TFrmMain) TimerTimer(sender vcl.IObject) {
-	//
+	var port string
+	// 更新UI
+	vcl.ThreadSync(func() {
+		if f.ServerSocket.Active() {
+			port = getAddrPort(f.ServerSocket.Addr())
+			f.StatusBar.Panels().Items(0).SetText(port)
+			if SendHoldTimeOut {
+				f.StatusBar.Panels().Items(2).SetText(strconv.Itoa(f.sessionCount) + "/#" + strconv.Itoa(f.ServerSocket.ActiveConnections()))
+			} else {
+				f.StatusBar.Panels().Items(2).SetText(strconv.Itoa(f.sessionCount) + "/" + strconv.Itoa(f.ServerSocket.ActiveConnections()))
+			}
+		} else {
+			f.StatusBar.Panels().Items(0).SetText("????")
+			f.StatusBar.Panels().Items(2).SetText("????")
+		}
+		f.Label2.SetCaption(strconv.Itoa(int(f.decodeMsgTime)))
+		if !GateReady {
+			f.StatusBar.Panels().Items(1).SetText("未连接")
+		} else {
+			if KeepAliveTimeOut {
+				f.StatusBar.Panels().Items(1).SetText("超时")
+			} else {
+				f.StatusBar.Panels().Items(1).SetText("已连接")
+				f.Lack.SetCaption(strconv.Itoa(TotalMsgListCount) + "/" + strconv.Itoa(SendMsgCount))
+			}
+		}
+	})
 }
 
 func MainLogOutMessage(msg string) {
