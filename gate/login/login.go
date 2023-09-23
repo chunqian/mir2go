@@ -5,7 +5,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"sync"
 	"time"
 
@@ -738,7 +737,7 @@ func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 					}
 				}
 				TotalMsgListCount += len(userSession.MsgList)
-				MainOutMessage(userSession.IP+" : "+strconv.Itoa(len(userSession.MsgList)), 5)
+				MainOutMessage(userSession.IP+" : "+common.IntToStr(len(userSession.MsgList)), 5)
 				SendMsgCount++
 			} else {
 				userSession.SocketHandle = uintptr(0)
@@ -826,12 +825,12 @@ func (f *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	// 更新UI
 	vcl.ThreadSync(func() {
 		if SendHoldTimeOut {
-			f.Hold.SetCaption(strconv.Itoa(ActiveConnections) + "#")
+			f.Hold.SetCaption(common.IntToStr(ActiveConnections) + "#")
 			if GetTickCount()-SendHoldTick > 3*1000 {
 				SendHoldTimeOut = false
 			}
 		} else {
-			f.Hold.SetCaption(strconv.Itoa(ActiveConnections))
+			f.Hold.SetCaption(common.IntToStr(ActiveConnections))
 		}
 	})
 
@@ -1019,18 +1018,18 @@ func (f *TFrmMain) TimerTimer(sender vcl.IObject) {
 			f.StatusBar.Panels().Items(0).SetText(port)
 			if SendHoldTimeOut {
 				f.StatusBar.Panels().Items(2).SetText(
-					strconv.Itoa(f.sessionCount) + "/#" + strconv.Itoa(f.ServerSocket.ActiveConnections()),
+					common.IntToStr(f.sessionCount) + "/#" + common.IntToStr(f.ServerSocket.ActiveConnections()),
 				)
 			} else {
 				f.StatusBar.Panels().Items(2).SetText(
-					strconv.Itoa(f.sessionCount) + "/" + strconv.Itoa(f.ServerSocket.ActiveConnections()),
+					common.IntToStr(f.sessionCount) + "/" + common.IntToStr(f.ServerSocket.ActiveConnections()),
 				)
 			}
 		} else {
 			f.StatusBar.Panels().Items(0).SetText("????")
 			f.StatusBar.Panels().Items(2).SetText("????")
 		}
-		f.Label2.SetCaption(strconv.Itoa(int(f.decodeMsgTime)))
+		f.Label2.SetCaption(common.IntToStr(int(f.decodeMsgTime)))
 		if !GateReady {
 			f.StatusBar.Panels().Items(1).SetText("未连接")
 		} else {
@@ -1038,7 +1037,7 @@ func (f *TFrmMain) TimerTimer(sender vcl.IObject) {
 				f.StatusBar.Panels().Items(1).SetText("超时")
 			} else {
 				f.StatusBar.Panels().Items(1).SetText("已连接")
-				f.Lack.SetCaption(strconv.Itoa(TotalMsgListCount) + "/" + strconv.Itoa(SendMsgCount))
+				f.Lack.SetCaption(common.IntToStr(TotalMsgListCount) + "/" + common.IntToStr(SendMsgCount))
 			}
 		}
 	})

@@ -57,12 +57,17 @@ func ArrestStringEx(source, searchAfter, arrestBefore string) (string, string) {
 }
 
 func StrToInt(str string, def int) int {
-	// 将截取的字符串转换为整数
+	// 字符串转换为整数
 	v, err := strconv.Atoi(str)
 	if err != nil {
 		v = def
 	}
 	return v
+}
+
+func IntToStr(i int) string {
+	// 整数转换为字符串
+	return strconv.Itoa(i)
 }
 
 func GetValidStr3(str string, divider []rune) (string, string) {
