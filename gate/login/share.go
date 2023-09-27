@@ -264,7 +264,7 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 
 				if buffer[i] == '$' {
 					reading = false
-					// fmt.Println("Message Received:", dataBuffer.String())
+					// log.Info("Message Received: {}", dataBuffer.String())
 					message := dataBuffer.String()
 					iSocket.ServerSocketClientRead(conn, message)
 					dataBuffer.Reset()
@@ -282,12 +282,12 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				fmt.Println(err)
-				continue
+				log.Error(err.Error())
+				return
 			}
 			tcpConn, ok := conn.(*net.TCPConn)
 			if !ok {
-				fmt.Println("Not a TCP connection")
+				log.Error("Not a TCP connection")
 				return
 			}
 			clientSocket := &TClientSocket{
@@ -309,7 +309,7 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 			case sock := <-ch:
 				go msgProducer(iSocket, sock)
 				// default:
-				// 	fmt.Println("Could not read from sockChan")
+				// 	log.Error("Could not read from sockChan")
 			}
 		}
 	}
@@ -380,7 +380,7 @@ func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 				if buffer[i] == '$' {
 					reading = false
 					dataBuffer.WriteByte(buffer[i])
-					// fmt.Println("Message Received:", dataBuffer.String())
+					// log.Info("Message Received: {}", dataBuffer.String())
 					message := dataBuffer.String()
 					iSocket.ClientSocketRead(conn, message)
 					dataBuffer.Reset()

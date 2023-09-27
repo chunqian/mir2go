@@ -131,15 +131,23 @@ func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	f.MenuControl.SetCaption("控制")
 	f.MenuControlStart.SetCaption("启动服务")
 	f.MenuControlStart.SetShortCutFromString("Ctrl+S")
+	f.MenuControlStart.SetOnClick(f.MenuControlStartClick)
+
 	f.MenuControlStop.SetCaption("停止服务")
 	f.MenuControlStop.SetShortCutFromString("Ctrl+T")
 	f.MenuControlStop.SetOnClick(f.MenuControlStopClick)
+
 	f.MenuControlReconnect.SetCaption("刷新连接")
 	f.MenuControlReconnect.SetShortCutFromString("Ctrl+R")
+	f.MenuControlReconnect.SetOnClick(f.MenuControlReconnectClick)
+
 	f.MenuControlClearLog.SetCaption("清除日志")
 	f.MenuControlClearLog.SetShortCutFromString("Ctrl+C")
+	f.MenuControlClearLog.SetOnClick(f.MenuControlClearLogClick)
+
 	f.MenuControlExit.SetCaption("退出")
 	f.MenuControlExit.SetShortCutFromString("Ctrl+X")
+	f.MenuControlExit.SetOnClick(f.MenuControlExitClick)
 
 	f.MenuView.SetCaption("查看")
 	f.MenuViewLogMsg.SetCaption("查看日志")
@@ -286,7 +294,7 @@ func (f *TFrmMain) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
 	*canClose = vcl.MessageDlg("是否确认退出服务器?",
 		types.MtConfirmation,
 		types.MbYes,
-		types.MbNo) == types.IdYes
+		types.MbNo) == types.MrYes
 }
 
 func (f *TFrmMain) closeSocket(socketHandle uintptr) {
@@ -775,26 +783,33 @@ func (f *TFrmMain) MemoLogChange(sender vcl.IObject) {
 }
 
 func (f *TFrmMain) MenuControlClearLogClick(sender vcl.IObject) {
-	//
+	if vcl.MessageDlg("是否确认清除显示的日志信息?",
+		types.MtConfirmation,
+		types.MbYes,
+		types.MbNo) == types.MrYes {
+		vcl.ThreadSync(func() {
+			f.MemoLog.Clear()
+		})
+	}
 }
 
 func (f *TFrmMain) MenuControlExitClick(sender vcl.IObject) {
-	//
+	f.Close()
 }
 
 func (f *TFrmMain) MenuControlReconnectClick(sender vcl.IObject) {
-	//
+	f.reConnectServerTick = 0
 }
 
 func (f *TFrmMain) MenuControlStartClick(sender vcl.IObject) {
-	//
+	f.startService()
 }
 
 func (f *TFrmMain) MenuControlStopClick(sender vcl.IObject) {
 	if vcl.MessageDlg("是否确认停止服务?",
 		types.MtConfirmation,
 		types.MbYes,
-		types.MbNo) == types.IdYes {
+		types.MbNo) == types.MrYes {
 		f.stopService()
 	}
 }
