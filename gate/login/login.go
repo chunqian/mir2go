@@ -641,6 +641,7 @@ func (f *TFrmMain) MenuOptionGeneralClick(sender vcl.IObject) {
 
 func (f *TFrmMain) MenuOptionIpFilterClick(sender vcl.IObject) {
 	//
+	FrmIPaddrFilter.ShowModal()
 }
 
 func (f *TFrmMain) MenuViewLogMsgClick(sender vcl.IObject) {

@@ -71,6 +71,7 @@ func loginFormLayout(sender vcl.IObject) {
 	f.MenuOption.SetCaption("选项")
 	f.MenuOptionGeneral.SetCaption("基本设置")
 	f.MenuOptionIpFilter.SetCaption("安全过滤")
+	f.MenuOptionIpFilter.SetOnClick(f.MenuOptionIpFilterClick)
 
 	f.N1.SetCaption("-")
 	f.N2.SetCaption("-")
@@ -194,7 +195,10 @@ func loginFormLayout(sender vcl.IObject) {
 	f.Timer.SetOnTimer(f.TimerTimer)
 }
 
-func loginFilterLayout(sender vcl.IObject) {
+func frmIPaddrFilterLayout(sender vcl.IObject) {
+	// f := &TFrmIPaddrFilter{
+	// 	TForm: vcl.AsForm(sender),
+	// }
 }
 
 func loginConfigLayout(sender vcl.IObject) {
