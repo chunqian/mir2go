@@ -93,15 +93,16 @@ var (
 
 func (sf *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
 
-	sf.SetLeft(420)
-	sf.SetTop(296)
-	sf.SetClientWidth(679)
-	sf.SetClientHeight(367)
 	// 布局
 	sf.Layout()
 }
 
 func (sf *TFrmIPaddrFilter) Layout() {
+
+	sf.SetLeft(420)
+	sf.SetTop(296)
+	sf.SetClientWidth(679)
+	sf.SetClientHeight(367)
 
 	sf.BlockListPopupMenu = &TBlockListPopupMenu{
 		TPopupMenu: vcl.NewPopupMenu(sf),

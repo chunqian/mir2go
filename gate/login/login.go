@@ -125,12 +125,23 @@ var (
 // ******************** Layout ********************
 func (sf *TFrmMain) Layout() {
 
+	sf.SetCaption("登陆网关")
+	sf.EnabledMaximize(false)
+	sf.SetBorderStyle(types.BsSingle)
+	sf.SetLeft(636)
+	sf.SetTop(215)
+	sf.SetClientWidth(308)
+	sf.SetClientHeight(154)
+
 	sf.MainMenu = &TMainMenu{
 		TMainMenu: vcl.NewMainMenu(sf),
 	}
+	sf.MainMenu.Layout(sf)
+
 	sf.Panel = &TPanel{
 		TPanel: vcl.NewPanel(sf),
 	}
+	sf.Panel.Layout(sf)
 
 	sf.MemoLog = vcl.NewMemo(sf)
 	sf.MemoLog.SetName("MemoLog")
@@ -168,9 +179,6 @@ func (sf *TFrmMain) Layout() {
 	panel = sf.StatusBar.Panels().Add()
 	panel.SetWidth(50)
 
-	sf.Panel.Layout(sf)
-	sf.MainMenu.Layout(sf)
-
 	sf.StartTimer = vcl.NewTimer(sf)
 	sf.StartTimer.SetInterval(200)
 	sf.StartTimer.SetEnabled(true)
@@ -197,28 +205,24 @@ func (sf *TMainMenu) Layout(sender *TFrmMain) {
 	sf.MenuControl = &TMenuControl{
 		TMenuItem: vcl.NewMenuItem(sf),
 	}
+	sf.MenuControl.SetCaption("控制")
+	sf.MenuControl.Layout(sender)
 
 	sf.MenuView = &TMenuView{
 		TMenuItem: vcl.NewMenuItem(sf),
 	}
+	sf.MenuView.SetCaption("查看")
+	sf.MenuView.Layout(sender)
 
 	sf.MenuOption = &TMenuOption{
 		TMenuItem: vcl.NewMenuItem(sf),
 	}
+	sf.MenuOption.SetCaption("选项")
+	sf.MenuOption.Layout(sender)
 
 	sf.N3 = &TMenuItem3{
 		TMenuItem: vcl.NewMenuItem(sf),
 	}
-
-	sf.MenuControl.SetCaption("控制")
-	sf.MenuControl.Layout(sender)
-
-	sf.MenuView.SetCaption("查看")
-	sf.MenuView.Layout(sender)
-
-	sf.MenuOption.SetCaption("选项")
-	sf.MenuOption.Layout(sender)
-
 	sf.N3.SetCaption("帮助")
 	sf.N3.Layout(sender)
 
@@ -229,6 +233,7 @@ func (sf *TMainMenu) Layout(sender *TFrmMain) {
 }
 
 func (sf *TPanel) Layout(sender *TFrmMain) {
+
 	sf.SetParent(vcl.AsForm(sender))
 	sf.SetAlign(types.AlTop)
 	sf.SetBevelOuter(types.BvNone)
@@ -264,6 +269,7 @@ func (sf *TPanel) Layout(sender *TFrmMain) {
 }
 
 func (sf *TMenuControl) Layout(sender *TFrmMain) {
+
 	sf.MenuControlStart = vcl.NewMenuItem(sf)
 	sf.MenuControlStart.SetCaption("启动服务")
 	sf.MenuControlStart.SetShortCutFromString("Ctrl+S")
@@ -331,13 +337,6 @@ func (sf *TMenuItem3) Layout(sender *TFrmMain) {
 // ******************** TFrmMain ********************
 func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
-	sf.SetCaption("登陆网关")
-	sf.EnabledMaximize(false)
-	sf.SetBorderStyle(types.BsSingle)
-	sf.SetLeft(636)
-	sf.SetTop(215)
-	sf.SetClientWidth(308)
-	sf.SetClientHeight(154)
 	// 布局
 	sf.Layout()
 
