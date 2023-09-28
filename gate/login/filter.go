@@ -178,8 +178,8 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 
 	sf.Label4 = vcl.NewLabel(sf)
 	sf.Label4.SetCaption("连接列表:")
-	sf.Label4.SetLeft(9)
-	sf.Label4.SetTop(26)
+	sf.Label4.SetLeft(0)
+	sf.Label4.SetTop(9)
 	sf.Label4.SetWidth(59)
 	sf.Label4.SetHeight(13)
 	sf.Label4.SetParent(sf)
@@ -188,9 +188,9 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 		TListBox: vcl.NewListBox(sf),
 	}
 	sf.ListBoxActiveList.SetHint("当前连接的IP地址列表")
-	sf.ListBoxActiveList.SetLeft(9)
-	sf.ListBoxActiveList.SetTop(43)
-	sf.ListBoxActiveList.SetWidth(131)
+	sf.ListBoxActiveList.SetLeft(0)
+	sf.ListBoxActiveList.SetTop(31)
+	sf.ListBoxActiveList.SetWidth(138)
 	sf.ListBoxActiveList.SetHeight(261)
 	sf.ListBoxActiveList.SetItemHeight(13)
 	sf.ListBoxActiveList.SetParentShowHint(false)
