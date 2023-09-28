@@ -7,138 +7,205 @@ import "github.com/ying32/govcl/vcl"
 type TFrmIPaddrFilter struct {
 	*vcl.TForm
 
-	ActiveListPopupMenu *TActiveListPopupMenu
-	BlockListPopupMenu *TBlockListPopupMenu
-	ButtonOK *vcl.TButton
-	GroupBox1 *TGroupBox1
-	GroupBox2 *TGroupBox2
-	GroupBoxActive *TGroupBoxActive
+	BlockListPopupMenu     *TBlockListPopupMenu
+	ButtonOK               *vcl.TButton
+	GroupBox1              *TGroupBox1
+	GroupBox2              *TGroupBox2
+	GroupBoxActive         *TGroupBoxActive
 	TempBlockListPopupMenu *TTempBlockListPopupMenu
 }
 
 type TActiveListPopupMenu struct {
 	*vcl.TPopupMenu
 
-	APOPMENU_REFLIST *vcl.TMenuItem
-	APOPMENU_SORT *vcl.TMenuItem
-	APOPMENU_ADDTEMPLIST *vcl.TMenuItem
-	APOPMENU_BLOCKLIST *vcl.TMenuItem
-	APOPMENU_KICK *vcl.TMenuItem
+	PopMenuRefList     *vcl.TMenuItem
+	PopMenuSort        *vcl.TMenuItem
+	PopMenuAddTempList *vcl.TMenuItem
+	PopMenuBlockList   *vcl.TMenuItem
+	PopMenuKick        *vcl.TMenuItem
 }
 
 type TBlockListPopupMenu struct {
 	*vcl.TPopupMenu
 
-	BPOPMENU_REFLIST *vcl.TMenuItem
-	BPOPMENU_SORT *vcl.TMenuItem
-	BPOPMENU_ADD *vcl.TMenuItem
-	BPOPMENU_ADDTEMPLIST *vcl.TMenuItem
-	BPOPMENU_DELETE *vcl.TMenuItem
+	PopMenuRefList     *vcl.TMenuItem
+	PopMenuSort        *vcl.TMenuItem
+	PopMenuAdd         *vcl.TMenuItem
+	PopMenuAddTempList *vcl.TMenuItem
+	PopMenuDelete      *vcl.TMenuItem
 }
 
 type TTempBlockListPopupMenu struct {
 	*vcl.TPopupMenu
 
-	TPOPMENU_REFLIST *vcl.TMenuItem
-	TPOPMENU_SORT *vcl.TMenuItem
-	TPOPMENU_ADD *vcl.TMenuItem
-	TPOPMENU_BLOCKLIST *vcl.TMenuItem
-	TPOPMENU_DELETE *vcl.TMenuItem
+	PopMenuRefList   *vcl.TMenuItem
+	PopMenuSort      *vcl.TMenuItem
+	PopMenuAdd       *vcl.TMenuItem
+	PopMenuBlockList *vcl.TMenuItem
+	PopMenuDelete    *vcl.TMenuItem
 }
 
 type TGroupBox1 struct {
 	*vcl.TGroupBox
 
-	Label1 *vcl.TLabel
-	LabelTempList *vcl.TLabel
+	Label1           *vcl.TLabel
+	LabelTempList    *vcl.TLabel
 	ListBoxBlockList *vcl.TListBox
-	ListBoxTempList *vcl.TListBox
+	ListBoxTempList  *vcl.TListBox
 }
 
 type TGroupBox2 struct {
 	*vcl.TGroupBox
 
-	EditMaxConnect * vcl.TSpinEdit
-	GroupBox3 *TGroupBox3
-	Label2 *vcl.TLabel
-	Label3 *vcl.TLabel
-	Label7 *vcl.TLabel
+	EditMaxConnect *vcl.TSpinEdit
+	GroupBox3      *TGroupBox3
+	Label2         *vcl.TLabel
+	Label3         *vcl.TLabel
+	Label7         *vcl.TLabel
 }
 
 type TGroupBox3 struct {
 	*vcl.TGroupBox
 
 	RadioAddBlockList *vcl.TRadioButton
-	RadioAddTempList *vcl.TRadioButton
-	RadioDisConnect *vcl.TRadioButton
+	RadioAddTempList  *vcl.TRadioButton
+	RadioDisConnect   *vcl.TRadioButton
 }
 
 type TGroupBoxActive struct {
 	*vcl.TGroupBox
 
-	Label4 *vcl.TLabel
-	ListBoxActiveList *vcl.TListBox
+	Label4            *vcl.TLabel
+	ListBoxActiveList *TListBox
+}
+
+type TListBox struct {
+	*vcl.TListBox
+
+	ActiveListPopupMenu *TActiveListPopupMenu
 }
 
 var (
 	FrmIPaddrFilter *TFrmIPaddrFilter
 )
 
-func (frm *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
-	frm.layout()
+func (sf *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
+
+	// 布局
+	sf.SetLeft(420)
+	sf.SetTop(296)
+	sf.SetClientWidth(679)
+	sf.SetClientHeight(367)
+	sf.Layout()
 }
 
-func (frm *TFrmIPaddrFilter) layout() {
-	frm.ActiveListPopupMenu = &TActiveListPopupMenu{
-		TPopupMenu: vcl.NewPopupMenu(frm),
+func (sf *TFrmIPaddrFilter) Layout() {
+
+	sf.BlockListPopupMenu = &TBlockListPopupMenu{
+		TPopupMenu: vcl.NewPopupMenu(sf),
 	}
-	frm.ActiveListPopupMenu.layout()
+	sf.BlockListPopupMenu.Layout(sf)
 
-	frm.BlockListPopupMenu = &TBlockListPopupMenu{
-		TPopupMenu: vcl.NewPopupMenu(frm),
+	sf.ButtonOK = vcl.NewButton(sf)
+	sf.ButtonOK.SetCaption("确定(&O)")
+	sf.ButtonOK.SetDefault(true)
+	sf.ButtonOK.SetLeft(568)
+	sf.ButtonOK.SetTop(295)
+	sf.ButtonOK.SetWidth(86)
+	sf.ButtonOK.SetHeight(27)
+	sf.ButtonOK.SetParent(sf)
+
+	sf.GroupBoxActive = &TGroupBoxActive{
+		TGroupBox: vcl.NewGroupBox(sf),
 	}
-	frm.BlockListPopupMenu.layout()
-
-	frm.ButtonOK = vcl.NewButton(frm)
-	frm.ButtonOK.SetCaption("确定(&O)")
-	frm.ButtonOK.SetDefault(true)
-	frm.ButtonOK.SetHeight(27)
-	frm.ButtonOK.SetLeft(568)
-	frm.ButtonOK.SetTop(295)
-	frm.ButtonOK.SetWidth(86)
-	frm.ButtonOK.SetParent(frm)
+	sf.GroupBoxActive.SetCaption("当前连接")
+	sf.GroupBoxActive.SetLeft(9)
+	sf.GroupBoxActive.SetTop(9)
+	sf.GroupBoxActive.SetWidth(148)
+	sf.GroupBoxActive.SetHeight(313)
+	sf.GroupBoxActive.Layout(sf)
+	sf.GroupBoxActive.SetParent(sf)
 }
 
-func (act *TActiveListPopupMenu) layout() {
-	act.APOPMENU_REFLIST = vcl.NewMenuItem(act)
-	act.APOPMENU_REFLIST.SetCaption("刷新(&R)")
+func (sf *TActiveListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
 
-	act.APOPMENU_SORT = vcl.NewMenuItem(act)
-	act.APOPMENU_SORT.SetCaption("排序(&S)")
+	sf.PopMenuRefList = vcl.NewMenuItem(sf)
+	sf.PopMenuRefList.SetCaption("刷新(&R)")
 
-	act.APOPMENU_ADDTEMPLIST = vcl.NewMenuItem(act)
-	act.APOPMENU_ADDTEMPLIST.SetCaption("加入动态过滤列表(&A)")
+	sf.PopMenuSort = vcl.NewMenuItem(sf)
+	sf.PopMenuSort.SetCaption("排序(&S)")
 
-	act.APOPMENU_BLOCKLIST = vcl.NewMenuItem(act)
-	act.APOPMENU_BLOCKLIST.SetCaption("加入永久过滤列表(&D)")
+	sf.PopMenuAddTempList = vcl.NewMenuItem(sf)
+	sf.PopMenuAddTempList.SetCaption("加入动态过滤列表(&A)")
 
-	act.APOPMENU_KICK = vcl.NewMenuItem(act)
-	act.APOPMENU_KICK.SetCaption("踢除下线(&K)")
+	sf.PopMenuBlockList = vcl.NewMenuItem(sf)
+	sf.PopMenuBlockList.SetCaption("加入永久过滤列表(&D)")
+
+	sf.PopMenuKick = vcl.NewMenuItem(sf)
+	sf.PopMenuKick.SetCaption("踢除下线(&K)")
+
+	sf.Items().Add(sf.PopMenuRefList)
+	sf.Items().Add(sf.PopMenuSort)
+	sf.Items().Add(sf.PopMenuAddTempList)
+	sf.Items().Add(sf.PopMenuBlockList)
+	sf.Items().Add(sf.PopMenuKick)
 }
 
-func (blk *TBlockListPopupMenu) layout() {
-	blk.BPOPMENU_REFLIST = vcl.NewMenuItem(blk)
-	blk.BPOPMENU_REFLIST.SetCaption("刷新(&R)")
+func (sf *TBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
+	sf.PopMenuRefList = vcl.NewMenuItem(sf)
+	sf.PopMenuRefList.SetCaption("刷新(&R)")
 
-	blk.BPOPMENU_SORT = vcl.NewMenuItem(blk)
-	blk.BPOPMENU_SORT.SetCaption("排序(&S)")
+	sf.PopMenuSort = vcl.NewMenuItem(sf)
+	sf.PopMenuSort.SetCaption("排序(&S)")
 
-	blk.BPOPMENU_ADD = vcl.NewMenuItem(blk)
-	blk.BPOPMENU_ADD.SetCaption("增加(&A)")
+	sf.PopMenuAdd = vcl.NewMenuItem(sf)
+	sf.PopMenuAdd.SetCaption("增加(&A)")
 
-	blk.BPOPMENU_ADDTEMPLIST = vcl.NewMenuItem(blk)
-	blk.BPOPMENU_ADDTEMPLIST.SetCaption("加入动态过滤列表(&A)")
+	sf.PopMenuAddTempList = vcl.NewMenuItem(sf)
+	sf.PopMenuAddTempList.SetCaption("加入动态过滤列表(&A)")
 
-	blk.BPOPMENU_DELETE = vcl.NewMenuItem(blk)
-	blk.BPOPMENU_DELETE.SetCaption("删除(&D)")
+	sf.PopMenuDelete = vcl.NewMenuItem(sf)
+	sf.PopMenuDelete.SetCaption("删除(&D)")
+
+	sf.Items().Add(sf.PopMenuRefList)
+	sf.Items().Add(sf.PopMenuSort)
+	sf.Items().Add(sf.PopMenuAdd)
+	sf.Items().Add(sf.PopMenuAddTempList)
+	sf.Items().Add(sf.PopMenuDelete)
+}
+
+func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
+
+	sf.Label4 = vcl.NewLabel(sf)
+	sf.Label4.SetCaption("连接列表:")
+	sf.Label4.SetLeft(9)
+	sf.Label4.SetTop(26)
+	sf.Label4.SetWidth(59)
+	sf.Label4.SetHeight(13)
+	sf.Label4.SetParent(sf)
+
+	sf.ListBoxActiveList = &TListBox{
+		TListBox: vcl.NewListBox(sf),
+	}
+	sf.ListBoxActiveList.SetHint("当前连接的IP地址列表")
+	sf.ListBoxActiveList.SetLeft(9)
+	sf.ListBoxActiveList.SetTop(43)
+	sf.ListBoxActiveList.SetWidth(131)
+	sf.ListBoxActiveList.SetHeight(261)
+	sf.ListBoxActiveList.SetItemHeight(13)
+	sf.ListBoxActiveList.SetParentShowHint(false)
+	sf.ListBoxActiveList.SetShowHint(true)
+	sf.ListBoxActiveList.SetSorted(true)
+	sf.ListBoxActiveList.Layout(sender)
+	sf.ListBoxActiveList.SetParent(sf)
+}
+
+func (sf *TListBox) Layout(sender *TFrmIPaddrFilter) {
+
+	sf.ActiveListPopupMenu = &TActiveListPopupMenu{
+		TPopupMenu: vcl.NewPopupMenu(sf),
+	}
+	sf.ActiveListPopupMenu.Layout(sender)
+
+	sf.SetPopupMenu(sf.ActiveListPopupMenu)
 }

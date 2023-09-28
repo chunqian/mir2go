@@ -10,6 +10,7 @@ import (
 
 	"github.com/ying32/govcl/vcl"
 	"github.com/ying32/govcl/vcl/types"
+	"github.com/ying32/govcl/vcl/types/colors"
 
 	"github.com/chunqian/mir2go/common"
 	log "github.com/chunqian/tinylog"
@@ -20,9 +21,20 @@ const (
 	GATEMAXSESSION = 10000
 )
 
-// ******************** Type ********************
 type TFrmMain struct {
 	*vcl.TForm
+
+	MainMenu  *TMainMenu
+	MemoLog   *vcl.TMemo
+	Panel     *TPanel
+	StatusBar *vcl.TStatusBar
+
+	SendTimer    *vcl.TTimer
+	StartTimer   *vcl.TTimer
+	DecodeTimer  *vcl.TTimer
+	Timer        *vcl.TTimer
+	ClientSocket *TClientSocket
+	ServerSocket *TServerSocket
 
 	serverReady         bool
 	showLocked          bool
@@ -32,36 +44,54 @@ type TFrmMain struct {
 	showMainLogTick     uint32
 	sessionCount        int
 	tempLogList         []string
-	tempLogListMutex    sync.Mutex
+}
 
-	ClientSocket         *TClientSocket
-	DecodeTimer          *vcl.TTimer
-	Label2               *vcl.TLabel
-	Hold                 *vcl.TLabel
-	Lack                 *vcl.TLabel
-	MainMenu             *vcl.TMainMenu
-	MemoLog              *vcl.TMemo
-	MenuControl          *vcl.TMenuItem
-	MenuControlClearLog  *vcl.TMenuItem
-	MenuControlExit      *vcl.TMenuItem
-	MenuControlReconnect *vcl.TMenuItem
+type TMainMenu struct {
+	*vcl.TMainMenu
+
+	MenuControl *TMenuControl
+	MenuView    *TMenuView
+	MenuOption  *TMenuOption
+	N3          *TMenuItem3
+}
+
+type TPanel struct {
+	*vcl.TPanel
+
+	Label2 *vcl.TLabel
+	Hold   *vcl.TLabel
+	Lack   *vcl.TLabel
+}
+
+type TMenuControl struct {
+	*vcl.TMenuItem
+
 	MenuControlStart     *vcl.TMenuItem
 	MenuControlStop      *vcl.TMenuItem
-	MenuOption           *vcl.TMenuItem
-	MenuOptionGeneral    *vcl.TMenuItem
-	MenuOptionIpFilter   *vcl.TMenuItem
-	MenuView             *vcl.TMenuItem
-	MenuViewLogMsg       *vcl.TMenuItem
+	MenuControlReconnect *vcl.TMenuItem
 	N1                   *vcl.TMenuItem
+	MenuControlClearLog  *vcl.TMenuItem
 	N2                   *vcl.TMenuItem
-	N3                   *vcl.TMenuItem
-	N4                   *vcl.TMenuItem
-	Panel                *vcl.TPanel
-	SendTimer            *vcl.TTimer
-	ServerSocket         *TServerSocket
-	StartTimer           *vcl.TTimer
-	StatusBar            *vcl.TStatusBar
-	Timer                *vcl.TTimer
+	MenuControlExit      *vcl.TMenuItem
+}
+
+type TMenuView struct {
+	*vcl.TMenuItem
+
+	MenuViewLogMsg *vcl.TMenuItem
+}
+
+type TMenuOption struct {
+	*vcl.TMenuItem
+
+	MenuOptionGeneral  *vcl.TMenuItem
+	MenuOptionIpFilter *vcl.TMenuItem
+}
+
+type TMenuItem3 struct {
+	*vcl.TMenuItem
+
+	N4 *vcl.TMenuItem
 }
 
 type TUserSession struct {
@@ -86,39 +116,252 @@ type TSessionArray [GATEMAXSESSION]*TUserSession
 
 // ******************** Var ********************
 var (
-	ClientSockeMsgList      []string
-	ClientSockeMsgListMutex sync.Mutex
-	FrmMain                 *TFrmMain
-	SessionArray            TSessionArray
-	ProcMsg                 string
+	ClientSockeMsgList []string
+	FrmMain            *TFrmMain
+	SessionArray       TSessionArray
+	ProcMsg            string
 )
 
-// ******************** TFrmMain ********************
-func (f *TFrmMain) OnFormCreate(sender vcl.IObject) {
+// ******************** Layout ********************
+func (sf *TFrmMain) layout() {
 
-	// 布局
-	loginFormLayout(f)
-	
-	f.tempLogList = make([]string, 0)
-	f.decodeMsgTime = 0
-	f.initUserSessionArray()
+	sf.SetCaption("登陆网关")
+	sf.EnabledMaximize(false)
+	sf.SetBorderStyle(types.BsSingle)
+	sf.SetClientHeight(154)
+	sf.SetClientWidth(308)
+	sf.SetTop(215)
+	sf.SetLeft(636)
+
+	sf.MainMenu = &TMainMenu{
+		TMainMenu: vcl.NewMainMenu(sf),
+	}
+	sf.Panel = &TPanel{
+		TPanel: vcl.NewPanel(sf),
+	}
+
+	sf.MemoLog = vcl.NewMemo(sf)
+	sf.MemoLog.SetName("MemoLog")
+	sf.MemoLog.SetAlign(types.AlClient)
+	sf.MemoLog.SetText("")
+	sf.MemoLog.SetParent(sf)
+	sf.MemoLog.SetColor(colors.ClMenuText)
+	sf.MemoLog.Font().SetColor(colors.ClLimegreen)
+	sf.MemoLog.SetTop(119)
+	sf.MemoLog.SetLeft(0)
+	sf.MemoLog.SetHeight(18)
+	sf.MemoLog.SetWidth(308)
+	sf.MemoLog.SetWordWrap(false)
+	sf.MemoLog.SetScrollBars(types.SsHorizontal)
+
+	sf.StatusBar = vcl.NewStatusBar(sf)
+	sf.StatusBar.SetParent(sf)
+	sf.StatusBar.SetSimplePanel(false)
+	sf.StatusBar.SetTop(137)
+	sf.StatusBar.SetLeft(0)
+	sf.StatusBar.SetHeight(17)
+	sf.StatusBar.SetWidth(308)
+	panel := sf.StatusBar.Panels().Add()
+	panel.SetAlignment(types.TaCenter)
+	panel.SetText("7100")
+	panel.SetWidth(50)
+	panel = sf.StatusBar.Panels().Add()
+	panel.SetAlignment(types.TaCenter)
+	panel.SetText("未连接")
+	panel.SetWidth(60)
+	panel = sf.StatusBar.Panels().Add()
+	panel.SetAlignment(types.TaCenter)
+	panel.SetText("0/0")
+	panel.SetWidth(70)
+	panel = sf.StatusBar.Panels().Add()
+	panel.SetWidth(50)
+
+	sf.Panel.layout(sf)
+	sf.MainMenu.layout(sf)
+
+	sf.StartTimer = vcl.NewTimer(sf)
+	sf.StartTimer.SetInterval(200)
+	sf.StartTimer.SetEnabled(true)
+	sf.StartTimer.SetOnTimer(sf.StartTimerTimer)
+
+	sf.DecodeTimer = vcl.NewTimer(sf)
+	sf.DecodeTimer.SetInterval(1)
+	sf.DecodeTimer.SetEnabled(false)
+	sf.DecodeTimer.SetOnTimer(sf.DecodeTimerTimer)
+
+	sf.SendTimer = vcl.NewTimer(sf)
+	sf.SendTimer.SetInterval(3000)
+	sf.SendTimer.SetEnabled(false)
+	sf.SendTimer.SetOnTimer(sf.SendTimerTimer)
+
+	sf.Timer = vcl.NewTimer(sf)
+	sf.Timer.SetInterval(1000)
+	sf.Timer.SetEnabled(true)
+	sf.Timer.SetOnTimer(sf.TimerTimer)
 }
 
-func (f *TFrmMain) OnFormDestroy(sender vcl.IObject) {
-	f.tempLogList = f.tempLogList[:0]
+func (sf *TMainMenu) layout(sender *TFrmMain) {
+
+	sf.MenuControl = &TMenuControl{
+		TMenuItem: vcl.NewMenuItem(sf),
+	}
+
+	sf.MenuView = &TMenuView{
+		TMenuItem: vcl.NewMenuItem(sf),
+	}
+
+	sf.MenuOption = &TMenuOption{
+		TMenuItem: vcl.NewMenuItem(sf),
+	}
+
+	sf.N3 = &TMenuItem3{
+		TMenuItem: vcl.NewMenuItem(sf),
+	}
+
+	sf.MenuControl.SetCaption("控制")
+	sf.MenuControl.layout(sender)
+
+	sf.MenuView.SetCaption("查看")
+	sf.MenuView.layout(sender)
+
+	sf.MenuOption.SetCaption("选项")
+	sf.MenuOption.layout(sender)
+
+	sf.N3.SetCaption("帮助")
+	sf.N3.layout(sender)
+
+	sf.Items().Add(sf.MenuControl)
+	sf.Items().Add(sf.MenuView)
+	sf.Items().Add(sf.MenuOption)
+	sf.Items().Add(sf.N3)
+}
+
+func (sf *TPanel) layout(sender *TFrmMain) {
+	sf.SetParent(vcl.AsForm(sender))
+	sf.SetAlign(types.AlTop)
+	sf.SetBevelOuter(types.BvNone)
+	sf.SetTabOrder(1)
+	sf.SetTop(0)
+	sf.SetLeft(0)
+	sf.SetHeight(119)
+	sf.SetWidth(308)
+
+	sf.Label2 = vcl.NewLabel(sf)
+	sf.Label2.SetParent(sf)
+	sf.Label2.SetCaption("label2")
+	sf.Label2.SetTop(11)
+	sf.Label2.SetLeft(199)
+	sf.Label2.SetHeight(13)
+	sf.Label2.SetWidth(42)
+
+	sf.Lack = vcl.NewLabel(sf)
+	sf.Lack.SetParent(sf)
+	sf.Lack.SetCaption("0/0")
+	sf.Lack.SetTop(33)
+	sf.Lack.SetLeft(195)
+	sf.Lack.SetHeight(13)
+	sf.Lack.SetWidth(21)
+
+	sf.Hold = vcl.NewLabel(sf)
+	sf.Hold.SetParent(sf)
+	sf.Hold.SetCaption("")
+	sf.Hold.SetTop(10)
+	sf.Hold.SetLeft(106)
+	sf.Hold.SetHeight(13)
+	sf.Hold.SetWidth(7)
+}
+
+func (sf *TMenuControl) layout(sender *TFrmMain) {
+	sf.MenuControlStart = vcl.NewMenuItem(sf)
+	sf.MenuControlStart.SetCaption("启动服务")
+	sf.MenuControlStart.SetShortCutFromString("Ctrl+S")
+	sf.MenuControlStart.SetOnClick(sender.MenuControlStartClick)
+
+	sf.MenuControlStop = vcl.NewMenuItem(sf)
+	sf.MenuControlStop.SetCaption("停止服务")
+	sf.MenuControlStop.SetShortCutFromString("Ctrl+T")
+	sf.MenuControlStop.SetOnClick(sender.MenuControlStopClick)
+
+	sf.MenuControlReconnect = vcl.NewMenuItem(sf)
+	sf.MenuControlReconnect.SetCaption("刷新连接")
+	sf.MenuControlReconnect.SetShortCutFromString("Ctrl+R")
+	sf.MenuControlReconnect.SetOnClick(sender.MenuControlReconnectClick)
+
+	sf.MenuControlClearLog = vcl.NewMenuItem(sf)
+	sf.MenuControlClearLog.SetCaption("清除日志")
+	sf.MenuControlClearLog.SetShortCutFromString("Ctrl+C")
+	sf.MenuControlClearLog.SetOnClick(sender.MenuControlClearLogClick)
+
+	sf.MenuControlExit = vcl.NewMenuItem(sf)
+	sf.MenuControlExit.SetCaption("退出")
+	sf.MenuControlExit.SetShortCutFromString("Ctrl+X")
+	sf.MenuControlExit.SetOnClick(sender.MenuControlExitClick)
+
+	sf.Add(sf.MenuControlStart)
+	sf.Add(sf.MenuControlStop)
+	sf.Add(sf.MenuControlReconnect)
+	sf.Add(sf.N1)
+	sf.Add(sf.MenuControlClearLog)
+	sf.Add(sf.N2)
+	sf.Add(sf.MenuControlExit)
+}
+
+func (sf *TMenuView) layout(sender *TFrmMain) {
+
+	sf.MenuViewLogMsg = vcl.NewMenuItem(sf)
+	sf.MenuViewLogMsg.SetCaption("查看日志")
+
+	sf.Add(sf.MenuViewLogMsg)
+}
+
+func (sf *TMenuOption) layout(sender *TFrmMain) {
+
+	sf.MenuOptionGeneral = vcl.NewMenuItem(sf)
+	sf.MenuOptionGeneral.SetCaption("基本设置")
+
+	sf.MenuOptionIpFilter = vcl.NewMenuItem(sf)
+	sf.MenuOptionIpFilter.SetCaption("安全过滤")
+	sf.MenuOptionIpFilter.SetOnClick(sender.MenuOptionIpFilterClick)
+
+	sf.Add(sf.MenuOptionGeneral)
+	sf.Add(sf.MenuOptionIpFilter)
+}
+
+func (sf *TMenuItem3) layout(sender *TFrmMain) {
+
+	sf.N4 = vcl.NewMenuItem(sf)
+	sf.N4.SetCaption("关于")
+	sf.N4.SetOnClick(sender.N4Click)
+
+	sf.Add(sf.N4)
+}
+
+// ******************** TFrmMain ********************
+func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
+
+	// 布局
+	sf.layout()
+
+	sf.tempLogList = make([]string, 0)
+	sf.decodeMsgTime = 0
+	sf.initUserSessionArray()
+}
+
+func (sf *TFrmMain) OnFormDestroy(sender vcl.IObject) {
+	sf.tempLogList = sf.tempLogList[:0]
 	for i := range SessionArray {
 		SessionArray[i] = nil
 	}
 }
 
-func (f *TFrmMain) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
+func (sf *TFrmMain) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
 	*canClose = vcl.MessageDlg("是否确认退出服务器?",
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.MrYes
 }
 
-func (f *TFrmMain) closeSocket(socketHandle uintptr) {
+func (sf *TFrmMain) closeSocket(socketHandle uintptr) {
 	for i := range SessionArray {
 		userSession := SessionArray[i]
 		if userSession.Socket != nil && userSession.SocketHandle == socketHandle {
@@ -128,7 +371,7 @@ func (f *TFrmMain) closeSocket(socketHandle uintptr) {
 	}
 }
 
-func (f *TFrmMain) initUserSessionArray() {
+func (sf *TFrmMain) initUserSessionArray() {
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := TUserSession{}
 		userSession.Socket = nil
@@ -146,7 +389,7 @@ func (f *TFrmMain) initUserSessionArray() {
 	}
 }
 
-func (f *TFrmMain) isBlockIP(ipaddr string) bool {
+func (sf *TFrmMain) isBlockIP(ipaddr string) bool {
 	ip := net.ParseIP(ipaddr)
 	for i := range TempBlockIPList {
 		ipAddr := TempBlockIPList[i]
@@ -163,7 +406,7 @@ func (f *TFrmMain) isBlockIP(ipaddr string) bool {
 	return false
 }
 
-func (f *TFrmMain) isConnLimited(ipaddr string) bool {
+func (sf *TFrmMain) isConnLimited(ipaddr string) bool {
 	denyConnect := false
 	ip := net.ParseIP(ipaddr)
 	for i := range CurrIPaddrList {
@@ -204,7 +447,7 @@ func (f *TFrmMain) isConnLimited(ipaddr string) bool {
 	return denyConnect
 }
 
-func (f *TFrmMain) loadConfig() {
+func (sf *TFrmMain) loadConfig() {
 	conf := vcl.NewIniFile(ConfigFile)
 	TitleName = conf.ReadString(GateClass, "Title", TitleName)
 	ServerPort = conf.ReadInteger(GateClass, "ServerPort", ServerPort)
@@ -228,7 +471,7 @@ func (f *TFrmMain) loadConfig() {
 	LoadBlockIPFile()
 }
 
-func (f *TFrmMain) resUserSessionArray() {
+func (sf *TFrmMain) resUserSessionArray() {
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := SessionArray[i]
 		userSession.Socket = nil
@@ -238,7 +481,7 @@ func (f *TFrmMain) resUserSessionArray() {
 	}
 }
 
-func (f *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
+func (sf *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
 	result := -1
 	if userSession.Socket != nil {
 		if !userSession.SendLock {
@@ -273,52 +516,52 @@ func (f *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
 	return result
 }
 
-func (f *TFrmMain) showLogMsg(flag bool) {
+func (sf *TFrmMain) showLogMsg(flag bool) {
 	var height int32
 	if flag {
-		height = f.Panel.Height()
-		f.Panel.SetHeight(0)
-		f.MemoLog.SetHeight(height)
-		f.MemoLog.SetTop(f.Panel.Top())
+		height = sf.Panel.Height()
+		sf.Panel.SetHeight(0)
+		sf.MemoLog.SetHeight(height)
+		sf.MemoLog.SetTop(sf.Panel.Top())
 	} else {
-		height = f.MemoLog.Height()
-		f.MemoLog.SetHeight(0)
-		f.Panel.SetHeight(height)
+		height = sf.MemoLog.Height()
+		sf.MemoLog.SetHeight(0)
+		sf.Panel.SetHeight(height)
 	}
 }
 
-func (f *TFrmMain) showMainLogMsg() {
+func (sf *TFrmMain) showMainLogMsg() {
 	MainLogMsgListMutex.Lock()
 	defer MainLogMsgListMutex.Unlock()
 
-	if GetTickCount()-f.showMainLogTick < 200 {
+	if GetTickCount()-sf.showMainLogTick < 200 {
 		return
 	}
-	f.showMainLogTick = GetTickCount()
+	sf.showMainLogTick = GetTickCount()
 
-	f.showLocked = true
-	defer func() { f.showLocked = false }()
+	sf.showLocked = true
+	defer func() { sf.showLocked = false }()
 
 	// 获取和清空主日志列表
-	f.tempLogList = append(f.tempLogList, MainLogMsgList...)
+	sf.tempLogList = append(sf.tempLogList, MainLogMsgList...)
 	MainLogMsgList = MainLogMsgList[:0]
 
 	// 在 GUI 中显示日志
-	memoLog := vcl.AsMemo(f.FindComponent("MemoLog"))
-	for _, logMsg := range f.tempLogList {
+	memoLog := vcl.AsMemo(sf.FindComponent("MemoLog"))
+	for _, logMsg := range sf.tempLogList {
 		vcl.ThreadSync(func() {
 			memoLog.Lines().Add(logMsg)
 		})
 	}
-	f.tempLogList = f.tempLogList[:0]
+	sf.tempLogList = sf.tempLogList[:0]
 }
 
-func (f *TFrmMain) startService() {
+func (sf *TFrmMain) startService() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			f.MenuControlStart.SetEnabled(true)
-			f.MenuControlStop.SetEnabled(false)
+			sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(true)
+			sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(false)
 			MainOutMessage(fmt.Sprintf("%v", r), 0)
 		}
 	}()
@@ -328,16 +571,16 @@ func (f *TFrmMain) startService() {
 	MainOutMessage("正在启动服务...", 3)
 	ServiceStart = true
 	GateReady = true
-	f.serverReady = false
-	f.sessionCount = 0
-	f.MenuControlStart.SetEnabled(false)
-	f.MenuControlStop.SetEnabled(true)
+	sf.serverReady = false
+	sf.sessionCount = 0
+	sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(false)
+	sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(true)
 
-	f.reConnectServerTick = GetTickCount() - 25*1000
+	sf.reConnectServerTick = GetTickCount() - 25*1000
 	KeepAliveTimeOut = false
 	SendMsgCount = 0
 	TotalMsgListCount = 0
-	f.sendKeepAliveTick = GetTickCount()
+	sf.sendKeepAliveTick = GetTickCount()
 	SendHoldTimeOut = false
 	SendHoldTick = GetTickCount()
 
@@ -346,36 +589,34 @@ func (f *TFrmMain) startService() {
 	TempBlockIPList = make([]TSockaddr, 0)
 	ClientSockeMsgList = make([]string, 0)
 
-	f.resUserSessionArray()
-	f.loadConfig()
+	sf.resUserSessionArray()
+	sf.loadConfig()
 
 	if TitleName != "" {
-		f.SetCaption(GateName + " - " + TitleName)
+		sf.SetCaption(GateName + " - " + TitleName)
 	} else {
-		f.SetCaption(GateName)
+		sf.SetCaption(GateName)
 	}
 
-	f.ClientSocket = &TClientSocket{}
-	f.ClientSocket.Dial(f, ServerAddr, ServerPort)
+	sf.ClientSocket = &TClientSocket{}
+	sf.ClientSocket.Dial(sf, ServerAddr, ServerPort)
 
-	f.ServerSocket = &TServerSocket{}
-	f.ServerSocket.Listen(f, GateAddr, GatePort)
+	sf.ServerSocket = &TServerSocket{}
+	sf.ServerSocket.Listen(sf, GateAddr, GatePort)
 
-	f.DecodeTimer.SetEnabled(true)
-	f.SendTimer.SetEnabled(true)
+	sf.DecodeTimer.SetEnabled(true)
+	sf.SendTimer.SetEnabled(true)
 	MainOutMessage("启动服务完成...", 3)
 }
 
-func (f *TFrmMain) stopService() {
-	ClientSockeMsgListMutex.Lock()
-	defer ClientSockeMsgListMutex.Unlock()
+func (sf *TFrmMain) stopService() {
 
 	MainOutMessage("正在停止服务...", 3)
 	ServiceStart = false
 	GateReady = false
-	f.MenuControlStart.SetEnabled(true)
-	f.MenuControlStop.SetEnabled(false)
-	f.SendTimer.SetEnabled(false)
+	sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(true)
+	sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(false)
+	sf.SendTimer.SetEnabled(false)
 	for i := 0; i < GATEMAXSESSION; i++ {
 		if SessionArray[i].Socket != nil {
 			SessionArray[i].Socket.Close()
@@ -384,8 +625,8 @@ func (f *TFrmMain) stopService() {
 
 	SaveBlockIPList()
 
-	f.ServerSocket.Close()
-	f.ClientSocket.Close()
+	sf.ServerSocket.Close()
+	sf.ClientSocket.Close()
 
 	CurrIPaddrList = CurrIPaddrList[:0]
 	BlockIPList = BlockIPList[:0]
@@ -395,14 +636,14 @@ func (f *TFrmMain) stopService() {
 	MainOutMessage("停止服务完成...", 3)
 }
 
-func (f *TFrmMain) CloseConnect(ipaddr string) {
-	if f.ServerSocket.Active() {
+func (sf *TFrmMain) CloseConnect(ipaddr string) {
+	if sf.ServerSocket.Active() {
 		for {
 			check := false
-			for i := 0; i < f.ServerSocket.ActiveConnections(); i++ {
-				remoteAddr := getAddrHost(f.ServerSocket.Connections()[i].RemoteAddr())
+			for i := 0; i < sf.ServerSocket.ActiveConnections(); i++ {
+				remoteAddr := getAddrHost(sf.ServerSocket.Connections()[i].RemoteAddr())
 				if ipaddr == remoteAddr {
-					f.ServerSocket.Connections()[i].Close()
+					sf.ServerSocket.Connections()[i].Close()
 					check = true
 					break
 				}
@@ -414,15 +655,15 @@ func (f *TFrmMain) CloseConnect(ipaddr string) {
 	}
 }
 
-func (f *TFrmMain) ClientSocketConnect(socket *TClientSocket) {
+func (sf *TFrmMain) ClientSocketConnect(socket *TClientSocket) {
 	GateReady = true
-	f.sessionCount = 0
+	sf.sessionCount = 0
 	KeepAliveTick = GetTickCount()
-	f.resUserSessionArray()
-	f.serverReady = true
+	sf.resUserSessionArray()
+	sf.serverReady = true
 }
 
-func (f *TFrmMain) ClientSocketDisconnect(socket *TClientSocket, err error) {
+func (sf *TFrmMain) ClientSocketDisconnect(socket *TClientSocket, err error) {
 	log.Info("ClientSocketDisconnect: {}", err.Error())
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := SessionArray[i]
@@ -434,27 +675,27 @@ func (f *TFrmMain) ClientSocketDisconnect(socket *TClientSocket, err error) {
 		userSession.SocketHandle = uintptr(0)
 	}
 
-	f.resUserSessionArray()
+	sf.resUserSessionArray()
 	ClientSockeMsgList = ClientSockeMsgList[:0]
 	GateReady = false
-	f.sessionCount = 0
+	sf.sessionCount = 0
 }
 
-func (f *TFrmMain) ClientSocketError(socket *TClientSocket, err error) {
+func (sf *TFrmMain) ClientSocketError(socket *TClientSocket, err error) {
 	log.Info("ClientSocketError: {}", err.Error())
 	socket.Close()
-	f.serverReady = false
+	sf.serverReady = false
 }
 
-func (f *TFrmMain) ClientSocketRead(socket *TClientSocket, message string) {
+func (sf *TFrmMain) ClientSocketRead(socket *TClientSocket, message string) {
 	log.Info("ClientSocketRead: {}", message)
 	ClientSockeMsgList = append(ClientSockeMsgList, message)
 }
 
-func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
+func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 	var processMsg, socketMsg string
 
-	f.showMainLogMsg()
+	sf.showMainLogMsg()
 
 	if DecodeLock || !GateReady {
 		return
@@ -485,7 +726,7 @@ func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 			}
 			if socketMsg[0] == '+' {
 				if socketMsg[1] == '-' {
-					f.closeSocket(
+					sf.closeSocket(
 						uintptr(
 							common.StrToInt(socketMsg[2:len(socketMsg)-2], 0),
 						),
@@ -533,13 +774,13 @@ func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 				ipAddr := TSockaddr{}
 				ipAddr.IPaddr = int(ipToInteger(ip))
 				TempBlockIPList = append(TempBlockIPList, ipAddr)
-				f.CloseConnect(remoteIPaddr)
+				sf.CloseConnect(remoteIPaddr)
 			case BlockList:
 				ip := net.ParseIP(remoteIPaddr)
 				ipAddr := TSockaddr{}
 				ipAddr.IPaddr = int(ipToInteger(ip))
 				BlockIPList = append(BlockIPList, ipAddr)
-				f.CloseConnect(remoteIPaddr)
+				sf.CloseConnect(remoteIPaddr)
 			}
 			MainOutMessage("端口空连接攻击: "+remoteIPaddr, 1)
 			continue
@@ -551,7 +792,7 @@ func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 			}
 			userSession := SessionArray[i]
 
-			sendRetCode := f.sendUserMsg(userSession, userSession.MsgList[0])
+			sendRetCode := sf.sendUserMsg(userSession, userSession.MsgList[0])
 			if sendRetCode >= 0 {
 				if sendRetCode == 1 {
 					userSession.ConnctCheckTick = GetTickCount()
@@ -576,98 +817,98 @@ func (f *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 		}
 	}
 
-	if GetTickCount()-f.sendKeepAliveTick > 2*1000 {
-		f.sendKeepAliveTick = GetTickCount()
+	if GetTickCount()-sf.sendKeepAliveTick > 2*1000 {
+		sf.sendKeepAliveTick = GetTickCount()
 		if GateReady {
-			f.ClientSocket.Write([]byte("%--$"))
+			sf.ClientSocket.Write([]byte("%--$"))
 		}
 	}
 
 	if GetTickCount()-KeepAliveTick > 10*1000 {
 		KeepAliveTimeOut = true
-		f.ClientSocket.Close()
+		sf.ClientSocket.Close()
 	}
 
 	decodeTime := GetTickCount() - decodeTick
-	if f.decodeMsgTime < decodeTime {
-		f.decodeMsgTime = decodeTime
+	if sf.decodeMsgTime < decodeTime {
+		sf.decodeMsgTime = decodeTime
 	}
-	if f.decodeMsgTime > 50 {
-		f.decodeMsgTime -= 50
-	}
-}
-
-func (f *TFrmMain) MemoLogChange(sender vcl.IObject) {
-	if f.MemoLog.Lines().Count() > 200 {
-		f.MemoLog.Clear()
+	if sf.decodeMsgTime > 50 {
+		sf.decodeMsgTime -= 50
 	}
 }
 
-func (f *TFrmMain) MenuControlClearLogClick(sender vcl.IObject) {
+func (sf *TFrmMain) MemoLogChange(sender vcl.IObject) {
+	if sf.MemoLog.Lines().Count() > 200 {
+		sf.MemoLog.Clear()
+	}
+}
+
+func (sf *TFrmMain) MenuControlClearLogClick(sender vcl.IObject) {
 	if vcl.MessageDlg("是否确认清除显示的日志信息?",
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.MrYes {
 		vcl.ThreadSync(func() {
-			f.MemoLog.Clear()
+			sf.MemoLog.Clear()
 		})
 	}
 }
 
-func (f *TFrmMain) MenuControlExitClick(sender vcl.IObject) {
-	f.Close()
+func (sf *TFrmMain) MenuControlExitClick(sender vcl.IObject) {
+	sf.Close()
 }
 
-func (f *TFrmMain) MenuControlReconnectClick(sender vcl.IObject) {
-	f.reConnectServerTick = 0
+func (sf *TFrmMain) MenuControlReconnectClick(sender vcl.IObject) {
+	sf.reConnectServerTick = 0
 }
 
-func (f *TFrmMain) MenuControlStartClick(sender vcl.IObject) {
-	f.startService()
+func (sf *TFrmMain) MenuControlStartClick(sender vcl.IObject) {
+	sf.startService()
 }
 
-func (f *TFrmMain) MenuControlStopClick(sender vcl.IObject) {
+func (sf *TFrmMain) MenuControlStopClick(sender vcl.IObject) {
 	if vcl.MessageDlg("是否确认停止服务?",
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.MrYes {
-		f.stopService()
+		sf.stopService()
 	}
 }
 
-func (f *TFrmMain) MenuOptionGeneralClick(sender vcl.IObject) {
+func (sf *TFrmMain) MenuOptionGeneralClick(sender vcl.IObject) {
 	//
 }
 
-func (f *TFrmMain) MenuOptionIpFilterClick(sender vcl.IObject) {
+func (sf *TFrmMain) MenuOptionIpFilterClick(sender vcl.IObject) {
 	//
 	FrmIPaddrFilter.ShowModal()
 }
 
-func (f *TFrmMain) MenuViewLogMsgClick(sender vcl.IObject) {
-	f.MenuViewLogMsg.SetChecked(!f.MenuViewLogMsg.Checked())
-	f.showLogMsg(f.MenuViewLogMsg.Checked())
+func (sf *TFrmMain) MenuViewLogMsgClick(sender vcl.IObject) {
+	sf.MainMenu.MenuView.MenuViewLogMsg.SetChecked(!sf.MainMenu.MenuView.MenuViewLogMsg.Checked())
+	sf.showLogMsg(sf.MainMenu.MenuView.MenuViewLogMsg.Checked())
 }
 
-func (f *TFrmMain) N4Click(sender vcl.IObject) {
+func (sf *TFrmMain) N4Click(sender vcl.IObject) {
 	MainLogOutMessage("引擎版本: 1.5.0 (20020522)")
 	MainLogOutMessage("更新日期: 2023/09/14")
 	MainLogOutMessage("程序制作: CHUNQIAN SHEN")
 }
 
-func (f *TFrmMain) SendTimerTimer(sender vcl.IObject) {
-	if f.ServerSocket.Active() {
-		ActiveConnections = f.ServerSocket.ActiveConnections()
+func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
+	if sf.ServerSocket.Active() {
+		ActiveConnections = sf.ServerSocket.ActiveConnections()
 	}
 	// 更新UI
 	vcl.ThreadSync(func() {
 		if SendHoldTimeOut {
-			f.Hold.SetCaption(common.IntToStr(ActiveConnections) + "#")
+			sf.Panel.Hold.SetCaption(common.IntToStr(ActiveConnections) + "#")
 			if GetTickCount()-SendHoldTick > 3*1000 {
 				SendHoldTimeOut = false
 			}
 		} else {
-			f.Hold.SetCaption(common.IntToStr(ActiveConnections))
+			sf.Panel.Hold.SetCaption(common.IntToStr(ActiveConnections))
 		}
 	})
 
@@ -686,14 +927,14 @@ func (f *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 		}
 	}
 	if !GateReady && ServiceStart {
-		if GetTickCount()-f.reConnectServerTick > 1000 /* 30*1000 */ {
-			f.reConnectServerTick = GetTickCount()
-			f.ClientSocket.Dial(f, ServerAddr, ServerPort)
+		if GetTickCount()-sf.reConnectServerTick > 1000 /* 30*1000 */ {
+			sf.reConnectServerTick = GetTickCount()
+			sf.ClientSocket.Dial(sf, ServerAddr, ServerPort)
 		}
 	}
 }
 
-func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
+func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	var remoteIPaddr, localIPaddr string
 	var ipAddr TSockaddr
 
@@ -701,18 +942,18 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	remoteIPaddr = getAddrHost(socket.RemoteAddr())
 
 	if DynamicIPDisMode {
-		localIPaddr = getAddrHost(f.ClientSocket.RemoteAddr())
+		localIPaddr = getAddrHost(sf.ClientSocket.RemoteAddr())
 	} else {
 		localIPaddr = getAddrHost(socket.LocalAddr())
 	}
 
-	if f.isBlockIP(remoteIPaddr) {
+	if sf.isBlockIP(remoteIPaddr) {
 		MainOutMessage("过滤连接: "+remoteIPaddr, 1)
 		socket.Close()
 		return
 	}
 
-	if f.isConnLimited(remoteIPaddr) {
+	if sf.isConnLimited(remoteIPaddr) {
 		switch BlockMethod {
 		case Disconnect:
 			socket.Close()
@@ -721,13 +962,13 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 			ipAddr = TSockaddr{}
 			ipAddr.IPaddr = int(ipToInteger(ip))
 			TempBlockIPList = append(TempBlockIPList, ipAddr)
-			f.CloseConnect(remoteIPaddr)
+			sf.CloseConnect(remoteIPaddr)
 		case BlockList:
 			ip := net.ParseIP(remoteIPaddr)
 			ipAddr = TSockaddr{}
 			ipAddr.IPaddr = int(ipToInteger(ip))
 			BlockIPList = append(BlockIPList, ipAddr)
-			f.CloseConnect(remoteIPaddr)
+			sf.CloseConnect(remoteIPaddr)
 		}
 		MainOutMessage("端口攻击: "+remoteIPaddr, 1)
 	}
@@ -751,7 +992,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 				userSession.MsgList = make([]string, 0)
 
 				socket.Index = i
-				f.sessionCount++
+				sf.sessionCount++
 				break
 			}
 		}
@@ -759,7 +1000,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 		if socket.Index >= 0 {
 			// 发送字符串
 			message := fmt.Sprintf("%%O%d/%s/%s$", socket.SocketHandle(), remoteIPaddr, localIPaddr)
-			f.ClientSocket.Write([]byte(message))
+			sf.ClientSocket.Write([]byte(message))
 			MainOutMessage("Connect: "+remoteIPaddr, 5)
 		} else {
 			socket.Close()
@@ -771,7 +1012,7 @@ func (f *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	}
 }
 
-func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error) {
+func (sf *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error) {
 	log.Info("ServerSocketClientDisconnect: {}", err.Error())
 	remoteIPaddr := getAddrHost(conn.RemoteAddr())
 	ip := net.ParseIP(remoteIPaddr)
@@ -794,26 +1035,26 @@ func (f *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error) 
 		userSession.RemoteIPaddr = ""
 		userSession.SocketHandle = uintptr(0)
 		userSession.MsgList = userSession.MsgList[:0]
-		f.sessionCount--
+		sf.sessionCount--
 		if GateReady {
 			message := fmt.Sprintf("%%X%d$", conn.SocketHandle())
-			f.ClientSocket.Write([]byte(message))
+			sf.ClientSocket.Write([]byte(message))
 			MainOutMessage("DisConnect: "+remoteIPaddr, 5)
 		}
 	}
 }
 
-func (f *TFrmMain) ServerSocketClientError(conn *TClientSocket, err error) {
+func (sf *TFrmMain) ServerSocketClientError(conn *TClientSocket, err error) {
 	log.Info("ServerSocketClientError: {}", err.Error())
 	conn.Close()
 }
 
-func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) {
+func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) {
 	log.Info("ServerSocketClientRead: {}", message)
 	sockIndex := conn.Index
 	if sockIndex >= 0 && sockIndex < GATEMAXSESSION {
 		userSession := SessionArray[sockIndex]
-		if f.serverReady {
+		if sf.serverReady {
 			userSession.SendAvailable = true
 			userSession.SendCheck = false
 			userSession.CheckSendLength = 0
@@ -825,56 +1066,56 @@ func (f *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) {
 					userSession.ReceiveLength = len(message)
 				}
 				message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle(), message)
-				f.ClientSocket.Write([]byte(message))
+				sf.ClientSocket.Write([]byte(message))
 			}
 		}
 	}
 }
 
-func (f *TFrmMain) StartTimerTimer(sender vcl.IObject) {
+func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 	startTimer := vcl.AsTimer(sender) // 将传入的 IObject 转型为 Timer
 	if Started {
 		startTimer.SetEnabled(false) // 禁用定时器
-		f.stopService()
+		sf.stopService()
 		Close = true
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
-		f.MenuViewLogMsgClick(sender)
+		sf.MenuViewLogMsgClick(sender)
 		Started = true
 		startTimer.SetEnabled(false) // 禁用定时器
-		f.startService()
+		sf.startService()
 	}
 }
 
-func (f *TFrmMain) TimerTimer(sender vcl.IObject) {
+func (sf *TFrmMain) TimerTimer(sender vcl.IObject) {
 	var port string
 	// 更新UI
 	vcl.ThreadSync(func() {
-		if f.ServerSocket.Active() {
-			port = getAddrPort(f.ServerSocket.Addr())
-			f.StatusBar.Panels().Items(0).SetText(port)
+		if sf.ServerSocket.Active() {
+			port = getAddrPort(sf.ServerSocket.Addr())
+			sf.StatusBar.Panels().Items(0).SetText(port)
 			if SendHoldTimeOut {
-				f.StatusBar.Panels().Items(2).SetText(
-					common.IntToStr(f.sessionCount) + "/#" + common.IntToStr(f.ServerSocket.ActiveConnections()),
+				sf.StatusBar.Panels().Items(2).SetText(
+					common.IntToStr(sf.sessionCount) + "/#" + common.IntToStr(sf.ServerSocket.ActiveConnections()),
 				)
 			} else {
-				f.StatusBar.Panels().Items(2).SetText(
-					common.IntToStr(f.sessionCount) + "/" + common.IntToStr(f.ServerSocket.ActiveConnections()),
+				sf.StatusBar.Panels().Items(2).SetText(
+					common.IntToStr(sf.sessionCount) + "/" + common.IntToStr(sf.ServerSocket.ActiveConnections()),
 				)
 			}
 		} else {
-			f.StatusBar.Panels().Items(0).SetText("????")
-			f.StatusBar.Panels().Items(2).SetText("????")
+			sf.StatusBar.Panels().Items(0).SetText("????")
+			sf.StatusBar.Panels().Items(2).SetText("????")
 		}
-		f.Label2.SetCaption(common.IntToStr(int(f.decodeMsgTime)))
+		sf.Panel.Label2.SetCaption(common.IntToStr(int(sf.decodeMsgTime)))
 		if !GateReady {
-			f.StatusBar.Panels().Items(1).SetText("未连接")
+			sf.StatusBar.Panels().Items(1).SetText("未连接")
 		} else {
 			if KeepAliveTimeOut {
-				f.StatusBar.Panels().Items(1).SetText("超时")
+				sf.StatusBar.Panels().Items(1).SetText("超时")
 			} else {
-				f.StatusBar.Panels().Items(1).SetText("已连接")
-				f.Lack.SetCaption(common.IntToStr(TotalMsgListCount) + "/" + common.IntToStr(SendMsgCount))
+				sf.StatusBar.Panels().Items(1).SetText("已连接")
+				sf.Panel.Lack.SetCaption(common.IntToStr(TotalMsgListCount) + "/" + common.IntToStr(SendMsgCount))
 			}
 		}
 	})
