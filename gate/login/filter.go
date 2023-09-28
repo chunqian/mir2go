@@ -2,7 +2,9 @@
 
 package main
 
-import "github.com/ying32/govcl/vcl"
+import (
+	"github.com/ying32/govcl/vcl"
+)
 
 type TFrmIPaddrFilter struct {
 	*vcl.TForm
@@ -118,7 +120,9 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	sf.GroupBoxActive = &TGroupBoxActive{
 		TGroupBox: vcl.NewGroupBox(sf),
 	}
+
 	sf.GroupBoxActive.SetCaption("当前连接")
+	sf.GroupBoxActive.Font().SetSize(9)
 	sf.GroupBoxActive.SetLeft(9)
 	sf.GroupBoxActive.SetTop(9)
 	sf.GroupBoxActive.SetWidth(148)
