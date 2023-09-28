@@ -93,11 +93,11 @@ var (
 
 func (sf *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
 
-	// 布局
 	sf.SetLeft(420)
 	sf.SetTop(296)
 	sf.SetClientWidth(679)
 	sf.SetClientHeight(367)
+	// 布局
 	sf.Layout()
 }
 

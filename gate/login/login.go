@@ -123,15 +123,7 @@ var (
 )
 
 // ******************** Layout ********************
-func (sf *TFrmMain) layout() {
-
-	sf.SetCaption("登陆网关")
-	sf.EnabledMaximize(false)
-	sf.SetBorderStyle(types.BsSingle)
-	sf.SetClientHeight(154)
-	sf.SetClientWidth(308)
-	sf.SetTop(215)
-	sf.SetLeft(636)
+func (sf *TFrmMain) Layout() {
 
 	sf.MainMenu = &TMainMenu{
 		TMainMenu: vcl.NewMainMenu(sf),
@@ -147,20 +139,20 @@ func (sf *TFrmMain) layout() {
 	sf.MemoLog.SetParent(sf)
 	sf.MemoLog.SetColor(colors.ClMenuText)
 	sf.MemoLog.Font().SetColor(colors.ClLimegreen)
-	sf.MemoLog.SetTop(119)
 	sf.MemoLog.SetLeft(0)
-	sf.MemoLog.SetHeight(18)
+	sf.MemoLog.SetTop(119)
 	sf.MemoLog.SetWidth(308)
+	sf.MemoLog.SetHeight(18)
 	sf.MemoLog.SetWordWrap(false)
 	sf.MemoLog.SetScrollBars(types.SsHorizontal)
 
 	sf.StatusBar = vcl.NewStatusBar(sf)
 	sf.StatusBar.SetParent(sf)
 	sf.StatusBar.SetSimplePanel(false)
-	sf.StatusBar.SetTop(137)
 	sf.StatusBar.SetLeft(0)
-	sf.StatusBar.SetHeight(17)
+	sf.StatusBar.SetTop(137)
 	sf.StatusBar.SetWidth(308)
+	sf.StatusBar.SetHeight(17)
 	panel := sf.StatusBar.Panels().Add()
 	panel.SetAlignment(types.TaCenter)
 	panel.SetText("7100")
@@ -176,8 +168,8 @@ func (sf *TFrmMain) layout() {
 	panel = sf.StatusBar.Panels().Add()
 	panel.SetWidth(50)
 
-	sf.Panel.layout(sf)
-	sf.MainMenu.layout(sf)
+	sf.Panel.Layout(sf)
+	sf.MainMenu.Layout(sf)
 
 	sf.StartTimer = vcl.NewTimer(sf)
 	sf.StartTimer.SetInterval(200)
@@ -200,7 +192,7 @@ func (sf *TFrmMain) layout() {
 	sf.Timer.SetOnTimer(sf.TimerTimer)
 }
 
-func (sf *TMainMenu) layout(sender *TFrmMain) {
+func (sf *TMainMenu) Layout(sender *TFrmMain) {
 
 	sf.MenuControl = &TMenuControl{
 		TMenuItem: vcl.NewMenuItem(sf),
@@ -219,16 +211,16 @@ func (sf *TMainMenu) layout(sender *TFrmMain) {
 	}
 
 	sf.MenuControl.SetCaption("控制")
-	sf.MenuControl.layout(sender)
+	sf.MenuControl.Layout(sender)
 
 	sf.MenuView.SetCaption("查看")
-	sf.MenuView.layout(sender)
+	sf.MenuView.Layout(sender)
 
 	sf.MenuOption.SetCaption("选项")
-	sf.MenuOption.layout(sender)
+	sf.MenuOption.Layout(sender)
 
 	sf.N3.SetCaption("帮助")
-	sf.N3.layout(sender)
+	sf.N3.Layout(sender)
 
 	sf.Items().Add(sf.MenuControl)
 	sf.Items().Add(sf.MenuView)
@@ -236,42 +228,42 @@ func (sf *TMainMenu) layout(sender *TFrmMain) {
 	sf.Items().Add(sf.N3)
 }
 
-func (sf *TPanel) layout(sender *TFrmMain) {
+func (sf *TPanel) Layout(sender *TFrmMain) {
 	sf.SetParent(vcl.AsForm(sender))
 	sf.SetAlign(types.AlTop)
 	sf.SetBevelOuter(types.BvNone)
 	sf.SetTabOrder(1)
-	sf.SetTop(0)
 	sf.SetLeft(0)
-	sf.SetHeight(119)
+	sf.SetTop(0)
 	sf.SetWidth(308)
+	sf.SetHeight(119)
 
 	sf.Label2 = vcl.NewLabel(sf)
 	sf.Label2.SetParent(sf)
 	sf.Label2.SetCaption("label2")
-	sf.Label2.SetTop(11)
 	sf.Label2.SetLeft(199)
-	sf.Label2.SetHeight(13)
+	sf.Label2.SetTop(11)
 	sf.Label2.SetWidth(42)
+	sf.Label2.SetHeight(13)
 
 	sf.Lack = vcl.NewLabel(sf)
 	sf.Lack.SetParent(sf)
 	sf.Lack.SetCaption("0/0")
-	sf.Lack.SetTop(33)
 	sf.Lack.SetLeft(195)
-	sf.Lack.SetHeight(13)
+	sf.Lack.SetTop(33)
 	sf.Lack.SetWidth(21)
+	sf.Lack.SetHeight(13)
 
 	sf.Hold = vcl.NewLabel(sf)
 	sf.Hold.SetParent(sf)
 	sf.Hold.SetCaption("")
-	sf.Hold.SetTop(10)
 	sf.Hold.SetLeft(106)
-	sf.Hold.SetHeight(13)
+	sf.Hold.SetTop(10)
 	sf.Hold.SetWidth(7)
+	sf.Hold.SetHeight(13)
 }
 
-func (sf *TMenuControl) layout(sender *TFrmMain) {
+func (sf *TMenuControl) Layout(sender *TFrmMain) {
 	sf.MenuControlStart = vcl.NewMenuItem(sf)
 	sf.MenuControlStart.SetCaption("启动服务")
 	sf.MenuControlStart.SetShortCutFromString("Ctrl+S")
@@ -306,7 +298,7 @@ func (sf *TMenuControl) layout(sender *TFrmMain) {
 	sf.Add(sf.MenuControlExit)
 }
 
-func (sf *TMenuView) layout(sender *TFrmMain) {
+func (sf *TMenuView) Layout(sender *TFrmMain) {
 
 	sf.MenuViewLogMsg = vcl.NewMenuItem(sf)
 	sf.MenuViewLogMsg.SetCaption("查看日志")
@@ -314,7 +306,7 @@ func (sf *TMenuView) layout(sender *TFrmMain) {
 	sf.Add(sf.MenuViewLogMsg)
 }
 
-func (sf *TMenuOption) layout(sender *TFrmMain) {
+func (sf *TMenuOption) Layout(sender *TFrmMain) {
 
 	sf.MenuOptionGeneral = vcl.NewMenuItem(sf)
 	sf.MenuOptionGeneral.SetCaption("基本设置")
@@ -327,7 +319,7 @@ func (sf *TMenuOption) layout(sender *TFrmMain) {
 	sf.Add(sf.MenuOptionIpFilter)
 }
 
-func (sf *TMenuItem3) layout(sender *TFrmMain) {
+func (sf *TMenuItem3) Layout(sender *TFrmMain) {
 
 	sf.N4 = vcl.NewMenuItem(sf)
 	sf.N4.SetCaption("关于")
@@ -339,8 +331,15 @@ func (sf *TMenuItem3) layout(sender *TFrmMain) {
 // ******************** TFrmMain ********************
 func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
+	sf.SetCaption("登陆网关")
+	sf.EnabledMaximize(false)
+	sf.SetBorderStyle(types.BsSingle)
+	sf.SetLeft(636)
+	sf.SetTop(215)
+	sf.SetClientWidth(308)
+	sf.SetClientHeight(154)
 	// 布局
-	sf.layout()
+	sf.Layout()
 
 	sf.tempLogList = make([]string, 0)
 	sf.decodeMsgTime = 0

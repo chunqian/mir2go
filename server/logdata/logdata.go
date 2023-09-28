@@ -40,44 +40,51 @@ var (
 	ServerAddr string = "127.0.0.1"
 )
 
+// ******************** Layout ********************
+func (sf *TFrmLogData) Layout() {
+
+	sf.Label3 = vcl.NewLabel(sf)
+	sf.Label3.SetParent(sf)
+	sf.Label3.SetCaption("当前日志文件:")
+	sf.Label3.SetLeft(9)
+	sf.Label3.SetTop(9)
+	sf.Label3.SetWidth(85)
+	sf.Label3.SetHeight(13)
+
+	sf.Timer1 = vcl.NewTimer(sf)
+	sf.Timer1.SetInterval(3000)
+	sf.Timer1.SetEnabled(true)
+	sf.Timer1.SetOnTimer(sf.Timer1Timer)
+
+	sf.Memo1 = vcl.NewMemo(sf)
+	sf.Memo1.SetParent(sf)
+	sf.Memo1.SetLeft(11)
+	sf.Memo1.SetTop(30)
+	sf.Memo1.SetWidth(303)
+	sf.Memo1.SetHeight(75)
+	sf.Memo1.SetReadOnly(true)
+}
+
 // ******************** TFrmLogData ********************
-func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
+func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
-	f.SetCaption("日志服务器")
-	f.EnabledMaximize(false)
-	f.SetWidth(329)
-	f.SetHeight(121)
-	f.SetTop(338)
-	f.SetLeft(782)
+	sf.SetCaption("日志服务器")
+	sf.EnabledMaximize(false)
+	sf.SetLeft(782)
+	sf.SetTop(338)
+	sf.SetWidth(329)
+	sf.SetHeight(121)
 
-	f.Label3 = vcl.NewLabel(f)
-	f.Label3.SetParent(f)
-	f.Label3.SetCaption("当前日志文件:")
-	f.Label3.SetTop(9)
-	f.Label3.SetLeft(9)
-	f.Label3.SetHeight(13)
-	f.Label3.SetWidth(85)
-
-	f.Timer1 = vcl.NewTimer(f)
-	f.Timer1.SetInterval(3000)
-	f.Timer1.SetEnabled(true)
-	f.Timer1.SetOnTimer(f.Timer1Timer)
-
-	f.Memo1 = vcl.NewMemo(f)
-	f.Memo1.SetParent(f)
-	f.Memo1.SetTop(30)
-	f.Memo1.SetLeft(11)
-	f.Memo1.SetHeight(75)
-	f.Memo1.SetWidth(303)
-	f.Memo1.SetReadOnly(true)
-
-	constraints := vcl.AsSizeConstraints(f.Constraints())
+	constraints := vcl.AsSizeConstraints(sf.Constraints())
 	constraints.SetMaxWidth(500)
-	f.SetConstraints(constraints)
+	sf.SetConstraints(constraints)
 
-	f.remoteClose = false
+	// 布局
+	sf.Layout()
 
-	f.logMsgList = vcl.NewStringList()
+	sf.remoteClose = false
+
+	sf.logMsgList = vcl.NewStringList()
 
 	conf := vcl.NewIniFile("./Config.ini")
 	if conf != nil {
@@ -87,9 +94,9 @@ func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 		ServerPort = conf.ReadInteger("Setup", "LogPort", ServerPort)
 		conf.Free()
 	}
-	f.SetCaption(Caption + " - " + ServerName)
+	sf.SetCaption(Caption + " - " + ServerName)
 
-	f.Memo1.SetText(BaseDir)
+	sf.Memo1.SetText(BaseDir)
 
 	// 初始化UDP组件
 	println(fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
@@ -99,31 +106,31 @@ func (f *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 		return
 	}
 
-	f.UdpConn, err = net.ListenUDP("udp", addr)
+	sf.UdpConn, err = net.ListenUDP("udp", addr)
 	if err != nil {
 		vcl.ShowMessage("无法监听UDP: " + err.Error())
 		return
 	}
 
 	// 启动goroutine来接收UDP消息
-	go f.UDPDataReceived()
+	go sf.UDPDataReceived()
 }
 
-func (f *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
-	f.logMsgList.Free()
+func (sf *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
+	sf.logMsgList.Free()
 }
 
-func (f *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
+func (sf *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
 	*canClose = vcl.MessageDlg("是否确认退出服务器?",
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.IdYes
 }
 
-func (f *TFrmLogData) UDPDataReceived() {
+func (sf *TFrmLogData) UDPDataReceived() {
 	buffer := make([]byte, 2048) // 最大2048个字节
 	for {
-		numberBytes, _, err := f.UdpConn.ReadFromUDP(buffer)
+		numberBytes, _, err := sf.UdpConn.ReadFromUDP(buffer)
 		if err != nil {
 			vcl.ThreadSync(func() {
 				vcl.ShowMessage("读取UDP数据出错: " + err.Error())
@@ -131,19 +138,19 @@ func (f *TFrmLogData) UDPDataReceived() {
 			return
 		}
 		message := string(buffer[:numberBytes])
-		f.logMsgList.Add(message)
+		sf.logMsgList.Add(message)
 	}
 }
 
-func (f *TFrmLogData) Timer1Timer(object vcl.IObject) {
-	f.WriteLogFile()
+func (sf *TFrmLogData) Timer1Timer(object vcl.IObject) {
+	sf.WriteLogFile()
 }
 
-func (f *TFrmLogData) WriteLogFile() {
-	f.logMsgListMutex.Lock()
-	defer f.logMsgListMutex.Unlock()
+func (sf *TFrmLogData) WriteLogFile() {
+	sf.logMsgListMutex.Lock()
+	defer sf.logMsgListMutex.Unlock()
 
-	if f.logMsgList.Count() <= 0 {
+	if sf.logMsgList.Count() <= 0 {
 		return
 	}
 
@@ -158,7 +165,7 @@ func (f *TFrmLogData) WriteLogFile() {
 
 	// 显示文件名
 	vcl.ThreadSync(func() {
-		f.Memo1.SetText(sLogFile)
+		sf.Memo1.SetText(sLogFile)
 	})
 
 	// 创建目录（如果不存在）
@@ -175,12 +182,12 @@ func (f *TFrmLogData) WriteLogFile() {
 	defer fl.Close()
 
 	// 写入日志信息
-	for i := int32(0); i < f.logMsgList.Count(); i++ {
-		msg := f.logMsgList.Strings(i)
+	for i := int32(0); i < sf.logMsgList.Count(); i++ {
+		msg := sf.logMsgList.Strings(i)
 		logEntry := fmt.Sprintf("%s\t%s\n", msg, now.Format("2006-01-02 15:04:05"))
 		fl.WriteString(logEntry)
 	}
 
 	// 清空logMsgList
-	f.logMsgList.Clear()
+	sf.logMsgList.Clear()
 }
