@@ -17,7 +17,7 @@ import (
 type TFrmLogData struct {
 	*vcl.TForm
 
-	logMsgList      *vcl.TStringList
+	logMsgList      []string
 	logMsgListMutex sync.Mutex
 	remoteClose     bool
 
@@ -84,7 +84,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
 	sf.remoteClose = false
 
-	sf.logMsgList = vcl.NewStringList()
+	sf.logMsgList = make([]string, 0)
 
 	conf := vcl.NewIniFile("./Config.ini")
 	if conf != nil {
@@ -117,7 +117,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 }
 
 func (sf *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
-	sf.logMsgList.Free()
+	sf.logMsgList = sf.logMsgList[:0]
 }
 
 func (sf *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
@@ -138,7 +138,7 @@ func (sf *TFrmLogData) UDPDataReceived() {
 			return
 		}
 		message := string(buffer[:numberBytes])
-		sf.logMsgList.Add(message)
+		sf.logMsgList = append(sf.logMsgList, message)
 	}
 }
 
@@ -150,7 +150,7 @@ func (sf *TFrmLogData) WriteLogFile() {
 	sf.logMsgListMutex.Lock()
 	defer sf.logMsgListMutex.Unlock()
 
-	if sf.logMsgList.Count() <= 0 {
+	if len(sf.logMsgList) <= 0 {
 		return
 	}
 
@@ -182,12 +182,12 @@ func (sf *TFrmLogData) WriteLogFile() {
 	defer fl.Close()
 
 	// 写入日志信息
-	for i := int32(0); i < sf.logMsgList.Count(); i++ {
-		msg := sf.logMsgList.Strings(i)
+	for i := 0; i < len(sf.logMsgList); i++ {
+		msg := sf.logMsgList[i]
 		logEntry := fmt.Sprintf("%s\t%s\n", msg, now.Format("2006-01-02 15:04:05"))
 		fl.WriteString(logEntry)
 	}
 
 	// 清空logMsgList
-	sf.logMsgList.Clear()
+	sf.logMsgList = sf.logMsgList[:0]
 }
