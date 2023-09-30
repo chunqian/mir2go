@@ -283,6 +283,7 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 			conn, err := listener.Accept()
 			if err != nil {
 				log.Error(err.Error())
+				s.active = false
 				return
 			}
 			tcpConn, ok := conn.(*net.TCPConn)
