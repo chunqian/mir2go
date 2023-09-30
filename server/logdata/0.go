@@ -4,16 +4,4 @@
 
 package main
 
-import (
-	"runtime"
-
-	_ "github.com/chunqian/mir2go/pkgs/macapp"
-)
-
-var AppDir string = "/Users/tim/Downloads/github/mir2go/bin/logdataserver/"
-
-func init() {
-	if runtime.GOOS != "darwin" {
-		AppDir = ""
-	}
-}
+import _ "github.com/chunqian/mir2go/pkgs/macapp"
