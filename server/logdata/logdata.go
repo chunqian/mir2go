@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -76,7 +78,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
 	sf.logMsgList = make([]string, 0)
 
-	conf := vcl.NewIniFile("./Config.ini")
+	conf := vcl.NewIniFile(GetExePath() + "./Config.ini")
 	if conf != nil {
 		BaseDir = conf.ReadString("Setup", "BaseDir", BaseDir)
 		ServerName = conf.ReadString("Setup", "ServerName", ServerName)
@@ -180,4 +182,14 @@ func (sf *TFrmLogData) WriteLogFile() {
 
 	// 清空logMsgList
 	sf.logMsgList = sf.logMsgList[:0]
+}
+
+func GetExePath() string {
+	exePath, _ := os.Executable()
+	appRoot := filepath.Dir(exePath)
+	if runtime.GOOS == "darwin" {
+		appRoot = filepath.Dir(filepath.Dir(filepath.Dir(appRoot)))
+	}
+
+	return appRoot + "/"
 }
