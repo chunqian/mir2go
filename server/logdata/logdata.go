@@ -84,8 +84,8 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 		ServerPort = conf.ReadInteger("Setup", "LogPort", ServerPort)
 		conf.Free()
 	}
-	sf.SetCaption(Caption + " - " + ServerName)
 
+	sf.SetCaption(Caption + " - " + ServerName)
 	sf.Memo1.SetText(BaseDir)
 
 	// 初始化UDP组件

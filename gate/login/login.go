@@ -427,24 +427,26 @@ func (sf *TFrmMain) isConnLimited(ipaddr string) bool {
 
 func (sf *TFrmMain) loadConfig() {
 	conf := vcl.NewIniFile(ConfigFile)
-	TitleName = conf.ReadString(GateClass, "Title", TitleName)
-	ServerPort = conf.ReadInteger(GateClass, "ServerPort", ServerPort)
-	ServerAddr = conf.ReadString(GateClass, "ServerAddr", ServerAddr)
-	GatePort = conf.ReadInteger(GateClass, "GatePort", GatePort)
-	GateAddr = conf.ReadString(GateClass, "GateAddr", GateAddr)
-	ShowLogLevel = conf.ReadInteger(GateClass, "ShowLogLevel", ShowLogLevel)
+	if conf != nil {
+		TitleName = conf.ReadString(GateClass, "Title", TitleName)
+		ServerPort = conf.ReadInteger(GateClass, "ServerPort", ServerPort)
+		ServerAddr = conf.ReadString(GateClass, "ServerAddr", ServerAddr)
+		GatePort = conf.ReadInteger(GateClass, "GatePort", GatePort)
+		GateAddr = conf.ReadString(GateClass, "GateAddr", GateAddr)
+		ShowLogLevel = conf.ReadInteger(GateClass, "ShowLogLevel", ShowLogLevel)
 
-	BlockMethod = TBlockIPMethod(conf.ReadInteger(GateClass, "BlockMethod", int32(BlockMethod)))
+		BlockMethod = TBlockIPMethod(conf.ReadInteger(GateClass, "BlockMethod", int32(BlockMethod)))
 
-	if conf.ReadInteger(GateClass, "KeepConnectTimeOut", -1) <= 0 {
-		conf.WriteInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
+		// if conf.ReadInteger(GateClass, "KeepConnectTimeOut", -1) <= 0 {
+		// 	conf.WriteInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
+		// }
+
+		MaxConnOfIPaddr = conf.ReadInteger(GateClass, "MaxConnOfIPaddr", MaxConnOfIPaddr)
+		KeepConnectTimeOut = conf.ReadInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
+		DynamicIPDisMode = conf.ReadBool(GateClass, "DynamicIPDisMode", DynamicIPDisMode)
+
+		conf.Free()
 	}
-
-	MaxConnOfIPaddr = conf.ReadInteger(GateClass, "MaxConnOfIPaddr", MaxConnOfIPaddr)
-	KeepConnectTimeOut = conf.ReadInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
-	DynamicIPDisMode = conf.ReadBool(GateClass, "DynamicIPDisMode", DynamicIPDisMode)
-
-	conf.Free()
 
 	LoadBlockIPFile()
 }
