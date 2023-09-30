@@ -33,7 +33,6 @@ var (
 )
 
 var (
-	AppDir     string = "/Users/tim/Downloads/github/mir2go/bin/logdataserver/"
 	BaseDir    string = AppDir + "./LogBase"
 	ServerName string = "热血传奇"
 	Caption    string = "引擎日志服务器"

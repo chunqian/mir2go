@@ -73,7 +73,6 @@ type IClientSocket interface {
 
 // ******************** Var ********************
 var (
-	AppDir               string      = "/Users/tim/Downloads/github/mir2go/bin/logingate/"
 	BlockIPList          []TSockaddr // 阻塞 IP 列表
 	BlockIPListMutex     sync.Mutex
 	BlockMethod          = Disconnect // 默认的阻塞方法
