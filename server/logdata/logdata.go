@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
-	"runtime"
 	"sync"
 	"time"
 
@@ -35,7 +33,8 @@ var (
 )
 
 var (
-	BaseDir    string = "./LogBase"
+	AppDir     string = "/Users/tim/Downloads/github/mir2go/bin/logdataserver/"
+	BaseDir    string = AppDir + "./LogBase"
 	ServerName string = "热血传奇"
 	Caption    string = "引擎日志服务器"
 	ServerPort int32  = 10000
@@ -78,7 +77,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
 	sf.logMsgList = make([]string, 0)
 
-	conf := vcl.NewIniFile(GetExePath() + "./Config.ini")
+	conf := vcl.NewIniFile(AppDir + "./Config.ini")
 	if conf != nil {
 		BaseDir = conf.ReadString("Setup", "BaseDir", BaseDir)
 		ServerName = conf.ReadString("Setup", "ServerName", ServerName)
@@ -182,14 +181,4 @@ func (sf *TFrmLogData) WriteLogFile() {
 
 	// 清空logMsgList
 	sf.logMsgList = sf.logMsgList[:0]
-}
-
-func GetExePath() string {
-	exePath, _ := os.Executable()
-	appRoot := filepath.Dir(exePath)
-	if runtime.GOOS == "darwin" {
-		appRoot = filepath.Dir(filepath.Dir(filepath.Dir(appRoot)))
-	}
-
-	return appRoot + "/"
 }

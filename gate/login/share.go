@@ -10,8 +10,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -75,6 +73,7 @@ type IClientSocket interface {
 
 // ******************** Var ********************
 var (
+	AppDir               string      = "/Users/tim/Downloads/github/mir2go/bin/logingate/"
 	BlockIPList          []TSockaddr // 阻塞 IP 列表
 	BlockIPListMutex     sync.Mutex
 	BlockMethod          = Disconnect // 默认的阻塞方法
@@ -104,8 +103,8 @@ var (
 	IPCountLimit2              = 40
 	MaxConnOfIPaddr      int32 = 10 // IP 地址的最大连接数
 	SendMsgCount         int
-	ShowLogLevel         int32       = 3              // 显示日志等级
-	ConfigFile                       = "./Config.ini" // 配置文件路径
+	ShowLogLevel         int32       = 3                       // 显示日志等级
+	ConfigFile                       = AppDir + "./Config.ini" // 配置文件路径
 	ServerAddr                       = "127.0.0.1"
 	ServerPort           int32       = 5500
 	TempBlockIPList      []TSockaddr // 临时阻塞 IP 列表
@@ -144,19 +143,9 @@ func getAddrPort(n net.Addr) string {
 	return port
 }
 
-func GetExePath() string {
-	exePath, _ := os.Executable()
-	appRoot := filepath.Dir(exePath)
-	if runtime.GOOS == "darwin" {
-		appRoot = filepath.Dir(filepath.Dir(filepath.Dir(appRoot)))
-	}
-
-	return appRoot + "/"
-}
-
 func LoadBlockIPFile() {
 	// 定义文件名
-	sFileName := GetExePath() + "./BlockIPList.txt"
+	sFileName := AppDir + "./BlockIPList.txt"
 
 	// 检查文件是否存在
 	if _, err := os.Stat(sFileName); os.IsNotExist(err) {
@@ -197,7 +186,7 @@ func LoadBlockIPFile() {
 
 func SaveBlockIPList() {
 	// 打开（或创建）文件
-	file, err := os.Create(GetExePath() + "./BlockIPList.txt")
+	file, err := os.Create(AppDir + "./BlockIPList.txt")
 	if err != nil {
 		return
 	}

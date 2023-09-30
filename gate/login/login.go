@@ -426,7 +426,7 @@ func (sf *TFrmMain) isConnLimited(ipaddr string) bool {
 }
 
 func (sf *TFrmMain) loadConfig() {
-	conf := vcl.NewIniFile(GetExePath() + ConfigFile)
+	conf := vcl.NewIniFile(ConfigFile)
 	if conf != nil {
 		TitleName = conf.ReadString(GateClass, "Title", TitleName)
 		ServerPort = conf.ReadInteger(GateClass, "ServerPort", ServerPort)
