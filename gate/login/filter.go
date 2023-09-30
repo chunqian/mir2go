@@ -9,12 +9,10 @@ import (
 type TFrmIPaddrFilter struct {
 	*vcl.TForm
 
-	BlockListPopupMenu     *TBlockListPopupMenu
-	ButtonOK               *vcl.TButton
-	GroupBox1              *TGroupBox1
-	GroupBox2              *TGroupBox2
-	GroupBoxActive         *TGroupBoxActive
-	TempBlockListPopupMenu *TTempBlockListPopupMenu
+	ButtonOK       *vcl.TButton
+	GroupBox1      *TGroupBox1
+	GroupBox2      *TGroupBox2
+	GroupBoxActive *TGroupBoxActive
 }
 
 type TActiveListPopupMenu struct {
@@ -50,10 +48,10 @@ type TTempBlockListPopupMenu struct {
 type TGroupBox1 struct {
 	*vcl.TGroupBox
 
-	Label1           *vcl.TLabel
 	LabelTempList    *vcl.TLabel
-	ListBoxBlockList *vcl.TListBox
-	ListBoxTempList  *vcl.TListBox
+	Label1           *vcl.TLabel
+	ListBoxTempList  *TListBoxTempList
+	ListBoxBlockList *TListBoxBlockList
 }
 
 type TGroupBox2 struct {
@@ -78,13 +76,25 @@ type TGroupBoxActive struct {
 	*vcl.TGroupBox
 
 	Label4            *vcl.TLabel
-	ListBoxActiveList *TListBox
+	ListBoxActiveList *TListBoxActiveList
 }
 
-type TListBox struct {
+type TListBoxActiveList struct {
 	*vcl.TListBox
 
 	ActiveListPopupMenu *TActiveListPopupMenu
+}
+
+type TListBoxBlockList struct {
+	*vcl.TListBox
+
+	BlockListPopupMenu *TBlockListPopupMenu
+}
+
+type TListBoxTempList struct {
+	*vcl.TListBox
+
+	TempBlockListPopupMenu *TTempBlockListPopupMenu
 }
 
 var (
@@ -104,10 +114,10 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	sf.SetClientWidth(679)
 	sf.SetClientHeight(367)
 
-	sf.BlockListPopupMenu = &TBlockListPopupMenu{
-		TPopupMenu: vcl.NewPopupMenu(sf),
-	}
-	sf.BlockListPopupMenu.Layout(sf)
+	// sf.BlockListPopupMenu = &TBlockListPopupMenu{
+	// 	TPopupMenu: vcl.NewPopupMenu(sf),
+	// }
+	// sf.BlockListPopupMenu.Layout(sf)
 
 	sf.ButtonOK = vcl.NewButton(sf)
 	sf.ButtonOK.SetCaption("确定(&O)")
@@ -130,6 +140,30 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	sf.GroupBoxActive.SetHeight(313)
 	sf.GroupBoxActive.Layout(sf)
 	sf.GroupBoxActive.SetParent(sf)
+
+	sf.GroupBox1 = &TGroupBox1{
+		TGroupBox: vcl.NewGroupBox(sf),
+	}
+	sf.GroupBox1.SetCaption("过滤列表")
+	sf.GroupBox1.Font().SetSize(9)
+	sf.GroupBox1.SetLeft(162)
+	sf.GroupBox1.SetTop(9)
+	sf.GroupBox1.SetWidth(294)
+	sf.GroupBox1.SetHeight(313)
+	sf.GroupBox1.Layout(sf)
+	sf.GroupBox1.SetParent(sf)
+
+	sf.GroupBox2 = &TGroupBox2{
+		TGroupBox: vcl.NewGroupBox(sf),
+	}
+	sf.GroupBox2.SetCaption("攻击保护")
+	sf.GroupBox2.Font().SetSize(9)
+	sf.GroupBox2.SetLeft(464)
+	sf.GroupBox2.SetTop(9)
+	sf.GroupBox2.SetWidth(201)
+	sf.GroupBox2.SetHeight(274)
+	sf.GroupBox2.Layout(sf)
+	sf.GroupBox2.SetParent(sf)
 }
 
 func (sf *TActiveListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
@@ -179,6 +213,29 @@ func (sf *TBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
 	sf.Items().Add(sf.PopMenuDelete)
 }
 
+func (sf *TTempBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
+	sf.PopMenuRefList = vcl.NewMenuItem(sf)
+	sf.PopMenuRefList.SetCaption("刷新(&R)")
+
+	sf.PopMenuSort = vcl.NewMenuItem(sf)
+	sf.PopMenuSort.SetCaption("排序(&S)")
+
+	sf.PopMenuAdd = vcl.NewMenuItem(sf)
+	sf.PopMenuAdd.SetCaption("增加(&A)")
+
+	sf.PopMenuBlockList = vcl.NewMenuItem(sf)
+	sf.PopMenuBlockList.SetCaption("加入永久过滤列表(&D)")
+
+	sf.PopMenuDelete = vcl.NewMenuItem(sf)
+	sf.PopMenuDelete.SetCaption("删除(&D)")
+
+	sf.Items().Add(sf.PopMenuRefList)
+	sf.Items().Add(sf.PopMenuSort)
+	sf.Items().Add(sf.PopMenuAdd)
+	sf.Items().Add(sf.PopMenuBlockList)
+	sf.Items().Add(sf.PopMenuDelete)
+}
+
 func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 
 	sf.Label4 = vcl.NewLabel(sf)
@@ -189,7 +246,7 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 	sf.Label4.SetHeight(13)
 	sf.Label4.SetParent(sf)
 
-	sf.ListBoxActiveList = &TListBox{
+	sf.ListBoxActiveList = &TListBoxActiveList{
 		TListBox: vcl.NewListBox(sf),
 	}
 	sf.ListBoxActiveList.SetHint("当前连接的IP地址列表")
@@ -205,7 +262,7 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxActiveList.SetParent(sf)
 }
 
-func (sf *TListBox) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TListBoxActiveList) Layout(sender *TFrmIPaddrFilter) {
 
 	sf.ActiveListPopupMenu = &TActiveListPopupMenu{
 		TPopupMenu: vcl.NewPopupMenu(sf),
@@ -213,4 +270,76 @@ func (sf *TListBox) Layout(sender *TFrmIPaddrFilter) {
 	sf.ActiveListPopupMenu.Layout(sender)
 
 	sf.SetPopupMenu(sf.ActiveListPopupMenu)
+}
+
+func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
+
+	sf.LabelTempList = vcl.NewLabel(sf)
+	sf.LabelTempList.SetCaption("动态过滤:")
+	sf.LabelTempList.SetLeft(9)
+	sf.LabelTempList.SetTop(9)
+	sf.LabelTempList.SetWidth(59)
+	sf.LabelTempList.SetHeight(13)
+	sf.LabelTempList.SetParent(sf)
+
+	sf.Label1 = vcl.NewLabel(sf)
+	sf.Label1.SetCaption("永久过滤:")
+	sf.Label1.SetLeft(147)
+	sf.Label1.SetTop(9)
+	sf.Label1.SetWidth(59)
+	sf.Label1.SetHeight(13)
+	sf.Label1.SetParent(sf)
+
+	sf.ListBoxTempList = &TListBoxTempList{
+		TListBox: vcl.NewListBox(sf),
+	}
+	sf.ListBoxTempList.SetHint("动态过滤列表,在此列表中的IP将无法建立连接,但在程序重新启动时此列表的信息将被清空")
+	sf.ListBoxTempList.SetLeft(0)
+	sf.ListBoxTempList.SetTop(31)
+	sf.ListBoxTempList.SetWidth(138)
+	sf.ListBoxTempList.SetHeight(261)
+	sf.ListBoxTempList.SetItemHeight(13)
+	sf.ListBoxTempList.SetParentShowHint(false)
+	sf.ListBoxTempList.SetShowHint(true)
+	sf.ListBoxTempList.SetSorted(true)
+	sf.ListBoxTempList.Layout(sender)
+	sf.ListBoxTempList.SetParent(sf)
+
+	sf.ListBoxBlockList = &TListBoxBlockList{
+		TListBox: vcl.NewListBox(sf),
+	}
+	sf.ListBoxBlockList.SetHint("永久过滤列表,在此列表中的IP将无法建立连接,此列表将保存于配置文件中,在程序重新启动时会重新加载此列表")
+	sf.ListBoxBlockList.SetLeft(147)
+	sf.ListBoxBlockList.SetTop(31)
+	sf.ListBoxBlockList.SetWidth(138)
+	sf.ListBoxBlockList.SetHeight(261)
+	sf.ListBoxBlockList.SetItemHeight(13)
+	sf.ListBoxBlockList.SetParentShowHint(false)
+	sf.ListBoxBlockList.SetShowHint(true)
+	sf.ListBoxBlockList.SetSorted(true)
+	sf.ListBoxBlockList.Layout(sender)
+	sf.ListBoxBlockList.SetParent(sf)
+}
+
+func (sf *TListBoxBlockList) Layout(sender *TFrmIPaddrFilter) {
+
+	sf.BlockListPopupMenu = &TBlockListPopupMenu{
+		TPopupMenu: vcl.NewPopupMenu(sf),
+	}
+	sf.BlockListPopupMenu.Layout(sender)
+
+	sf.SetPopupMenu(sf.BlockListPopupMenu)
+}
+
+func (sf *TListBoxTempList) Layout(sender *TFrmIPaddrFilter) {
+
+	sf.TempBlockListPopupMenu = &TTempBlockListPopupMenu{
+		TPopupMenu: vcl.NewPopupMenu(sf),
+	}
+	sf.TempBlockListPopupMenu.Layout(sender)
+
+	sf.SetPopupMenu(sf.TempBlockListPopupMenu)
+}
+
+func (sf *TGroupBox2) Layout(sender *TFrmIPaddrFilter) {
 }
