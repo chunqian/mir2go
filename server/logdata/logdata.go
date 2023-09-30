@@ -43,14 +43,6 @@ var (
 // ******************** Layout ********************
 func (sf *TFrmLogData) Layout() {
 
-	sf.SetCaption("日志服务器")
-	sf.EnabledMaximize(false)
-	sf.SetBounds(782, 338, 329, 121)
-
-	constraints := vcl.AsSizeConstraints(sf.Constraints())
-	constraints.SetMaxWidth(500)
-	sf.SetConstraints(constraints)
-
 	sf.Label3 = vcl.NewLabel(sf)
 	sf.Label3.SetParent(sf)
 	sf.Label3.SetCaption("当前日志文件:")
@@ -71,6 +63,13 @@ func (sf *TFrmLogData) Layout() {
 func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
 	// 布局
+	sf.SetCaption("日志服务器")
+	sf.EnabledMaximize(false)
+	sf.SetBounds(782, 338, 329, 121)
+	// constraints := vcl.AsSizeConstraints(sf.Constraints())
+	// constraints.SetMaxWidth(500)
+	// sf.SetConstraints(constraints)
+	sf.SetBorderStyle(types.BsSingle)
 	sf.Layout()
 
 	sf.remoteClose = false

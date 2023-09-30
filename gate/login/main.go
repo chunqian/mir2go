@@ -8,5 +8,9 @@ import (
 
 func main() {
 	vcl.DEBUG = true
-	vcl.RunApp(&FrmMain, &FrmIPaddrFilter)
+	vcl.RunApp(
+		&FrmMain,
+		&FrmIPaddrFilter,
+		&FrmGeneralConfig,
+	)
 }

@@ -125,11 +125,6 @@ var (
 // ******************** Layout ********************
 func (sf *TFrmMain) Layout() {
 
-	sf.SetCaption("登陆网关")
-	sf.EnabledMaximize(false)
-	sf.SetBorderStyle(types.BsSingle)
-	sf.SetBounds(636, 215, 308, 154)
-
 	sf.MainMenu = &TMainMenu{
 		TMainMenu: vcl.NewMainMenu(sf),
 	}
@@ -138,13 +133,16 @@ func (sf *TFrmMain) Layout() {
 	sf.Panel = &TPanel{
 		TPanel: vcl.NewPanel(sf),
 	}
+	sf.Panel.SetAlign(types.AlTop)
+	sf.Panel.SetBevelOuter(types.BvNone)
+	sf.Panel.SetTabOrder(1)
+	sf.Panel.SetBounds(0, 0, 308, 119)
 	sf.Panel.Layout(sf)
 
 	sf.MemoLog = vcl.NewMemo(sf)
 	sf.MemoLog.SetName("MemoLog")
 	sf.MemoLog.SetAlign(types.AlClient)
 	sf.MemoLog.SetText("")
-	sf.MemoLog.SetParent(sf)
 	sf.MemoLog.SetColor(colors.ClMenuText)
 	sf.MemoLog.Font().SetColor(colors.ClLimegreen)
 	sf.MemoLog.SetBounds(0, 119, 308, 18)
@@ -152,7 +150,6 @@ func (sf *TFrmMain) Layout() {
 	sf.MemoLog.SetScrollBars(types.SsHorizontal)
 
 	sf.StatusBar = vcl.NewStatusBar(sf)
-	sf.StatusBar.SetParent(sf)
 	sf.StatusBar.SetSimplePanel(false)
 	sf.StatusBar.SetBounds(0, 137, 308, 17)
 	panel := sf.StatusBar.Panels().Add()
@@ -189,6 +186,10 @@ func (sf *TFrmMain) Layout() {
 	sf.Timer.SetInterval(1000)
 	sf.Timer.SetEnabled(true)
 	sf.Timer.SetOnTimer(sf.TimerTimer)
+
+	sf.Panel.SetParent(sf)
+	sf.MemoLog.SetParent(sf)
+	sf.StatusBar.SetParent(sf)
 }
 
 func (sf *TMainMenu) Layout(sender *TFrmMain) {
@@ -225,26 +226,21 @@ func (sf *TMainMenu) Layout(sender *TFrmMain) {
 
 func (sf *TPanel) Layout(sender *TFrmMain) {
 
-	sf.SetParent(vcl.AsForm(sender))
-	sf.SetAlign(types.AlTop)
-	sf.SetBevelOuter(types.BvNone)
-	sf.SetTabOrder(1)
-	sf.SetBounds(0, 0, 308, 119)
-
 	sf.Label2 = vcl.NewLabel(sf)
-	sf.Label2.SetParent(sf)
 	sf.Label2.SetCaption("label2")
 	sf.Label2.SetBounds(199, 11, 42, 13)
 
 	sf.Lack = vcl.NewLabel(sf)
-	sf.Lack.SetParent(sf)
 	sf.Lack.SetCaption("0/0")
 	sf.Lack.SetBounds(195, 33, 21, 13)
 
 	sf.Hold = vcl.NewLabel(sf)
-	sf.Hold.SetParent(sf)
 	sf.Hold.SetCaption("")
 	sf.Hold.SetBounds(106, 10, 7, 13)
+
+	sf.Label2.SetParent(sf)
+	sf.Lack.SetParent(sf)
+	sf.Hold.SetParent(sf)
 }
 
 func (sf *TMenuControl) Layout(sender *TFrmMain) {
@@ -295,6 +291,7 @@ func (sf *TMenuOption) Layout(sender *TFrmMain) {
 
 	sf.MenuOptionGeneral = vcl.NewMenuItem(sf)
 	sf.MenuOptionGeneral.SetCaption("基本设置")
+	sf.MenuOptionGeneral.SetOnClick(sender.MenuOptionGeneralClick)
 
 	sf.MenuOptionIpFilter = vcl.NewMenuItem(sf)
 	sf.MenuOptionIpFilter.SetCaption("安全过滤")
@@ -317,6 +314,10 @@ func (sf *TMenuItem3) Layout(sender *TFrmMain) {
 func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
 	// 布局
+	sf.SetCaption("登陆网关")
+	sf.EnabledMaximize(false)
+	sf.SetBorderStyle(types.BsSingle)
+	sf.SetBounds(636, 215, 308, 154)
 	sf.Layout()
 
 	sf.tempLogList = make([]string, 0)
@@ -855,6 +856,7 @@ func (sf *TFrmMain) MenuControlStopClick(sender vcl.IObject) {
 
 func (sf *TFrmMain) MenuOptionGeneralClick(sender vcl.IObject) {
 	//
+	FrmGeneralConfig.ShowModal()
 }
 
 func (sf *TFrmMain) MenuOptionIpFilterClick(sender vcl.IObject) {

@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/ying32/govcl/vcl"
+	"github.com/ying32/govcl/vcl/types"
 	"github.com/ying32/govcl/vcl/types/colors"
 )
 
@@ -102,32 +103,21 @@ var (
 	FrmIPaddrFilter *TFrmIPaddrFilter
 )
 
-func (sf *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
-
-	// 布局
-	sf.Layout()
-}
-
 // ******************** Layout ********************
 func (sf *TFrmIPaddrFilter) Layout() {
-
-	sf.SetBounds(420, 296, 679, 347)
 
 	sf.ButtonOK = vcl.NewButton(sf)
 	sf.ButtonOK.SetCaption("确定(&O)")
 	sf.ButtonOK.SetDefault(true)
 	sf.ButtonOK.SetBounds(568, 295, 86, 27)
-	sf.ButtonOK.SetParent(sf)
 
 	sf.GroupBoxActive = &TGroupBoxActive{
 		TGroupBox: vcl.NewGroupBox(sf),
 	}
-
 	sf.GroupBoxActive.SetCaption("当前连接")
 	sf.GroupBoxActive.Font().SetSize(9)
 	sf.GroupBoxActive.SetBounds(9, 9, 148, 313)
 	sf.GroupBoxActive.Layout(sf)
-	sf.GroupBoxActive.SetParent(sf)
 
 	sf.GroupBox1 = &TGroupBox1{
 		TGroupBox: vcl.NewGroupBox(sf),
@@ -136,7 +126,6 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	sf.GroupBox1.Font().SetSize(9)
 	sf.GroupBox1.SetBounds(162, 9, 294, 313)
 	sf.GroupBox1.Layout(sf)
-	sf.GroupBox1.SetParent(sf)
 
 	sf.GroupBox2 = &TGroupBox2{
 		TGroupBox: vcl.NewGroupBox(sf),
@@ -145,6 +134,10 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	sf.GroupBox2.Font().SetSize(9)
 	sf.GroupBox2.SetBounds(464, 9, 201, 274)
 	sf.GroupBox2.Layout(sf)
+
+	sf.ButtonOK.SetParent(sf)
+	sf.GroupBoxActive.SetParent(sf)
+	sf.GroupBox1.SetParent(sf)
 	sf.GroupBox2.SetParent(sf)
 }
 
@@ -225,7 +218,6 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 	sf.Label4 = vcl.NewLabel(sf)
 	sf.Label4.SetCaption("连接列表:")
 	sf.Label4.SetBounds(0, 9, 59, 13)
-	sf.Label4.SetParent(sf)
 
 	sf.ListBoxActiveList = &TListBoxActiveList{
 		TListBox: vcl.NewListBox(sf),
@@ -237,6 +229,8 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxActiveList.SetShowHint(true)
 	sf.ListBoxActiveList.SetSorted(true)
 	sf.ListBoxActiveList.Layout(sender)
+
+	sf.Label4.SetParent(sf)
 	sf.ListBoxActiveList.SetParent(sf)
 }
 
@@ -255,12 +249,10 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 	sf.LabelTempList = vcl.NewLabel(sf)
 	sf.LabelTempList.SetCaption("动态过滤:")
 	sf.LabelTempList.SetBounds(9, 9, 59, 13)
-	sf.LabelTempList.SetParent(sf)
 
 	sf.Label1 = vcl.NewLabel(sf)
 	sf.Label1.SetCaption("永久过滤:")
 	sf.Label1.SetBounds(147, 9, 59, 13)
-	sf.Label1.SetParent(sf)
 
 	sf.ListBoxTempList = &TListBoxTempList{
 		TListBox: vcl.NewListBox(sf),
@@ -272,7 +264,6 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxTempList.SetShowHint(true)
 	sf.ListBoxTempList.SetSorted(true)
 	sf.ListBoxTempList.Layout(sender)
-	sf.ListBoxTempList.SetParent(sf)
 
 	sf.ListBoxBlockList = &TListBoxBlockList{
 		TListBox: vcl.NewListBox(sf),
@@ -284,6 +275,10 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxBlockList.SetShowHint(true)
 	sf.ListBoxBlockList.SetSorted(true)
 	sf.ListBoxBlockList.Layout(sender)
+
+	sf.LabelTempList.SetParent(sf)
+	sf.Label1.SetParent(sf)
+	sf.ListBoxTempList.SetParent(sf)
 	sf.ListBoxBlockList.SetParent(sf)
 }
 
@@ -371,4 +366,13 @@ func (sf *TGroupBox3) Layout(sender *TFrmIPaddrFilter) {
 	sf.RadioDisConnect.SetParent(sf)
 	sf.RadioAddTempList.SetParent(sf)
 	sf.RadioAddBlockList.SetParent(sf)
+}
+
+// ******************** TFrmIPaddrFilter ********************
+func (sf *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
+
+	// 布局
+	sf.SetBounds(420, 296, 679, 347)
+	sf.SetBorderStyle(types.BsSingle)
+	sf.Layout()
 }
