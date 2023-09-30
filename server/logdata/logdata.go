@@ -45,10 +45,7 @@ func (sf *TFrmLogData) Layout() {
 
 	sf.SetCaption("日志服务器")
 	sf.EnabledMaximize(false)
-	sf.SetLeft(782)
-	sf.SetTop(338)
-	sf.SetWidth(329)
-	sf.SetHeight(121)
+	sf.SetBounds(782, 338, 329, 121)
 
 	constraints := vcl.AsSizeConstraints(sf.Constraints())
 	constraints.SetMaxWidth(500)
@@ -57,10 +54,7 @@ func (sf *TFrmLogData) Layout() {
 	sf.Label3 = vcl.NewLabel(sf)
 	sf.Label3.SetParent(sf)
 	sf.Label3.SetCaption("当前日志文件:")
-	sf.Label3.SetLeft(9)
-	sf.Label3.SetTop(9)
-	sf.Label3.SetWidth(85)
-	sf.Label3.SetHeight(13)
+	sf.Label3.SetBounds(9, 9, 85, 13)
 
 	sf.Timer1 = vcl.NewTimer(sf)
 	sf.Timer1.SetInterval(3000)
@@ -69,10 +63,7 @@ func (sf *TFrmLogData) Layout() {
 
 	sf.Memo1 = vcl.NewMemo(sf)
 	sf.Memo1.SetParent(sf)
-	sf.Memo1.SetLeft(11)
-	sf.Memo1.SetTop(30)
-	sf.Memo1.SetWidth(303)
-	sf.Memo1.SetHeight(75)
+	sf.Memo1.SetBounds(11, 30, 303, 75)
 	sf.Memo1.SetReadOnly(true)
 }
 
