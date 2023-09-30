@@ -10,6 +10,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -142,9 +144,19 @@ func getAddrPort(n net.Addr) string {
 	return port
 }
 
+func GetExePath() string {
+	exePath, _ := os.Executable()
+	appRoot := filepath.Dir(exePath)
+	if runtime.GOOS == "darwin" {
+		appRoot = filepath.Dir(filepath.Dir(filepath.Dir(appRoot)))
+	}
+
+	return appRoot + "/"
+}
+
 func LoadBlockIPFile() {
 	// 定义文件名
-	sFileName := "./BlockIPList.txt"
+	sFileName := GetExePath() + "./BlockIPList.txt"
 
 	// 检查文件是否存在
 	if _, err := os.Stat(sFileName); os.IsNotExist(err) {
@@ -185,7 +197,7 @@ func LoadBlockIPFile() {
 
 func SaveBlockIPList() {
 	// 打开（或创建）文件
-	file, err := os.Create("./BlockIPList.txt")
+	file, err := os.Create(GetExePath() + "./BlockIPList.txt")
 	if err != nil {
 		return
 	}

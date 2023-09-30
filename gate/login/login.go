@@ -426,7 +426,7 @@ func (sf *TFrmMain) isConnLimited(ipaddr string) bool {
 }
 
 func (sf *TFrmMain) loadConfig() {
-	conf := vcl.NewIniFile(ConfigFile)
+	conf := vcl.NewIniFile(GetExePath() + ConfigFile)
 	if conf != nil {
 		TitleName = conf.ReadString(GateClass, "Title", TitleName)
 		ServerPort = conf.ReadInteger(GateClass, "ServerPort", ServerPort)
@@ -437,9 +437,9 @@ func (sf *TFrmMain) loadConfig() {
 
 		BlockMethod = TBlockIPMethod(conf.ReadInteger(GateClass, "BlockMethod", int32(BlockMethod)))
 
-		// if conf.ReadInteger(GateClass, "KeepConnectTimeOut", -1) <= 0 {
-		// 	conf.WriteInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
-		// }
+		if conf.ReadInteger(GateClass, "KeepConnectTimeOut", -1) <= 0 {
+			conf.WriteInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
+		}
 
 		MaxConnOfIPaddr = conf.ReadInteger(GateClass, "MaxConnOfIPaddr", MaxConnOfIPaddr)
 		KeepConnectTimeOut = conf.ReadInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
