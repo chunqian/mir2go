@@ -4,4 +4,16 @@
 
 package main
 
-import _ "github.com/chunqian/mir2go/pkgs/macapp"
+import (
+	"runtime"
+
+	_ "github.com/chunqian/mir2go/pkgs/macapp"
+)
+
+var AppDir string = "/Users/tim/Downloads/github/mir2go/bin/logingate/"
+
+func init() {
+	if runtime.GOOS != "darwin" {
+		AppDir = ""
+	}
+}
