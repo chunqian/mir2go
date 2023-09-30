@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/ying32/govcl/vcl"
+	"github.com/ying32/govcl/vcl/types/colors"
 )
 
 type TFrmIPaddrFilter struct {
@@ -107,25 +108,15 @@ func (sf *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
 	sf.Layout()
 }
 
+// ******************** Layout ********************
 func (sf *TFrmIPaddrFilter) Layout() {
 
-	sf.SetLeft(420)
-	sf.SetTop(296)
-	sf.SetClientWidth(679)
-	sf.SetClientHeight(367)
-
-	// sf.BlockListPopupMenu = &TBlockListPopupMenu{
-	// 	TPopupMenu: vcl.NewPopupMenu(sf),
-	// }
-	// sf.BlockListPopupMenu.Layout(sf)
+	sf.SetBounds(420, 296, 679, 347)
 
 	sf.ButtonOK = vcl.NewButton(sf)
 	sf.ButtonOK.SetCaption("确定(&O)")
 	sf.ButtonOK.SetDefault(true)
-	sf.ButtonOK.SetLeft(568)
-	sf.ButtonOK.SetTop(295)
-	sf.ButtonOK.SetWidth(86)
-	sf.ButtonOK.SetHeight(27)
+	sf.ButtonOK.SetBounds(568, 295, 86, 27)
 	sf.ButtonOK.SetParent(sf)
 
 	sf.GroupBoxActive = &TGroupBoxActive{
@@ -134,10 +125,7 @@ func (sf *TFrmIPaddrFilter) Layout() {
 
 	sf.GroupBoxActive.SetCaption("当前连接")
 	sf.GroupBoxActive.Font().SetSize(9)
-	sf.GroupBoxActive.SetLeft(9)
-	sf.GroupBoxActive.SetTop(9)
-	sf.GroupBoxActive.SetWidth(148)
-	sf.GroupBoxActive.SetHeight(313)
+	sf.GroupBoxActive.SetBounds(9, 9, 148, 313)
 	sf.GroupBoxActive.Layout(sf)
 	sf.GroupBoxActive.SetParent(sf)
 
@@ -146,10 +134,7 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	}
 	sf.GroupBox1.SetCaption("过滤列表")
 	sf.GroupBox1.Font().SetSize(9)
-	sf.GroupBox1.SetLeft(162)
-	sf.GroupBox1.SetTop(9)
-	sf.GroupBox1.SetWidth(294)
-	sf.GroupBox1.SetHeight(313)
+	sf.GroupBox1.SetBounds(162, 9, 294, 313)
 	sf.GroupBox1.Layout(sf)
 	sf.GroupBox1.SetParent(sf)
 
@@ -158,10 +143,7 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	}
 	sf.GroupBox2.SetCaption("攻击保护")
 	sf.GroupBox2.Font().SetSize(9)
-	sf.GroupBox2.SetLeft(464)
-	sf.GroupBox2.SetTop(9)
-	sf.GroupBox2.SetWidth(201)
-	sf.GroupBox2.SetHeight(274)
+	sf.GroupBox2.SetBounds(464, 9, 201, 274)
 	sf.GroupBox2.Layout(sf)
 	sf.GroupBox2.SetParent(sf)
 }
@@ -191,6 +173,7 @@ func (sf *TActiveListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
 }
 
 func (sf *TBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
+
 	sf.PopMenuRefList = vcl.NewMenuItem(sf)
 	sf.PopMenuRefList.SetCaption("刷新(&R)")
 
@@ -214,6 +197,7 @@ func (sf *TBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
 }
 
 func (sf *TTempBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
+
 	sf.PopMenuRefList = vcl.NewMenuItem(sf)
 	sf.PopMenuRefList.SetCaption("刷新(&R)")
 
@@ -240,21 +224,15 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 
 	sf.Label4 = vcl.NewLabel(sf)
 	sf.Label4.SetCaption("连接列表:")
-	sf.Label4.SetLeft(0)
-	sf.Label4.SetTop(9)
-	sf.Label4.SetWidth(59)
-	sf.Label4.SetHeight(13)
+	sf.Label4.SetBounds(0, 9, 59, 13)
 	sf.Label4.SetParent(sf)
 
 	sf.ListBoxActiveList = &TListBoxActiveList{
 		TListBox: vcl.NewListBox(sf),
 	}
 	sf.ListBoxActiveList.SetHint("当前连接的IP地址列表")
-	sf.ListBoxActiveList.SetLeft(0)
-	sf.ListBoxActiveList.SetTop(31)
-	sf.ListBoxActiveList.SetWidth(138)
-	sf.ListBoxActiveList.SetHeight(261)
 	sf.ListBoxActiveList.SetItemHeight(13)
+	sf.ListBoxActiveList.SetBounds(0, 31, 138, 261)
 	sf.ListBoxActiveList.SetParentShowHint(false)
 	sf.ListBoxActiveList.SetShowHint(true)
 	sf.ListBoxActiveList.SetSorted(true)
@@ -276,29 +254,20 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 
 	sf.LabelTempList = vcl.NewLabel(sf)
 	sf.LabelTempList.SetCaption("动态过滤:")
-	sf.LabelTempList.SetLeft(9)
-	sf.LabelTempList.SetTop(9)
-	sf.LabelTempList.SetWidth(59)
-	sf.LabelTempList.SetHeight(13)
+	sf.LabelTempList.SetBounds(9, 9, 59, 13)
 	sf.LabelTempList.SetParent(sf)
 
 	sf.Label1 = vcl.NewLabel(sf)
 	sf.Label1.SetCaption("永久过滤:")
-	sf.Label1.SetLeft(147)
-	sf.Label1.SetTop(9)
-	sf.Label1.SetWidth(59)
-	sf.Label1.SetHeight(13)
+	sf.Label1.SetBounds(147, 9, 59, 13)
 	sf.Label1.SetParent(sf)
 
 	sf.ListBoxTempList = &TListBoxTempList{
 		TListBox: vcl.NewListBox(sf),
 	}
 	sf.ListBoxTempList.SetHint("动态过滤列表,在此列表中的IP将无法建立连接,但在程序重新启动时此列表的信息将被清空")
-	sf.ListBoxTempList.SetLeft(0)
-	sf.ListBoxTempList.SetTop(31)
-	sf.ListBoxTempList.SetWidth(138)
-	sf.ListBoxTempList.SetHeight(261)
 	sf.ListBoxTempList.SetItemHeight(13)
+	sf.ListBoxTempList.SetBounds(0, 31, 138, 261)
 	sf.ListBoxTempList.SetParentShowHint(false)
 	sf.ListBoxTempList.SetShowHint(true)
 	sf.ListBoxTempList.SetSorted(true)
@@ -309,11 +278,8 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 		TListBox: vcl.NewListBox(sf),
 	}
 	sf.ListBoxBlockList.SetHint("永久过滤列表,在此列表中的IP将无法建立连接,此列表将保存于配置文件中,在程序重新启动时会重新加载此列表")
-	sf.ListBoxBlockList.SetLeft(147)
-	sf.ListBoxBlockList.SetTop(31)
-	sf.ListBoxBlockList.SetWidth(138)
-	sf.ListBoxBlockList.SetHeight(261)
 	sf.ListBoxBlockList.SetItemHeight(13)
+	sf.ListBoxBlockList.SetBounds(147, 31, 138, 261)
 	sf.ListBoxBlockList.SetParentShowHint(false)
 	sf.ListBoxBlockList.SetShowHint(true)
 	sf.ListBoxBlockList.SetSorted(true)
@@ -342,4 +308,67 @@ func (sf *TListBoxTempList) Layout(sender *TFrmIPaddrFilter) {
 }
 
 func (sf *TGroupBox2) Layout(sender *TFrmIPaddrFilter) {
+
+	sf.Label2 = vcl.NewLabel(sf)
+	sf.Label2.SetCaption("连接限制:")
+	sf.Label2.SetBounds(9, 9, 59, 13)
+
+	sf.EditMaxConnect = vcl.NewSpinEdit(sf)
+	sf.EditMaxConnect.SetMaxValue(1000)
+	sf.EditMaxConnect.SetMinValue(1)
+	sf.EditMaxConnect.SetHint("单个IP地址,最多可以建立连接数,超过指定连接数将按下面的操作处理")
+	sf.EditMaxConnect.SetShowHint(true)
+	sf.EditMaxConnect.SetParentShowHint(false)
+	sf.EditMaxConnect.SetValue(50)
+	sf.EditMaxConnect.SetBounds(69, 4, 71, 22)
+
+	sf.Label3 = vcl.NewLabel(sf)
+	sf.Label3.SetCaption("连接/IP")
+	sf.Label3.SetBounds(147, 9, 47, 13)
+
+	sf.GroupBox3 = &TGroupBox3{
+		TGroupBox: vcl.NewGroupBox(sf),
+	}
+	sf.GroupBox3.SetCaption("攻击操作")
+	sf.GroupBox3.SetBounds(5, 115, 183, 97)
+	sf.GroupBox3.Layout(sender)
+
+	sf.Label7 = vcl.NewLabel(sf)
+	sf.Label7.SetCaption("以上参数调后立即生效")
+	sf.Label7.Font().SetColor(colors.ClRed)
+	sf.Label7.SetBounds(35, 226, 140, 13)
+
+	sf.Label2.SetParent(sf)
+	sf.EditMaxConnect.SetParent(sf)
+	sf.Label3.SetParent(sf)
+	sf.GroupBox3.SetParent(sf)
+	sf.Label7.SetParent(sf)
+}
+
+func (sf *TGroupBox3) Layout(sender *TFrmIPaddrFilter) {
+
+	sf.RadioDisConnect = vcl.NewRadioButton(sf)
+	sf.RadioDisConnect.SetCaption("断开连接")
+	sf.RadioDisConnect.SetHint("将连接简单的断开处理")
+	sf.RadioDisConnect.SetParentShowHint(false)
+	sf.RadioDisConnect.SetShowHint(true)
+	sf.RadioDisConnect.SetBounds(17, 5, 140, 19)
+
+	sf.RadioAddTempList = vcl.NewRadioButton(sf)
+	sf.RadioAddTempList.SetCaption("加入动态过滤列表")
+	sf.RadioAddTempList.SetHint("将此连接的IP加入动态过滤列表,并将此IP的所有连接强行中断")
+	sf.RadioAddTempList.SetParentShowHint(false)
+	sf.RadioAddTempList.SetShowHint(true)
+	sf.RadioAddTempList.SetBounds(17, 29, 140, 19)
+
+	sf.RadioAddBlockList = vcl.NewRadioButton(sf)
+	sf.RadioAddBlockList.SetCaption("加入永久过滤列表")
+	sf.RadioAddBlockList.SetHint("将此连接的IP加入永久过滤列表,并将此IP的所有连接强行中断")
+	sf.RadioAddBlockList.SetParentShowHint(false)
+	sf.RadioAddBlockList.SetShowHint(true)
+	sf.RadioAddBlockList.SetBounds(17, 53, 140, 19)
+
+	sf.RadioDisConnect.SetParent(sf)
+	sf.RadioAddTempList.SetParent(sf)
+	sf.RadioAddBlockList.SetParent(sf)
 }
