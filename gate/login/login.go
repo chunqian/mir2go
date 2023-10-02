@@ -37,7 +37,6 @@ type TFrmMain struct {
 	ServerSocket *TServerSocket
 
 	serverReady         bool
-	showLocked          bool
 	decodeMsgTime       uint32
 	reConnectServerTick uint32
 	sendKeepAliveTick   uint32
@@ -333,6 +332,9 @@ func (sf *TFrmMain) OnFormDestroy(sender vcl.IObject) {
 }
 
 func (sf *TFrmMain) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
+	if Closed {
+		return
+	}
 	*canClose = vcl.MessageDlg("是否确认退出服务器?",
 		types.MtConfirmation,
 		types.MbYes,
@@ -518,9 +520,6 @@ func (sf *TFrmMain) showMainLogMsg() {
 		return
 	}
 	sf.showMainLogTick = GetTickCount()
-
-	sf.showLocked = true
-	defer func() { sf.showLocked = false }()
 
 	// 获取和清空主日志列表
 	sf.tempLogList = append(sf.tempLogList, MainLogMsgList...)
@@ -1058,7 +1057,7 @@ func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 	if Started {
 		startTimer.SetEnabled(false) // 禁用定时器
 		sf.stopService()
-		Close = true
+		Closed = true
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
 		sf.MenuViewLogMsgClick(sender)
