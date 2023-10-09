@@ -22,10 +22,10 @@ func ArrestStringEx(source, searchAfter, arrestBefore string) (string, string) {
 	if source == "" {
 		return "", ""
 	}
-	
+
 	var goodData bool
 	srcLen := len(source)
-	
+
 	if srcLen >= len(searchAfter) {
 		if strings.HasPrefix(source, searchAfter) {
 			source = source[len(searchAfter):]

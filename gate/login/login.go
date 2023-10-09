@@ -12,7 +12,7 @@ import (
 	"github.com/ying32/govcl/vcl/types"
 	"github.com/ying32/govcl/vcl/types/colors"
 
-	"github.com/chunqian/mir2go/common"
+	common "github.com/chunqian/mir2go/common"
 	log "github.com/chunqian/tinylog"
 )
 
@@ -33,8 +33,8 @@ type TFrmMain struct {
 	StartTimer   *vcl.TTimer
 	DecodeTimer  *vcl.TTimer
 	Timer        *vcl.TTimer
-	ClientSocket *TClientSocket
-	ServerSocket *TServerSocket
+	ClientSocket *common.TClientSocket
+	ServerSocket *common.TServerSocket
 
 	serverReady         bool
 	decodeMsgTime       uint32
@@ -94,7 +94,7 @@ type TMenuItem3 struct {
 }
 
 type TUserSession struct {
-	Socket          *TClientSocket
+	Socket          *common.TClientSocket
 	RemoteIPaddr    string
 	SendMsgLen      int
 	SendLock        bool
@@ -362,7 +362,7 @@ func (sf *TFrmMain) initUserSessionArray() {
 		userSession.SendCheck = false
 		userSession.CheckSendLength = 0
 		userSession.ReceiveLength = 0
-		userSession.UserTimeOutTick = GetTickCount()
+		userSession.UserTimeOutTick = common.GetTickCount()
 		userSession.SocketHandle = uintptr(0)
 		userSession.MsgList = make([]string, 0)
 		SessionArray[i] = &userSession
@@ -373,13 +373,13 @@ func (sf *TFrmMain) isBlockIP(ipaddr string) bool {
 	ip := net.ParseIP(ipaddr)
 	for i := range TempBlockIPList {
 		ipAddr := TempBlockIPList[i]
-		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+		if ipAddr.IPaddr == int(common.IpToInteger(ip)) {
 			return true
 		}
 	}
 	for i := range BlockIPList {
 		ipAddr := BlockIPList[i]
-		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+		if ipAddr.IPaddr == int(common.IpToInteger(ip)) {
 			return true
 		}
 	}
@@ -391,25 +391,25 @@ func (sf *TFrmMain) isConnLimited(ipaddr string) bool {
 	ip := net.ParseIP(ipaddr)
 	for i := range CurrIPaddrList {
 		ipAddr := CurrIPaddrList[i]
-		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+		if ipAddr.IPaddr == int(common.IpToInteger(ip)) {
 			ipAddr.Count++
-			if (GetTickCount() - ipAddr.IPCountTick1) < 1000 {
+			if (common.GetTickCount() - ipAddr.IPCountTick1) < 1000 {
 				ipAddr.IPCount1++
 				if ipAddr.IPCount1 >= IPCountLimit1 {
 					denyConnect = true
 				}
 			} else {
-				ipAddr.IPCountTick1 = GetTickCount()
+				ipAddr.IPCountTick1 = common.GetTickCount()
 				ipAddr.IPCount1 = 0
 			}
 
-			if (GetTickCount() - ipAddr.IPCountTick2) < 3000 {
+			if (common.GetTickCount() - ipAddr.IPCountTick2) < 3000 {
 				ipAddr.IPCount2++
 				if ipAddr.IPCount2 >= IPCountLimit2 {
 					denyConnect = true
 				}
 			} else {
-				ipAddr.IPCountTick2 = GetTickCount()
+				ipAddr.IPCountTick2 = common.GetTickCount()
 				ipAddr.IPCount2 = 0
 			}
 
@@ -419,8 +419,8 @@ func (sf *TFrmMain) isConnLimited(ipaddr string) bool {
 		}
 	}
 
-	sockAddr := TSockaddr{
-		IPaddr: int(ipToInteger(ip)),
+	sockAddr := common.TSockAddr{
+		IPaddr: int(common.IpToInteger(ip)),
 		Count:  1,
 	}
 	CurrIPaddrList = append(CurrIPaddrList, sockAddr)
@@ -437,7 +437,7 @@ func (sf *TFrmMain) loadConfig() {
 		GateAddr = conf.ReadString(GateClass, "GateAddr", GateAddr)
 		ShowLogLevel = conf.ReadInteger(GateClass, "ShowLogLevel", ShowLogLevel)
 
-		BlockMethod = TBlockIPMethod(conf.ReadInteger(GateClass, "BlockMethod", int32(BlockMethod)))
+		BlockMethod = common.TBlockIPMethod(conf.ReadInteger(GateClass, "BlockMethod", int32(BlockMethod)))
 
 		if conf.ReadInteger(GateClass, "KeepConnectTimeOut", -1) <= 0 {
 			conf.WriteInteger(GateClass, "KeepConnectTimeOut", KeepConnectTimeOut)
@@ -467,11 +467,11 @@ func (sf *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
 	result := -1
 	if userSession.Socket != nil {
 		if !userSession.SendLock {
-			if userSession.SendAvailable && GetTickCount() > userSession.SendLockTimeOut {
+			if userSession.SendAvailable && common.GetTickCount() > userSession.SendLockTimeOut {
 				userSession.SendAvailable = true
 				userSession.CheckSendLength = 0
 				SendHoldTimeOut = true
-				SendHoldTick = GetTickCount()
+				SendHoldTick = common.GetTickCount()
 			}
 			if userSession.SendAvailable {
 				if userSession.CheckSendLength >= 250 {
@@ -481,7 +481,7 @@ func (sf *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
 					}
 					if userSession.CheckSendLength >= 512 {
 						userSession.SendAvailable = false
-						userSession.SendLockTimeOut = GetTickCount() + 3*1000
+						userSession.SendLockTimeOut = common.GetTickCount() + 3*1000
 					}
 				}
 				userSession.Socket.Write([]byte(sendMsg))
@@ -516,10 +516,10 @@ func (sf *TFrmMain) showMainLogMsg() {
 	MainLogMsgListMutex.Lock()
 	defer MainLogMsgListMutex.Unlock()
 
-	if GetTickCount()-sf.showMainLogTick < 200 {
+	if common.GetTickCount()-sf.showMainLogTick < 200 {
 		return
 	}
-	sf.showMainLogTick = GetTickCount()
+	sf.showMainLogTick = common.GetTickCount()
 
 	// 获取和清空主日志列表
 	sf.tempLogList = append(sf.tempLogList, MainLogMsgList...)
@@ -555,17 +555,17 @@ func (sf *TFrmMain) startService() {
 	sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(false)
 	sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(true)
 
-	sf.reConnectServerTick = GetTickCount() - 25*1000
+	sf.reConnectServerTick = common.GetTickCount() - 25*1000
 	KeepAliveTimeOut = false
 	SendMsgCount = 0
 	TotalMsgListCount = 0
-	sf.sendKeepAliveTick = GetTickCount()
+	sf.sendKeepAliveTick = common.GetTickCount()
 	SendHoldTimeOut = false
-	SendHoldTick = GetTickCount()
+	SendHoldTick = common.GetTickCount()
 
-	CurrIPaddrList = make([]TSockaddr, 0)
-	BlockIPList = make([]TSockaddr, 0)
-	TempBlockIPList = make([]TSockaddr, 0)
+	CurrIPaddrList = make([]common.TSockAddr, 0)
+	BlockIPList = make([]common.TSockAddr, 0)
+	TempBlockIPList = make([]common.TSockAddr, 0)
 	ClientSockeMsgList = make([]string, 0)
 
 	sf.resUserSessionArray()
@@ -577,10 +577,10 @@ func (sf *TFrmMain) startService() {
 		sf.SetCaption(GateName)
 	}
 
-	sf.ClientSocket = &TClientSocket{}
+	sf.ClientSocket = &common.TClientSocket{}
 	sf.ClientSocket.Dial(sf, ServerAddr, ServerPort)
 
-	sf.ServerSocket = &TServerSocket{}
+	sf.ServerSocket = &common.TServerSocket{}
 	sf.ServerSocket.Listen(sf, GateAddr, GatePort)
 
 	sf.DecodeTimer.SetEnabled(true)
@@ -620,7 +620,7 @@ func (sf *TFrmMain) CloseConnect(ipaddr string) {
 		for {
 			check := false
 			for i := 0; i < sf.ServerSocket.ActiveConnections(); i++ {
-				remoteAddr := getAddrHost(sf.ServerSocket.Connections()[i].RemoteAddr())
+				remoteAddr := common.GetAddrHost(sf.ServerSocket.Connections()[i].RemoteAddr())
 				if ipaddr == remoteAddr {
 					sf.ServerSocket.Connections()[i].Close()
 					check = true
@@ -634,15 +634,15 @@ func (sf *TFrmMain) CloseConnect(ipaddr string) {
 	}
 }
 
-func (sf *TFrmMain) ClientSocketConnect(socket *TClientSocket) {
+func (sf *TFrmMain) ClientSocketConnect(socket *common.TClientSocket) {
 	GateReady = true
 	sf.sessionCount = 0
-	KeepAliveTick = GetTickCount()
+	KeepAliveTick = common.GetTickCount()
 	sf.resUserSessionArray()
 	sf.serverReady = true
 }
 
-func (sf *TFrmMain) ClientSocketDisconnect(socket *TClientSocket, err error) {
+func (sf *TFrmMain) ClientSocketDisconnect(socket *common.TClientSocket, err error) {
 	log.Info("ClientSocketDisconnect: {}", err.Error())
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := SessionArray[i]
@@ -660,13 +660,13 @@ func (sf *TFrmMain) ClientSocketDisconnect(socket *TClientSocket, err error) {
 	sf.sessionCount = 0
 }
 
-func (sf *TFrmMain) ClientSocketError(socket *TClientSocket, err error) {
+func (sf *TFrmMain) ClientSocketError(socket *common.TClientSocket, err error) {
 	log.Info("ClientSocketError: {}", err.Error())
 	socket.Close()
 	sf.serverReady = false
 }
 
-func (sf *TFrmMain) ClientSocketRead(socket *TClientSocket, message string) {
+func (sf *TFrmMain) ClientSocketRead(socket *common.TClientSocket, message string) {
 	log.Info("ClientSocketRead: {}", message)
 	ClientSockeMsgList = append(ClientSockeMsgList, message)
 }
@@ -680,7 +680,7 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 		return
 	}
 
-	decodeTick := GetTickCount()
+	decodeTick := common.GetTickCount()
 	DecodeLock = true
 	defer func() {
 		DecodeLock = false
@@ -712,7 +712,7 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 					)
 					continue
 				} else {
-					KeepAliveTick = GetTickCount()
+					KeepAliveTick = common.GetTickCount()
 					KeepAliveTimeOut = false
 					continue
 				}
@@ -743,21 +743,21 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 			continue
 		}
 		// 踢除超时无数据传输连接
-		if GetTickCount()-SessionArray[i].ConnctCheckTick > uint32(KeepConnectTimeOut) {
+		if common.GetTickCount()-SessionArray[i].ConnctCheckTick > uint32(KeepConnectTimeOut) {
 			remoteIPaddr := SessionArray[i].RemoteIPaddr
 			switch BlockMethod {
-			case Disconnect:
+			case common.Disconnect:
 				SessionArray[i].Socket.Close()
-			case Block:
+			case common.Block:
 				ip := net.ParseIP(remoteIPaddr)
-				ipAddr := TSockaddr{}
-				ipAddr.IPaddr = int(ipToInteger(ip))
+				ipAddr := common.TSockAddr{}
+				ipAddr.IPaddr = int(common.IpToInteger(ip))
 				TempBlockIPList = append(TempBlockIPList, ipAddr)
 				sf.CloseConnect(remoteIPaddr)
-			case BlockList:
+			case common.BlockList:
 				ip := net.ParseIP(remoteIPaddr)
-				ipAddr := TSockaddr{}
-				ipAddr.IPaddr = int(ipToInteger(ip))
+				ipAddr := common.TSockAddr{}
+				ipAddr.IPaddr = int(common.IpToInteger(ip))
 				BlockIPList = append(BlockIPList, ipAddr)
 				sf.CloseConnect(remoteIPaddr)
 			}
@@ -774,7 +774,7 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 			sendRetCode := sf.sendUserMsg(userSession, userSession.MsgList[0])
 			if sendRetCode >= 0 {
 				if sendRetCode == 1 {
-					userSession.ConnctCheckTick = GetTickCount()
+					userSession.ConnctCheckTick = common.GetTickCount()
 					userSession.MsgList = userSession.MsgList[1:]
 					continue
 				}
@@ -796,19 +796,19 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 		}
 	}
 
-	if GetTickCount()-sf.sendKeepAliveTick > 2*1000 {
-		sf.sendKeepAliveTick = GetTickCount()
+	if common.GetTickCount()-sf.sendKeepAliveTick > 2*1000 {
+		sf.sendKeepAliveTick = common.GetTickCount()
 		if GateReady {
 			sf.ClientSocket.Write([]byte("%--$"))
 		}
 	}
 
-	if GetTickCount()-KeepAliveTick > 10*1000 {
+	if common.GetTickCount()-KeepAliveTick > 10*1000 {
 		KeepAliveTimeOut = true
 		sf.ClientSocket.Close()
 	}
 
-	decodeTime := GetTickCount() - decodeTick
+	decodeTime := common.GetTickCount() - decodeTick
 	if sf.decodeMsgTime < decodeTime {
 		sf.decodeMsgTime = decodeTime
 	}
@@ -884,7 +884,7 @@ func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	vcl.ThreadSync(func() {
 		if SendHoldTimeOut {
 			sf.Panel.Hold.SetCaption(common.IntToStr(ActiveConnections) + "#")
-			if GetTickCount()-SendHoldTick > 3*1000 {
+			if common.GetTickCount()-SendHoldTick > 3*1000 {
 				SendHoldTimeOut = false
 			}
 		} else {
@@ -896,7 +896,7 @@ func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 		for i := 0; i < GATEMAXSESSION; i++ {
 			userSession := SessionArray[i]
 			if userSession.Socket != nil {
-				if GetTickCount()-userSession.UserTimeOutTick > 60*60*1000 {
+				if common.GetTickCount()-userSession.UserTimeOutTick > 60*60*1000 {
 					userSession.Socket.Close()
 					userSession.Socket = nil
 					userSession.SocketHandle = uintptr(0)
@@ -907,24 +907,24 @@ func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 		}
 	}
 	if !GateReady && ServiceStart {
-		if GetTickCount()-sf.reConnectServerTick > 1000 /* 30*1000 */ {
-			sf.reConnectServerTick = GetTickCount()
+		if common.GetTickCount()-sf.reConnectServerTick > 1000 /* 30*1000 */ {
+			sf.reConnectServerTick = common.GetTickCount()
 			sf.ClientSocket.Dial(sf, ServerAddr, ServerPort)
 		}
 	}
 }
 
-func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
+func (sf *TFrmMain) ServerSocketClientConnect(socket *common.TClientSocket) {
 	var remoteIPaddr, localIPaddr string
-	var ipAddr TSockaddr
+	var ipAddr common.TSockAddr
 
 	socket.Index = -1
-	remoteIPaddr = getAddrHost(socket.RemoteAddr())
+	remoteIPaddr = common.GetAddrHost(socket.RemoteAddr())
 
 	if DynamicIPDisMode {
-		localIPaddr = getAddrHost(sf.ClientSocket.RemoteAddr())
+		localIPaddr = common.GetAddrHost(sf.ClientSocket.RemoteAddr())
 	} else {
-		localIPaddr = getAddrHost(socket.LocalAddr())
+		localIPaddr = common.GetAddrHost(socket.LocalAddr())
 	}
 
 	if sf.isBlockIP(remoteIPaddr) {
@@ -935,18 +935,18 @@ func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 
 	if sf.isConnLimited(remoteIPaddr) {
 		switch BlockMethod {
-		case Disconnect:
+		case common.Disconnect:
 			socket.Close()
-		case Block:
+		case common.Block:
 			ip := net.ParseIP(remoteIPaddr)
-			ipAddr = TSockaddr{}
-			ipAddr.IPaddr = int(ipToInteger(ip))
+			ipAddr = common.TSockAddr{}
+			ipAddr.IPaddr = int(common.IpToInteger(ip))
 			TempBlockIPList = append(TempBlockIPList, ipAddr)
 			sf.CloseConnect(remoteIPaddr)
-		case BlockList:
+		case common.BlockList:
 			ip := net.ParseIP(remoteIPaddr)
-			ipAddr = TSockaddr{}
-			ipAddr.IPaddr = int(ipToInteger(ip))
+			ipAddr = common.TSockAddr{}
+			ipAddr.IPaddr = int(common.IpToInteger(ip))
 			BlockIPList = append(BlockIPList, ipAddr)
 			sf.CloseConnect(remoteIPaddr)
 		}
@@ -961,12 +961,12 @@ func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 				userSession.RemoteIPaddr = remoteIPaddr
 				userSession.SendMsgLen = 0
 				userSession.SendLock = false
-				userSession.ConnctCheckTick = GetTickCount()
+				userSession.ConnctCheckTick = common.GetTickCount()
 				userSession.SendAvailable = true
 				userSession.SendCheck = false
 				userSession.CheckSendLength = 0
 				userSession.ReceiveLength = 0
-				userSession.UserTimeOutTick = GetTickCount()
+				userSession.UserTimeOutTick = common.GetTickCount()
 				userSession.SocketHandle = socket.SocketHandle()
 				userSession.IP = remoteIPaddr
 				userSession.MsgList = make([]string, 0)
@@ -992,15 +992,15 @@ func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	}
 }
 
-func (sf *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error) {
+func (sf *TFrmMain) ServerSocketClientDisconnect(conn *common.TClientSocket, err error) {
 	log.Info("ServerSocketClientDisconnect: {}", err.Error())
-	remoteIPaddr := getAddrHost(conn.RemoteAddr())
+	remoteIPaddr := common.GetAddrHost(conn.RemoteAddr())
 	ip := net.ParseIP(remoteIPaddr)
 	sockIndex := conn.Index
 
 	for i := 0; i < len(CurrIPaddrList); i++ {
 		ipAddr := CurrIPaddrList[i]
-		if ipAddr.IPaddr == int(ipToInteger(ip)) {
+		if ipAddr.IPaddr == int(common.IpToInteger(ip)) {
 			ipAddr.Count--
 			if ipAddr.Count <= 0 {
 				CurrIPaddrList = append(CurrIPaddrList[:i], CurrIPaddrList[i+1:]...)
@@ -1024,12 +1024,12 @@ func (sf *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error)
 	}
 }
 
-func (sf *TFrmMain) ServerSocketClientError(conn *TClientSocket, err error) {
+func (sf *TFrmMain) ServerSocketClientError(conn *common.TClientSocket, err error) {
 	log.Info("ServerSocketClientError: {}", err.Error())
 	conn.Close()
 }
 
-func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) {
+func (sf *TFrmMain) ServerSocketClientRead(conn *common.TClientSocket, message string) {
 	log.Info("ServerSocketClientRead: {}", message)
 	sockIndex := conn.Index
 	if sockIndex >= 0 && sockIndex < GATEMAXSESSION {
@@ -1039,8 +1039,8 @@ func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) 
 			userSession.SendCheck = false
 			userSession.CheckSendLength = 0
 			if GateReady && !KeepAliveTimeOut {
-				userSession.ConnctCheckTick = GetTickCount()
-				if (GetTickCount() - userSession.UserTimeOutTick) < 1000 {
+				userSession.ConnctCheckTick = common.GetTickCount()
+				if (common.GetTickCount() - userSession.UserTimeOutTick) < 1000 {
 					userSession.ReceiveLength += len(message)
 				} else {
 					userSession.ReceiveLength = len(message)
@@ -1072,7 +1072,7 @@ func (sf *TFrmMain) TimerTimer(sender vcl.IObject) {
 	// 更新UI
 	vcl.ThreadSync(func() {
 		if sf.ServerSocket.Active() {
-			port = getAddrPort(sf.ServerSocket.Addr())
+			port = common.GetAddrPort(sf.ServerSocket.Addr())
 			sf.StatusBar.Panels().Items(0).SetText(port)
 			if SendHoldTimeOut {
 				sf.StatusBar.Panels().Items(2).SetText(
