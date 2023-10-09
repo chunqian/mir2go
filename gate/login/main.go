@@ -14,7 +14,7 @@ func main() {
 	vcl.DEBUG = true
 	vcl.RunApp(
 		&FrmMain,
-		&FrmIPaddrFilter,
+		&FrmIPAddrFilter,
 		&FrmGeneralConfig,
 	)
 }

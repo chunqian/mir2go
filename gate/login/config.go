@@ -18,14 +18,14 @@ type TFrmGeneralConfig struct {
 type TGroupBoxNet struct {
 	*vcl.TGroupBox
 
-	LabelGateIPaddr   *vcl.TLabel
+	LabelGateIPAddr   *vcl.TLabel
 	LabelGatePort     *vcl.TLabel
-	LabelServerIPaddr *vcl.TLabel
+	LabelServerIPAddr *vcl.TLabel
 	LabelServerPort   *vcl.TLabel
 
-	EditGateIPaddr   *vcl.TEdit
+	EditGateIPAddr   *vcl.TEdit
 	EditGatePort     *vcl.TEdit
-	EditServerIPaddr *vcl.TEdit
+	EditServerIPAddr *vcl.TEdit
 	EditServerPort   *vcl.TEdit
 }
 
@@ -74,45 +74,45 @@ func (sf *TFrmGeneralConfig) Layout() {
 
 func (sf *TGroupBoxNet) Layout(sender *TFrmGeneralConfig) {
 
-	sf.LabelGateIPaddr = vcl.NewLabel(sf)
-	sf.LabelGateIPaddr.SetCaption("网关地址:")
-	sf.LabelGateIPaddr.SetBounds(9, 9, 59, 13)
+	sf.LabelGateIPAddr = vcl.NewLabel(sf)
+	sf.LabelGateIPAddr.SetCaption("网关地址:")
+	sf.LabelGateIPAddr.SetBounds(9, 9, 59, 13)
 
 	sf.LabelGatePort = vcl.NewLabel(sf)
 	sf.LabelGatePort.SetCaption("网关端口:")
 	sf.LabelGatePort.SetBounds(9, 33, 59, 13)
 
-	sf.LabelServerIPaddr = vcl.NewLabel(sf)
-	sf.LabelServerIPaddr.SetCaption("服务器地址:")
-	sf.LabelServerIPaddr.SetBounds(9, 59, 59, 13)
+	sf.LabelServerIPAddr = vcl.NewLabel(sf)
+	sf.LabelServerIPAddr.SetCaption("服务器地址:")
+	sf.LabelServerIPAddr.SetBounds(9, 59, 59, 13)
 
 	sf.LabelServerPort = vcl.NewLabel(sf)
 	sf.LabelServerPort.SetCaption("服务器端口:")
 	sf.LabelServerPort.SetBounds(9, 85, 59, 13)
 
-	sf.EditGateIPaddr = vcl.NewEdit(sf)
-	sf.EditGateIPaddr.SetText("127.0.0.1")
-	sf.EditGateIPaddr.SetBounds(87, 5, 105, 20)
+	sf.EditGateIPAddr = vcl.NewEdit(sf)
+	sf.EditGateIPAddr.SetText("127.0.0.1")
+	sf.EditGateIPAddr.SetBounds(87, 5, 105, 20)
 
 	sf.EditGatePort = vcl.NewEdit(sf)
 	sf.EditGatePort.SetText("7200")
 	sf.EditGatePort.SetBounds(87, 31, 44, 20)
 
-	sf.EditServerIPaddr = vcl.NewEdit(sf)
-	sf.EditServerIPaddr.SetText("127.0.0.1")
-	sf.EditServerIPaddr.SetBounds(87, 57, 105, 20)
+	sf.EditServerIPAddr = vcl.NewEdit(sf)
+	sf.EditServerIPAddr.SetText("127.0.0.1")
+	sf.EditServerIPAddr.SetBounds(87, 57, 105, 20)
 
 	sf.EditServerPort = vcl.NewEdit(sf)
 	sf.EditServerPort.SetText("5000")
 	sf.EditServerPort.SetBounds(87, 83, 44, 20)
 
-	sf.LabelGateIPaddr.SetParent(sf)
+	sf.LabelGateIPAddr.SetParent(sf)
 	sf.LabelGatePort.SetParent(sf)
-	sf.LabelServerIPaddr.SetParent(sf)
+	sf.LabelServerIPAddr.SetParent(sf)
 	sf.LabelServerPort.SetParent(sf)
-	sf.EditGateIPaddr.SetParent(sf)
+	sf.EditGateIPAddr.SetParent(sf)
 	sf.EditGatePort.SetParent(sf)
-	sf.EditServerIPaddr.SetParent(sf)
+	sf.EditServerIPAddr.SetParent(sf)
 	sf.EditServerPort.SetParent(sf)
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/ying32/govcl/vcl/types/colors"
 )
 
-type TFrmIPaddrFilter struct {
+type TFrmIPAddrFilter struct {
 	*vcl.TForm
 
 	ButtonOK       *vcl.TButton
@@ -100,11 +100,11 @@ type TListBoxTempList struct {
 }
 
 var (
-	FrmIPaddrFilter *TFrmIPaddrFilter
+	FrmIPAddrFilter *TFrmIPAddrFilter
 )
 
 // ******************** Layout ********************
-func (sf *TFrmIPaddrFilter) Layout() {
+func (sf *TFrmIPAddrFilter) Layout() {
 
 	sf.ButtonOK = vcl.NewButton(sf)
 	sf.ButtonOK.SetCaption("确定(&O)")
@@ -141,7 +141,7 @@ func (sf *TFrmIPaddrFilter) Layout() {
 	sf.GroupBox2.SetParent(sf)
 }
 
-func (sf *TActiveListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TActiveListPopupMenu) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.PopMenuRefList = vcl.NewMenuItem(sf)
 	sf.PopMenuRefList.SetCaption("刷新(&R)")
@@ -165,7 +165,7 @@ func (sf *TActiveListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
 	sf.Items().Add(sf.PopMenuKick)
 }
 
-func (sf *TBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TBlockListPopupMenu) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.PopMenuRefList = vcl.NewMenuItem(sf)
 	sf.PopMenuRefList.SetCaption("刷新(&R)")
@@ -189,7 +189,7 @@ func (sf *TBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
 	sf.Items().Add(sf.PopMenuDelete)
 }
 
-func (sf *TTempBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TTempBlockListPopupMenu) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.PopMenuRefList = vcl.NewMenuItem(sf)
 	sf.PopMenuRefList.SetCaption("刷新(&R)")
@@ -213,7 +213,7 @@ func (sf *TTempBlockListPopupMenu) Layout(sender *TFrmIPaddrFilter) {
 	sf.Items().Add(sf.PopMenuDelete)
 }
 
-func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TGroupBoxActive) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.Label4 = vcl.NewLabel(sf)
 	sf.Label4.SetCaption("连接列表:")
@@ -234,7 +234,7 @@ func (sf *TGroupBoxActive) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxActiveList.SetParent(sf)
 }
 
-func (sf *TListBoxActiveList) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TListBoxActiveList) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.ActiveListPopupMenu = &TActiveListPopupMenu{
 		TPopupMenu: vcl.NewPopupMenu(sf),
@@ -244,7 +244,7 @@ func (sf *TListBoxActiveList) Layout(sender *TFrmIPaddrFilter) {
 	sf.SetPopupMenu(sf.ActiveListPopupMenu)
 }
 
-func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TGroupBox1) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.LabelTempList = vcl.NewLabel(sf)
 	sf.LabelTempList.SetCaption("动态过滤:")
@@ -282,7 +282,7 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxBlockList.SetParent(sf)
 }
 
-func (sf *TListBoxBlockList) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TListBoxBlockList) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.BlockListPopupMenu = &TBlockListPopupMenu{
 		TPopupMenu: vcl.NewPopupMenu(sf),
@@ -292,7 +292,7 @@ func (sf *TListBoxBlockList) Layout(sender *TFrmIPaddrFilter) {
 	sf.SetPopupMenu(sf.BlockListPopupMenu)
 }
 
-func (sf *TListBoxTempList) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TListBoxTempList) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.TempBlockListPopupMenu = &TTempBlockListPopupMenu{
 		TPopupMenu: vcl.NewPopupMenu(sf),
@@ -302,7 +302,7 @@ func (sf *TListBoxTempList) Layout(sender *TFrmIPaddrFilter) {
 	sf.SetPopupMenu(sf.TempBlockListPopupMenu)
 }
 
-func (sf *TGroupBox2) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TGroupBox2) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.Label2 = vcl.NewLabel(sf)
 	sf.Label2.SetCaption("连接限制:")
@@ -340,7 +340,7 @@ func (sf *TGroupBox2) Layout(sender *TFrmIPaddrFilter) {
 	sf.Label7.SetParent(sf)
 }
 
-func (sf *TGroupBox3) Layout(sender *TFrmIPaddrFilter) {
+func (sf *TGroupBox3) Layout(sender *TFrmIPAddrFilter) {
 
 	sf.RadioDisConnect = vcl.NewRadioButton(sf)
 	sf.RadioDisConnect.SetCaption("断开连接")
@@ -368,8 +368,8 @@ func (sf *TGroupBox3) Layout(sender *TFrmIPaddrFilter) {
 	sf.RadioAddBlockList.SetParent(sf)
 }
 
-// ******************** TFrmIPaddrFilter ********************
-func (sf *TFrmIPaddrFilter) OnFormCreate(sender vcl.IObject) {
+// ******************** TFrmIPAddrFilter ********************
+func (sf *TFrmIPAddrFilter) OnFormCreate(sender vcl.IObject) {
 
 	// 布局
 	sf.SetBounds(420, 296, 679, 347)

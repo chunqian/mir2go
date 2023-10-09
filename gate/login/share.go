@@ -23,7 +23,7 @@ var (
 	ServiceStart        = false
 	Started             = false
 	Closed              = false
-	CurrIPaddrList      []common.TSockAddr // 当前 IP 地址列表
+	CurrIPAddrList      []common.TSockAddr // 当前 IP 地址列表
 	KeepAliveTick       uint32
 	KeepConnectTimeOut  int32 = 60 * 1000 // 保持连接的超时时间
 	SendHoldTick        uint32
@@ -38,7 +38,7 @@ var (
 	ActiveConnections   int
 	IPCountLimit1             = 20 // IP 限制次数
 	IPCountLimit2             = 40
-	MaxConnOfIPaddr     int32 = 10 // IP 地址的最大连接数
+	MaxConnOfIPAddr     int32 = 10 // IP 地址的最大连接数
 	SendMsgCount        int
 	ShowLogLevel        int32              = 3                       // 显示日志等级
 	ConfigFile                             = AppDir + "./Config.ini" // 配置文件路径
@@ -50,15 +50,15 @@ var (
 
 func LoadBlockIPFile() {
 	// 定义文件名
-	sFileName := AppDir + "./BlockIPList.txt"
+	fileName := AppDir + "./BlockIPList.txt"
 
 	// 检查文件是否存在
-	if _, err := os.Stat(sFileName); os.IsNotExist(err) {
+	if _, err := os.Stat(fileName); os.IsNotExist(err) {
 		return
 	}
 
 	// 打开文件
-	file, err := os.Open(sFileName)
+	file, err := os.Open(fileName)
 	if err != nil {
 		return
 	}
@@ -68,19 +68,19 @@ func LoadBlockIPFile() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		// 修整字符串并检查是否为空
-		sIPaddr := strings.TrimSpace(scanner.Text())
-		if sIPaddr == "" {
+		ipAddr := strings.TrimSpace(scanner.Text())
+		if ipAddr == "" {
 			continue
 		}
 
 		// 使用 net 包来解析 IP 地址
-		ip := net.ParseIP(sIPaddr)
+		ip := net.ParseIP(ipAddr)
 		if ip == nil {
 			continue
 		}
 
 		// 将 IP 地址加入 BlockIPList
-		BlockIPList = append(BlockIPList, common.TSockAddr{IPaddr: int(common.IpToInteger(ip))})
+		BlockIPList = append(BlockIPList, common.TSockAddr{IP: int(common.IpToInteger(ip))})
 	}
 
 	// 错误处理
@@ -100,9 +100,9 @@ func SaveBlockIPList() {
 	// 使用 bufio 的 Writer 进行写入
 	writer := bufio.NewWriter(file)
 
-	for _, sockaddr := range BlockIPList {
+	for _, sockAddr := range BlockIPList {
 		// 使用 integerToIP 自定义函数将整数转换为 net.IP 类型, 再转换为字符串
-		ipString := common.IntegerToIP(uint32(sockaddr.IPaddr)).String()
+		ipString := common.IntegerToIP(uint32(sockAddr.IP)).String()
 
 		// 将 IP 写入文件
 		writer.WriteString(ipString + "\n")

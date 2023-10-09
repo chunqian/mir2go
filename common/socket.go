@@ -27,7 +27,7 @@ const (
 // ******************** Type ********************
 // TSockAddr 存储与 IP 地址相关的信息.
 type TSockAddr struct {
-	IPaddr       int
+	IP           int
 	Count        int
 	IPCountTick1 uint32
 	IPCount1     int
