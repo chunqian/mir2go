@@ -4,7 +4,6 @@ package main
 
 import (
 	. "github.com/chunqian/mir2go/common"
-	"github.com/ying32/govcl/vcl"
 )
 
 // ******************** Const ********************
@@ -49,22 +48,22 @@ type TSendUserData struct {
 // ******************** Var ********************
 var (
 	MainLogMsgList         []string
-	ShowLogLevel           int32  = 3
-	GateClass                     = "GameGate"
-	GateName                      = "游戏网关"
-	TitleName                     = "热血传奇"
-	ServerAddr                    = "127.0.0.1"
-	ServerPort             int32  = 5000
-	GateAddr                      = "0.0.0.0"
-	GatePort               int32  = 7200
-	Started                       = false
-	Closed                        = false
-	ShowBite                      = true // 显示B 或 KB
-	ServiceStart                  = true
-	GateReady                     = true  // 网关是否就绪
-	CheckServerFail               = false // 网关 <-> 游戏服务器之间检测是否失败 (超时)
-	CheckServerTimeOutTime uint32 = 3 * 60 * 1000
-	useList                []string
+	ShowLogLevel           int32    = 3
+	GateClass                       = "Setup"
+	GateName                        = "游戏网关"
+	TitleName                       = "热血传奇"
+	ServerAddr                      = "127.0.0.1"
+	ServerPort             int32    = 5000
+	GateAddr                        = "0.0.0.0"
+	GatePort               int32    = 7200
+	Started                         = false
+	Closed                          = false
+	ShowBite                        = true // 显示B 或 KB
+	ServiceStart                    = true
+	GateReady                       = true  // 网关是否就绪
+	CheckServerFail                 = false // 网关 <-> 游戏服务器之间检测是否失败 (超时)
+	CheckServerTimeOutTime uint32   = 3 * 60 * 1000
+	WordFilterList         []string // 文字过滤列表
 	SessionArray           [GATEMAXSESSION]*TSessionInfo
 	SessionCount           int32
 	ShowSckData            bool
@@ -103,10 +102,31 @@ var (
 
 	ClientSendBlockSize int32  = 1000 // 发送给客户端数据包大小限制
 	ClientTimeOutTime   uint32 = 5000 // 客户端连接会话超时(指定时间内未有数据传输)
-	Conf                vcl.TIniFile
 	ConfigFileName      string = "./Config.ini"
 	SayMsgMaxLen        int32  = 70   // 发言字符长度
 	SayMsgTime          uint32 = 1000 // 发主间隔时间
 	HitTime             uint32 = 300  // 攻击间隔时间
 	SessionTimeOutTime  uint32 = 60 * 60 * 1000
+
+	ShowMainLogTick   uint32
+	ShowLocked        bool
+	TempLogList       []string
+	CheckClientTick   uint32
+	ProcessPacketTick uint32
+
+	ServerReady          bool
+	LoopCheckTick        uint32
+	LoopTime             uint32
+	ProcessServerMsgTime uint32
+	ProcessClientMsgTime uint32
+	ReConnectServerTime  uint32
+	RefConsolMsgTick     uint32
+	BufferOfM2Size       int32
+	RefConsoleMsgTick    uint32
+	ReviceMsgSize        int32
+	DeCodeMsgSize        int32
+	SendBlockSize        int32
+	ProcessMsgSize       int32
+	HumLogonMsgSize      int32
+	HumPlayMsgSize       int32
 )
