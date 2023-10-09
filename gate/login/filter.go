@@ -257,7 +257,7 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxTempList = &TListBoxTempList{
 		TListBox: vcl.NewListBox(sf),
 	}
-	sf.ListBoxTempList.SetHint("动态过滤列表,在此列表中的IP将无法建立连接,但在程序重新启动时此列表的信息将被清空")
+	sf.ListBoxTempList.SetHint("动态过滤列表, 在此列表中的IP将无法建立连接, 但在程序重新启动时此列表的信息将被清空")
 	sf.ListBoxTempList.SetItemHeight(13)
 	sf.ListBoxTempList.SetBounds(0, 31, 138, 261)
 	sf.ListBoxTempList.SetParentShowHint(false)
@@ -268,7 +268,7 @@ func (sf *TGroupBox1) Layout(sender *TFrmIPaddrFilter) {
 	sf.ListBoxBlockList = &TListBoxBlockList{
 		TListBox: vcl.NewListBox(sf),
 	}
-	sf.ListBoxBlockList.SetHint("永久过滤列表,在此列表中的IP将无法建立连接,此列表将保存于配置文件中,在程序重新启动时会重新加载此列表")
+	sf.ListBoxBlockList.SetHint("永久过滤列表, 在此列表中的IP将无法建立连接, 此列表将保存于配置文件中, 在程序重新启动时会重新加载此列表")
 	sf.ListBoxBlockList.SetItemHeight(13)
 	sf.ListBoxBlockList.SetBounds(147, 31, 138, 261)
 	sf.ListBoxBlockList.SetParentShowHint(false)
@@ -311,7 +311,7 @@ func (sf *TGroupBox2) Layout(sender *TFrmIPaddrFilter) {
 	sf.EditMaxConnect = vcl.NewSpinEdit(sf)
 	sf.EditMaxConnect.SetMaxValue(1000)
 	sf.EditMaxConnect.SetMinValue(1)
-	sf.EditMaxConnect.SetHint("单个IP地址,最多可以建立连接数,超过指定连接数将按下面的操作处理")
+	sf.EditMaxConnect.SetHint("单个IP地址,最多可以建立连接数, 超过指定连接数将按下面的操作处理")
 	sf.EditMaxConnect.SetShowHint(true)
 	sf.EditMaxConnect.SetParentShowHint(false)
 	sf.EditMaxConnect.SetValue(50)
@@ -351,14 +351,14 @@ func (sf *TGroupBox3) Layout(sender *TFrmIPaddrFilter) {
 
 	sf.RadioAddTempList = vcl.NewRadioButton(sf)
 	sf.RadioAddTempList.SetCaption("加入动态过滤列表")
-	sf.RadioAddTempList.SetHint("将此连接的IP加入动态过滤列表,并将此IP的所有连接强行中断")
+	sf.RadioAddTempList.SetHint("将此连接的IP加入动态过滤列表, 并将此IP的所有连接强行中断")
 	sf.RadioAddTempList.SetParentShowHint(false)
 	sf.RadioAddTempList.SetShowHint(true)
 	sf.RadioAddTempList.SetBounds(17, 29, 140, 19)
 
 	sf.RadioAddBlockList = vcl.NewRadioButton(sf)
 	sf.RadioAddBlockList.SetCaption("加入永久过滤列表")
-	sf.RadioAddBlockList.SetHint("将此连接的IP加入永久过滤列表,并将此IP的所有连接强行中断")
+	sf.RadioAddBlockList.SetHint("将此连接的IP加入永久过滤列表, 并将此IP的所有连接强行中断")
 	sf.RadioAddBlockList.SetParentShowHint(false)
 	sf.RadioAddBlockList.SetShowHint(true)
 	sf.RadioAddBlockList.SetBounds(17, 53, 140, 19)
