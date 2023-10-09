@@ -3,14 +3,14 @@
 package main
 
 import (
-    "github.com/ying32/govcl/vcl"
+	"github.com/ying32/govcl/vcl"
 )
 
 var (
-    AppDir string = "/Users/tim/Downloads/github/mir2go/bin/rungate/"
+	AppDir string = "/Users/tim/Downloads/github/mir2go/bin/rungate/"
 )
 
 func main() {
-    vcl.DEBUG = true
-    vcl.RunApp()
+	vcl.DEBUG = true
+	vcl.RunApp()
 }
