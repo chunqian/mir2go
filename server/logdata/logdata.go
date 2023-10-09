@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/ying32/govcl/vcl"
@@ -17,10 +16,6 @@ import (
 type TFrmLogData struct {
 	*vcl.TForm
 
-	logMsgList      []string
-	logMsgListMutex sync.Mutex
-	remoteClose     bool
-
 	Label3  *vcl.TLabel
 	Memo1   *vcl.TMemo
 	UdpConn *net.UDPConn
@@ -30,14 +25,6 @@ type TFrmLogData struct {
 // ******************** Var ********************
 var (
 	FrmLogData *TFrmLogData
-)
-
-var (
-	BaseDir    string = AppDir + "./LogBase"
-	ServerName string = "热血传奇"
-	Caption    string = "引擎日志服务器"
-	ServerPort int32  = 10000
-	ServerAddr string = "127.0.0.1"
 )
 
 // ******************** Layout ********************
@@ -72,16 +59,15 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	sf.SetBorderStyle(types.BsSingle)
 	sf.Layout()
 
-	sf.remoteClose = false
-
-	sf.logMsgList = make([]string, 0)
+	RemoteClose = false
+	LogMsgList = make([]string, 0)
 
 	conf := vcl.NewIniFile(AppDir + "./Config.ini")
 	if conf != nil {
-		BaseDir = conf.ReadString("Setup", "BaseDir", BaseDir)
-		ServerName = conf.ReadString("Setup", "ServerName", ServerName)
-		ServerAddr = conf.ReadString("Setup", "LogAddr", ServerAddr)
-		ServerPort = conf.ReadInteger("Setup", "LogPort", ServerPort)
+		BaseDir = conf.ReadString(ServerClass, "BaseDir", BaseDir)
+		ServerName = conf.ReadString(ServerClass, "ServerName", ServerName)
+		ServerAddr = conf.ReadString(ServerClass, "LogAddr", ServerAddr)
+		ServerPort = conf.ReadInteger(ServerClass, "LogPort", ServerPort)
 		conf.Free()
 	}
 
@@ -107,7 +93,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 }
 
 func (sf *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
-	sf.logMsgList = sf.logMsgList[:0]
+	LogMsgList = LogMsgList[:0]
 }
 
 func (sf *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
@@ -128,7 +114,7 @@ func (sf *TFrmLogData) UDPDataReceived() {
 			return
 		}
 		message := string(buffer[:numberBytes])
-		sf.logMsgList = append(sf.logMsgList, message)
+		LogMsgList = append(LogMsgList, message)
 	}
 }
 
@@ -137,10 +123,10 @@ func (sf *TFrmLogData) Timer1Timer(object vcl.IObject) {
 }
 
 func (sf *TFrmLogData) WriteLogFile() {
-	sf.logMsgListMutex.Lock()
-	defer sf.logMsgListMutex.Unlock()
+	LogMsgListMutex.Lock()
+	defer LogMsgListMutex.Unlock()
 
-	if len(sf.logMsgList) <= 0 {
+	if len(LogMsgList) <= 0 {
 		return
 	}
 
@@ -172,12 +158,12 @@ func (sf *TFrmLogData) WriteLogFile() {
 	defer fl.Close()
 
 	// 写入日志信息
-	for i := 0; i < len(sf.logMsgList); i++ {
-		msg := sf.logMsgList[i]
+	for i := 0; i < len(LogMsgList); i++ {
+		msg := LogMsgList[i]
 		logEntry := fmt.Sprintf("%s\t%s\n", msg, now.Format("2006-01-02 15:04:05"))
 		fl.WriteString(logEntry)
 	}
 
 	// 清空logMsgList
-	sf.logMsgList = sf.logMsgList[:0]
+	LogMsgList = LogMsgList[:0]
 }
