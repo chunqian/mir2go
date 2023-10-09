@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	log "github.com/chunqian/tinylog"
 	"github.com/ying32/govcl/vcl"
 	"github.com/ying32/govcl/vcl/types"
 )
@@ -75,7 +76,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	sf.Memo1.SetText(BaseDir)
 
 	// 初始化UDP组件
-	println(fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
+	log.Info(fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
 	if err != nil {
 		vcl.ShowMessage("无法解析地址: " + err.Error())
@@ -152,7 +153,7 @@ func (sf *TFrmLogData) WriteLogFile() {
 	// 打开或创建文件
 	fl, err := os.OpenFile(sLogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		log.Error("Error opening file: {}", err.Error())
 		return
 	}
 	defer fl.Close()
