@@ -66,6 +66,16 @@ var (
 	ServerPort         int32       = 5500
 	TempBlockIPList    []TSockAddr // 临时阻塞 IP 列表
 	TitleName          = "热血传奇"
+
+	ServerReady         bool
+	DecodeMsgTime       uint32
+	ReConnectServerTick uint32
+	SendKeepAliveTick   uint32
+	ShowMainLogTick     uint32
+	SessionCount        int
+	ClientSockeMsgList  []string
+	SessionArray        [GATEMAXSESSION]*TUserSession
+	ProcMsg             string
 )
 
 func LoadBlockIPFile() {

@@ -12,5 +12,8 @@ var (
 
 func main() {
 	vcl.DEBUG = true
-	vcl.RunApp(&FrmLogData)
+	vcl.Application.Initialize()
+	vcl.Application.SetMainFormOnTaskBar(true)
+	vcl.Application.CreateForm(&FrmLogData)
+	vcl.Application.Run()
 }
