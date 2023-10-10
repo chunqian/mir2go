@@ -62,7 +62,7 @@ func (t *TTimer) start() {
 		select {
 		case <-t.ticker.C:
 			if t.onTimer != nil {
-				vcl.ThreadSync(func() {
+				go vcl.ThreadSync(func() {
 					t.onTimer(t)
 				})
 			}

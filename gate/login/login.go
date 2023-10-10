@@ -838,6 +838,7 @@ func (sf *TFrmMain) SendTimerTimer(sender *TTimer) {
 	if sf.ServerSocket.Active() {
 		ActiveConnections = sf.ServerSocket.ActiveConnections()
 	}
+
 	// 更新UI
 	if SendHoldTimeOut {
 		sf.Panel.Hold.SetCaption(IntToStr(ActiveConnections) + "#")
@@ -1024,6 +1025,7 @@ func (sf *TFrmMain) StartTimerTimer(sender *TTimer) {
 
 func (sf *TFrmMain) TimerTimer(sender *TTimer) {
 	var port string
+
 	// 更新UI
 	if sf.ServerSocket.Active() {
 		port = GetAddrPort(sf.ServerSocket.Addr())

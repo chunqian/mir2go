@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	log "github.com/chunqian/tinylog"
+	"github.com/ying32/govcl/vcl"
 )
 
 // ******************** Enum ********************
@@ -139,10 +140,14 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 				s.activeConnections--
 
 				if err != io.EOF {
-					iSocket.ServerSocketClientError(conn, err)
+					go vcl.ThreadSync(func() {
+						iSocket.ServerSocketClientError(conn, err)
+					})
 				} else {
 					conn.Close()
-					iSocket.ServerSocketClientDisconnect(conn, err)
+					go vcl.ThreadSync(func() {
+						iSocket.ServerSocketClientDisconnect(conn, err)
+					})
 				}
 				break
 			}
@@ -158,7 +163,9 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 					reading = false
 					// log.Info("Message Received: {}", dataBuffer.String())
 					message := dataBuffer.String()
-					iSocket.ServerSocketClientRead(conn, message)
+					go vcl.ThreadSync(func() {
+						iSocket.ServerSocketClientRead(conn, message)
+					})
 					dataBuffer.Reset()
 					continue
 				}
@@ -190,7 +197,9 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 
 			s.activeConnections++
 			s.connections = append(s.connections, clientSocket)
-			iSocket.ServerSocketClientConnect(clientSocket)
+			go vcl.ThreadSync(func() {
+				iSocket.ServerSocketClientConnect(clientSocket)
+			})
 
 			ch <- clientSocket
 		}
@@ -254,10 +263,14 @@ func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 			n, err := conn.Read(buffer)
 			if err != nil {
 				if err != io.EOF {
-					iSocket.ClientSocketError(conn, err)
+					go vcl.ThreadSync(func() {
+						iSocket.ClientSocketError(conn, err)
+					})
 				} else {
 					conn.Close()
-					iSocket.ClientSocketDisconnect(conn, err)
+					go vcl.ThreadSync(func() {
+						iSocket.ClientSocketDisconnect(conn, err)
+					})
 				}
 				break
 			}
@@ -275,7 +288,9 @@ func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 					dataBuffer.WriteByte(buffer[i])
 					// log.Info("Message Received: {}", dataBuffer.String())
 					message := dataBuffer.String()
-					iSocket.ClientSocketRead(conn, message)
+					go vcl.ThreadSync(func() {
+						iSocket.ClientSocketRead(conn, message)
+					})
 					dataBuffer.Reset()
 					continue
 				}
@@ -290,7 +305,9 @@ func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 	c.TCPConn = tcpConn
 	c.socketHandle = uintptr(unsafe.Pointer(tcpConn))
 
-	iSocket.ClientSocketConnect(c)
+	go vcl.ThreadSync(func() {
+		iSocket.ClientSocketConnect(c)
+	})
 
 	go msgProducer(iSocket, c)
 }
