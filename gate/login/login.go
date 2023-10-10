@@ -22,10 +22,10 @@ type TFrmMain struct {
 	Panel     *TPanel
 	StatusBar *vcl.TStatusBar
 
-	SendTimer   *vcl.TTimer
-	StartTimer  *vcl.TTimer
-	DecodeTimer *vcl.TTimer
-	Timer       *vcl.TTimer
+	SendTimer   *TTimer
+	StartTimer  *TTimer
+	DecodeTimer *TTimer
+	Timer       *TTimer
 
 	ClientSocket *TClientSocket
 	ServerSocket *TServerSocket
@@ -128,26 +128,6 @@ func (sf *TFrmMain) Layout() {
 	spanel.SetWidth(70)
 	spanel = sf.StatusBar.Panels().Add()
 	spanel.SetWidth(50)
-
-	sf.StartTimer = vcl.NewTimer(sf)
-	sf.StartTimer.SetInterval(200)
-	sf.StartTimer.SetEnabled(true)
-	sf.StartTimer.SetOnTimer(sf.StartTimerTimer)
-
-	sf.DecodeTimer = vcl.NewTimer(sf)
-	sf.DecodeTimer.SetInterval(1)
-	sf.DecodeTimer.SetEnabled(false)
-	sf.DecodeTimer.SetOnTimer(sf.DecodeTimerTimer)
-
-	sf.SendTimer = vcl.NewTimer(sf)
-	sf.SendTimer.SetInterval(3000)
-	sf.SendTimer.SetEnabled(false)
-	sf.SendTimer.SetOnTimer(sf.SendTimerTimer)
-
-	sf.Timer = vcl.NewTimer(sf)
-	sf.Timer.SetInterval(1000)
-	sf.Timer.SetEnabled(true)
-	sf.Timer.SetOnTimer(sf.TimerTimer)
 
 	sf.Panel.SetParent(sf)
 	sf.MemoLog.SetParent(sf)
@@ -281,6 +261,26 @@ func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetBounds(636, 215, 308, 154)
 	sf.Layout()
+
+	sf.StartTimer = NewTimer()
+	sf.StartTimer.SetInterval(200)
+	sf.StartTimer.SetEnabled(true)
+	sf.StartTimer.SetOnTimer(sf.StartTimerTimer)
+
+	sf.DecodeTimer = NewTimer()
+	sf.DecodeTimer.SetInterval(3)
+	sf.DecodeTimer.SetEnabled(false)
+	sf.DecodeTimer.SetOnTimer(sf.DecodeTimerTimer)
+
+	sf.SendTimer = NewTimer()
+	sf.SendTimer.SetInterval(3000)
+	sf.SendTimer.SetEnabled(false)
+	sf.SendTimer.SetOnTimer(sf.SendTimerTimer)
+
+	sf.Timer = NewTimer()
+	sf.Timer.SetInterval(1000)
+	sf.Timer.SetEnabled(false)
+	sf.Timer.SetOnTimer(sf.TimerTimer)
 
 	DecodeMsgTime = 0
 	sf.initUserSessionArray()
@@ -482,10 +482,10 @@ func (sf *TFrmMain) showMainLogMsg() {
 
 	// 获取主日志列表, 在 GUI 中显示日志
 	memoLog := vcl.AsMemo(sf.FindComponent("MemoLog"))
+
+	// 更新UI
 	for _, logMsg := range MainLog.MsgList() {
-		vcl.ThreadSync(func() {
-			memoLog.Lines().Add(logMsg)
-		})
+		memoLog.Lines().Add(logMsg)
 	}
 
 	// 清空主日志列表
@@ -528,6 +528,7 @@ func (sf *TFrmMain) startService() {
 	sf.resUserSessionArray()
 	sf.loadConfig()
 
+	// 更新UI
 	if TitleName != "" {
 		sf.SetCaption(GateName + " - " + TitleName)
 	} else {
@@ -542,6 +543,8 @@ func (sf *TFrmMain) startService() {
 
 	sf.DecodeTimer.SetEnabled(true)
 	sf.SendTimer.SetEnabled(true)
+	sf.Timer.SetEnabled(true)
+
 	MainLog.AddLogMsg("启动服务完成...", 3)
 }
 
@@ -552,7 +555,9 @@ func (sf *TFrmMain) stopService() {
 	GateReady = false
 	sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(true)
 	sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(false)
-	sf.SendTimer.SetEnabled(false)
+
+	// sf.SendTimer.SetEnabled(false)
+
 	for i := 0; i < GATEMAXSESSION; i++ {
 		if SessionArray[i].Socket != nil {
 			SessionArray[i].Socket.Close()
@@ -628,7 +633,7 @@ func (sf *TFrmMain) ClientSocketRead(socket *TClientSocket, message string) {
 	ClientSockeMsgList = append(ClientSockeMsgList, message)
 }
 
-func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
+func (sf *TFrmMain) DecodeTimerTimer(sender *TTimer) {
 	var processMsg, socketMsg string
 
 	sf.showMainLogMsg()
@@ -783,9 +788,7 @@ func (sf *TFrmMain) MenuControlClearLogClick(sender vcl.IObject) {
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.MrYes {
-		vcl.ThreadSync(func() {
-			sf.MemoLog.Clear()
-		})
+		sf.MemoLog.Clear()
 	}
 }
 
@@ -831,21 +834,19 @@ func (sf *TFrmMain) N4Click(sender vcl.IObject) {
 	MainLog.AddMsg("程序制作: CHUNQIAN SHEN")
 }
 
-func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
+func (sf *TFrmMain) SendTimerTimer(sender *TTimer) {
 	if sf.ServerSocket.Active() {
 		ActiveConnections = sf.ServerSocket.ActiveConnections()
 	}
 	// 更新UI
-	vcl.ThreadSync(func() {
-		if SendHoldTimeOut {
-			sf.Panel.Hold.SetCaption(IntToStr(ActiveConnections) + "#")
-			if GetTickCount()-SendHoldTick > 3*1000 {
-				SendHoldTimeOut = false
-			}
-		} else {
-			sf.Panel.Hold.SetCaption(IntToStr(ActiveConnections))
+	if SendHoldTimeOut {
+		sf.Panel.Hold.SetCaption(IntToStr(ActiveConnections) + "#")
+		if GetTickCount()-SendHoldTick > 3*1000 {
+			SendHoldTimeOut = false
 		}
-	})
+	} else {
+		sf.Panel.Hold.SetCaption(IntToStr(ActiveConnections))
+	}
 
 	if GateReady && !KeepAliveTimeOut {
 		for i := 0; i < GATEMAXSESSION; i++ {
@@ -1006,53 +1007,51 @@ func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) 
 	}
 }
 
-func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
-	startTimer := vcl.AsTimer(sender) // 将传入的 IObject 转型为 Timer
+func (sf *TFrmMain) StartTimerTimer(sender *TTimer) {
+	startTimer := sender
 	if Started {
 		startTimer.SetEnabled(false) // 禁用定时器
 		sf.stopService()
 		Closed = true
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
-		sf.MenuViewLogMsgClick(sender)
+		sf.MenuViewLogMsgClick(sf)
 		Started = true
 		startTimer.SetEnabled(false) // 禁用定时器
 		sf.startService()
 	}
 }
 
-func (sf *TFrmMain) TimerTimer(sender vcl.IObject) {
+func (sf *TFrmMain) TimerTimer(sender *TTimer) {
 	var port string
 	// 更新UI
-	vcl.ThreadSync(func() {
-		if sf.ServerSocket.Active() {
-			port = GetAddrPort(sf.ServerSocket.Addr())
-			sf.StatusBar.Panels().Items(0).SetText(port)
-			if SendHoldTimeOut {
-				sf.StatusBar.Panels().Items(2).SetText(
-					IntToStr(SessionCount) + "/#" + IntToStr(sf.ServerSocket.ActiveConnections()),
-				)
-			} else {
-				sf.StatusBar.Panels().Items(2).SetText(
-					IntToStr(SessionCount) + "/" + IntToStr(sf.ServerSocket.ActiveConnections()),
-				)
-			}
+	if sf.ServerSocket.Active() {
+		port = GetAddrPort(sf.ServerSocket.Addr())
+		sf.StatusBar.Panels().Items(0).SetText(port)
+		if SendHoldTimeOut {
+			sf.StatusBar.Panels().Items(2).SetText(
+				IntToStr(SessionCount) + "/#" + IntToStr(sf.ServerSocket.ActiveConnections()),
+			)
 		} else {
-			sf.StatusBar.Panels().Items(0).SetText("????")
-			sf.StatusBar.Panels().Items(2).SetText("????")
+			sf.StatusBar.Panels().Items(2).SetText(
+				IntToStr(SessionCount) + "/" + IntToStr(sf.ServerSocket.ActiveConnections()),
+			)
 		}
-		sf.Panel.Label2.SetCaption(IntToStr(int(DecodeMsgTime)))
-		if !GateReady {
-			sf.StatusBar.Panels().Items(1).SetText("未连接")
+	} else {
+		sf.StatusBar.Panels().Items(0).SetText("????")
+		sf.StatusBar.Panels().Items(2).SetText("????")
+	}
+	sf.Panel.Label2.SetCaption(IntToStr(int(DecodeMsgTime)))
+	if !GateReady {
+		sf.StatusBar.Panels().Items(1).SetText("未连接")
+	} else {
+		if KeepAliveTimeOut {
+			sf.StatusBar.Panels().Items(1).SetText("超时")
 		} else {
-			if KeepAliveTimeOut {
-				sf.StatusBar.Panels().Items(1).SetText("超时")
-			} else {
-				sf.StatusBar.Panels().Items(1).SetText("已连接")
-				sf.Panel.Lack.SetCaption(IntToStr(TotalMsgListCount) + "/" + IntToStr(SendMsgCount))
-			}
+			sf.StatusBar.Panels().Items(1).SetText("已连接")
+			sf.Panel.Lack.SetCaption(IntToStr(TotalMsgListCount) + "/" + IntToStr(SendMsgCount))
 		}
-	})
+	}
 }
 
 func RGB(r, g, b uint32) types.TColor {

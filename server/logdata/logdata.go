@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	. "github.com/chunqian/mir2go/common"
 	log "github.com/chunqian/tinylog"
 	"github.com/ying32/govcl/vcl"
 	"github.com/ying32/govcl/vcl/types"
@@ -20,7 +21,7 @@ type TFrmLogData struct {
 	Label3  *vcl.TLabel
 	Memo1   *vcl.TMemo
 	UdpConn *net.UDPConn
-	Timer1  *vcl.TTimer
+	Timer1  *TTimer
 }
 
 // ******************** Var ********************
@@ -35,11 +36,6 @@ func (sf *TFrmLogData) Layout() {
 	sf.Label3.SetParent(sf)
 	sf.Label3.SetCaption("当前日志文件:")
 	sf.Label3.SetBounds(9, 9, 85, 13)
-
-	sf.Timer1 = vcl.NewTimer(sf)
-	sf.Timer1.SetInterval(3000)
-	sf.Timer1.SetEnabled(true)
-	sf.Timer1.SetOnTimer(sf.Timer1Timer)
 
 	sf.Memo1 = vcl.NewMemo(sf)
 	sf.Memo1.SetParent(sf)
@@ -59,6 +55,11 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	// sf.SetConstraints(constraints)
 	sf.SetBorderStyle(types.BsSingle)
 	sf.Layout()
+
+	sf.Timer1 = NewTimer()
+	sf.Timer1.SetInterval(3000)
+	sf.Timer1.SetEnabled(true)
+	sf.Timer1.SetOnTimer(sf.Timer1Timer)
 
 	RemoteClose = false
 	LogMsgList = make([]string, 0)
@@ -119,7 +120,7 @@ func (sf *TFrmLogData) UDPDataReceived() {
 	}
 }
 
-func (sf *TFrmLogData) Timer1Timer(object vcl.IObject) {
+func (sf *TFrmLogData) Timer1Timer(sender *TTimer) {
 	sf.WriteLogFile()
 }
 

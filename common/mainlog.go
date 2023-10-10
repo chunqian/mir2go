@@ -23,7 +23,6 @@ var (
 func init() {
 	MainLog = &TMainLog{
 		msgList:  make([]string, 0),
-		mutex:    sync.Mutex{},
 		logLevel: 3,
 	}
 }
