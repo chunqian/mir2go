@@ -556,7 +556,7 @@ func (sf *TFrmMain) stopService() {
 	sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(true)
 	sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(false)
 
-	// sf.SendTimer.SetEnabled(false)
+	sf.SendTimer.SetEnabled(false)
 
 	for i := 0; i < GATEMAXSESSION; i++ {
 		if SessionArray[i].Socket != nil {
