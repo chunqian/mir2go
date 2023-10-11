@@ -32,7 +32,7 @@ type TUserSession struct {
 	SocketHandle     uintptr
 	MsgList          []string
 	ConnectCheckTick uint32
-	mutex            sync.Mutex
+	Mu               sync.Mutex
 }
 
 // ******************** Var ********************

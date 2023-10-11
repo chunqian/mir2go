@@ -22,10 +22,10 @@ type TFrmMain struct {
 	Panel     *TPanel
 	StatusBar *vcl.TStatusBar
 
-	SendTimer   *TTimer
-	StartTimer  *TTimer
-	DecodeTimer *TTimer
-	Timer       *TTimer
+	SendTimer   *vcl.TTimer
+	StartTimer  *vcl.TTimer
+	DecodeTimer *vcl.TTimer
+	Timer       *vcl.TTimer
 
 	ClientSocket *TClientSocket
 	ServerSocket *TServerSocket
@@ -128,6 +128,26 @@ func (sf *TFrmMain) Layout() {
 	spanel.SetWidth(70)
 	spanel = sf.StatusBar.Panels().Add()
 	spanel.SetWidth(50)
+
+	sf.StartTimer = vcl.NewTimer(sf)
+	sf.StartTimer.SetInterval(200)
+	sf.StartTimer.SetEnabled(true)
+	sf.StartTimer.SetOnTimer(sf.StartTimerTimer)
+
+	sf.DecodeTimer = vcl.NewTimer(sf)
+	sf.DecodeTimer.SetInterval(3)
+	sf.DecodeTimer.SetEnabled(false)
+	sf.DecodeTimer.SetOnTimer(sf.DecodeTimerTimer)
+
+	sf.SendTimer = vcl.NewTimer(sf)
+	sf.SendTimer.SetInterval(3000)
+	sf.SendTimer.SetEnabled(false)
+	sf.SendTimer.SetOnTimer(sf.SendTimerTimer)
+
+	sf.Timer = vcl.NewTimer(sf)
+	sf.Timer.SetInterval(1000)
+	sf.Timer.SetEnabled(false)
+	sf.Timer.SetOnTimer(sf.TimerTimer)
 
 	sf.Panel.SetParent(sf)
 	sf.MemoLog.SetParent(sf)
@@ -261,26 +281,6 @@ func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetBounds(636, 215, 308, 154)
 	sf.Layout()
-
-	sf.StartTimer = NewTimer()
-	sf.StartTimer.SetInterval(200)
-	sf.StartTimer.SetEnabled(true)
-	sf.StartTimer.SetOnTimer(sf.StartTimerTimer)
-
-	sf.DecodeTimer = NewTimer()
-	sf.DecodeTimer.SetInterval(3)
-	sf.DecodeTimer.SetEnabled(false)
-	sf.DecodeTimer.SetOnTimer(sf.DecodeTimerTimer)
-
-	sf.SendTimer = NewTimer()
-	sf.SendTimer.SetInterval(3000)
-	sf.SendTimer.SetEnabled(false)
-	sf.SendTimer.SetOnTimer(sf.SendTimerTimer)
-
-	sf.Timer = NewTimer()
-	sf.Timer.SetInterval(1000)
-	sf.Timer.SetEnabled(false)
-	sf.Timer.SetOnTimer(sf.TimerTimer)
 
 	DecodeMsgTime = 0
 	sf.initUserSessionArray()
@@ -633,7 +633,7 @@ func (sf *TFrmMain) ClientSocketRead(socket *TClientSocket, message string) {
 	ClientSockeMsgList = append(ClientSockeMsgList, message)
 }
 
-func (sf *TFrmMain) DecodeTimerTimer(sender *TTimer) {
+func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 	var processMsg, socketMsg string
 
 	sf.showMainLogMsg()
@@ -834,7 +834,7 @@ func (sf *TFrmMain) N4Click(sender vcl.IObject) {
 	MainLog.AddMsg("程序制作: CHUNQIAN SHEN")
 }
 
-func (sf *TFrmMain) SendTimerTimer(sender *TTimer) {
+func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	if sf.ServerSocket.Active() {
 		ActiveConnections = sf.ServerSocket.ActiveConnections()
 	}
@@ -1008,8 +1008,8 @@ func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) 
 	}
 }
 
-func (sf *TFrmMain) StartTimerTimer(sender *TTimer) {
-	startTimer := sender
+func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
+	startTimer := vcl.AsTimer(sender)
 	if Started {
 		startTimer.SetEnabled(false) // 禁用定时器
 		sf.stopService()
@@ -1023,7 +1023,7 @@ func (sf *TFrmMain) StartTimerTimer(sender *TTimer) {
 	}
 }
 
-func (sf *TFrmMain) TimerTimer(sender *TTimer) {
+func (sf *TFrmMain) TimerTimer(sender vcl.IObject) {
 	var port string
 
 	// 更新UI

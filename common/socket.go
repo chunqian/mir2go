@@ -104,6 +104,103 @@ func GetTickCount() uint32 {
 	return uint32(time.Now().UnixNano() / 1e6)
 }
 
+func (s *TServerSocket) msgProducer(iSocket IServerSocket, conn *TClientSocket) {
+	defer conn.Close()
+
+	buffer := make([]byte, 1024)
+	var dataBuffer bytes.Buffer
+	reading := false
+
+	for {
+		n, err := conn.Read(buffer)
+		if err != nil {
+			for i := 0; i < s.activeConnections; {
+				socketHandle := s.connections[i].SocketHandle()
+				if conn.socketHandle == socketHandle {
+					s.connections = append(s.connections[:i], s.connections[i+1:]...)
+					break
+				} else {
+					i++
+				}
+			}
+			s.activeConnections--
+
+			if err != io.EOF {
+				go vcl.ThreadSync(func() {
+					iSocket.ServerSocketClientError(conn, err)
+				})
+			} else {
+				conn.Close()
+				go vcl.ThreadSync(func() {
+					iSocket.ServerSocketClientDisconnect(conn, err)
+				})
+			}
+			break
+		}
+
+		for i := 0; i < n; i++ {
+			if buffer[i] == '%' {
+				reading = true
+				dataBuffer.Reset()
+				continue
+			}
+
+			if buffer[i] == '$' {
+				reading = false
+				message := dataBuffer.String()
+				go vcl.ThreadSync(func() {
+					iSocket.ServerSocketClientRead(conn, message)
+				})
+				dataBuffer.Reset()
+				continue
+			}
+
+			if reading {
+				dataBuffer.WriteByte(buffer[i])
+			}
+		}
+	}
+}
+
+func (s *TServerSocket) sockProducer(iSocket IServerSocket, ch chan *TClientSocket) {
+	for {
+		conn, err := s.Accept()
+		if err != nil {
+			log.Error(err.Error())
+			s.active = false
+			return
+		}
+		tcpConn, ok := conn.(*net.TCPConn)
+		if !ok {
+			log.Error("Not a TCP connection")
+			return
+		}
+		clientSocket := &TClientSocket{
+			TCPConn:      tcpConn,
+			socketHandle: uintptr(unsafe.Pointer(tcpConn)),
+		}
+
+		s.activeConnections++
+		s.connections = append(s.connections, clientSocket)
+		go vcl.ThreadSync(func() {
+			iSocket.ServerSocketClientConnect(clientSocket)
+		})
+
+		ch <- clientSocket
+	}
+}
+
+func (s *TServerSocket) sockConsumer(iSocket IServerSocket, ch chan *TClientSocket) {
+	for {
+		select {
+		case sock := <-ch:
+			go s.msgProducer(iSocket, sock)
+			// default:
+			// 	log.Error("Could not read from sockChan")
+		}
+	}
+}
+
 func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
@@ -118,110 +215,12 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 
 	sockChan := make(chan *TClientSocket)
 
-	msgProducer := func(iSocket IServerSocket, conn *TClientSocket) {
-		defer conn.Close()
-
-		buffer := make([]byte, 1024)
-		var dataBuffer bytes.Buffer
-		reading := false
-
-		for {
-			n, err := conn.Read(buffer)
-			if err != nil {
-				for i := 0; i < s.activeConnections; {
-					socketHandle := s.connections[i].SocketHandle()
-					if conn.socketHandle == socketHandle {
-						s.connections = append(s.connections[:i], s.connections[i+1:]...)
-						break
-					} else {
-						i++
-					}
-				}
-				s.activeConnections--
-
-				if err != io.EOF {
-					go vcl.ThreadSync(func() {
-						iSocket.ServerSocketClientError(conn, err)
-					})
-				} else {
-					conn.Close()
-					go vcl.ThreadSync(func() {
-						iSocket.ServerSocketClientDisconnect(conn, err)
-					})
-				}
-				break
-			}
-
-			for i := 0; i < n; i++ {
-				if buffer[i] == '%' {
-					reading = true
-					dataBuffer.Reset()
-					continue
-				}
-
-				if buffer[i] == '$' {
-					reading = false
-					// log.Info("Message Received: {}", dataBuffer.String())
-					message := dataBuffer.String()
-					go vcl.ThreadSync(func() {
-						iSocket.ServerSocketClientRead(conn, message)
-					})
-					dataBuffer.Reset()
-					continue
-				}
-
-				if reading {
-					dataBuffer.WriteByte(buffer[i])
-				}
-			}
-		}
-	}
-
-	sockProducer := func(ch chan *TClientSocket) {
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Error(err.Error())
-				s.active = false
-				return
-			}
-			tcpConn, ok := conn.(*net.TCPConn)
-			if !ok {
-				log.Error("Not a TCP connection")
-				return
-			}
-			clientSocket := &TClientSocket{
-				TCPConn:      tcpConn,
-				socketHandle: uintptr(unsafe.Pointer(tcpConn)),
-			}
-
-			s.activeConnections++
-			s.connections = append(s.connections, clientSocket)
-			go vcl.ThreadSync(func() {
-				iSocket.ServerSocketClientConnect(clientSocket)
-			})
-
-			ch <- clientSocket
-		}
-	}
-
-	sockConsumer := func(ch chan *TClientSocket) {
-		for {
-			select {
-			case sock := <-ch:
-				go msgProducer(iSocket, sock)
-				// default:
-				// 	log.Error("Could not read from sockChan")
-			}
-		}
-	}
-
 	s.TCPListener = listener
 	s.active = true
 	s.activeConnections = 0
 
-	go sockProducer(sockChan)
-	go sockConsumer(sockChan)
+	go s.sockProducer(iSocket, sockChan)
+	go s.sockConsumer(iSocket, sockChan)
 }
 
 func (s *TServerSocket) Active() bool {
@@ -240,6 +239,55 @@ func (c *TClientSocket) SocketHandle() uintptr {
 	return c.socketHandle
 }
 
+func (c *TClientSocket) msgProducer(iSocket IClientSocket, conn *TClientSocket) {
+	defer conn.Close()
+
+	buffer := make([]byte, 1024)
+	var dataBuffer bytes.Buffer
+	reading := false
+
+	for {
+		n, err := conn.Read(buffer)
+		if err != nil {
+			if err != io.EOF {
+				go vcl.ThreadSync(func() {
+					iSocket.ClientSocketError(conn, err)
+				})
+			} else {
+				conn.Close()
+				go vcl.ThreadSync(func() {
+					iSocket.ClientSocketDisconnect(conn, err)
+				})
+			}
+			break
+		}
+
+		for i := 0; i < n; i++ {
+			if buffer[i] == '%' {
+				reading = true
+				dataBuffer.Reset()
+				dataBuffer.WriteByte(buffer[i])
+				continue
+			}
+
+			if buffer[i] == '$' {
+				reading = false
+				dataBuffer.WriteByte(buffer[i])
+				message := dataBuffer.String()
+				go vcl.ThreadSync(func() {
+					iSocket.ClientSocketRead(conn, message)
+				})
+				dataBuffer.Reset()
+				continue
+			}
+
+			if reading {
+				dataBuffer.WriteByte(buffer[i])
+			}
+		}
+	}
+}
+
 func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
@@ -252,56 +300,6 @@ func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 		return
 	}
 
-	msgProducer := func(iSocket IClientSocket, conn *TClientSocket) {
-		defer conn.Close()
-
-		buffer := make([]byte, 1024)
-		var dataBuffer bytes.Buffer
-		reading := false
-
-		for {
-			n, err := conn.Read(buffer)
-			if err != nil {
-				if err != io.EOF {
-					go vcl.ThreadSync(func() {
-						iSocket.ClientSocketError(conn, err)
-					})
-				} else {
-					conn.Close()
-					go vcl.ThreadSync(func() {
-						iSocket.ClientSocketDisconnect(conn, err)
-					})
-				}
-				break
-			}
-
-			for i := 0; i < n; i++ {
-				if buffer[i] == '%' {
-					reading = true
-					dataBuffer.Reset()
-					dataBuffer.WriteByte(buffer[i])
-					continue
-				}
-
-				if buffer[i] == '$' {
-					reading = false
-					dataBuffer.WriteByte(buffer[i])
-					// log.Info("Message Received: {}", dataBuffer.String())
-					message := dataBuffer.String()
-					go vcl.ThreadSync(func() {
-						iSocket.ClientSocketRead(conn, message)
-					})
-					dataBuffer.Reset()
-					continue
-				}
-
-				if reading {
-					dataBuffer.WriteByte(buffer[i])
-				}
-			}
-		}
-	}
-
 	c.TCPConn = tcpConn
 	c.socketHandle = uintptr(unsafe.Pointer(tcpConn))
 
@@ -309,7 +307,7 @@ func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 		iSocket.ClientSocketConnect(c)
 	})
 
-	go msgProducer(iSocket, c)
+	go c.msgProducer(iSocket, c)
 }
 
 func (c *TClientSocket) Close() {
