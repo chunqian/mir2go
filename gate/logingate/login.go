@@ -832,7 +832,3 @@ func (sf *TFrmMain) TimerTimer(sender vcl.IObject) {
 		}
 	}
 }
-
-func RGB(r, g, b uint32) types.TColor {
-	return types.TColor(r | (g << 8) | (b << 16))
-}
