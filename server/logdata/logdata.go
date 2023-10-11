@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"time"
 
@@ -18,10 +17,10 @@ import (
 type TFrmLogData struct {
 	*vcl.TForm
 
-	Label3  *vcl.TLabel
-	Memo1   *vcl.TMemo
-	UdpConn *net.UDPConn
-	Timer1  *TTimer
+	Label3 *vcl.TLabel
+	Memo1  *vcl.TMemo
+	Socket *TUdpSocket
+	Timer1 *vcl.TTimer
 }
 
 // ******************** Var ********************
@@ -50,19 +49,21 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	sf.SetCaption("日志服务器")
 	sf.EnabledMaximize(false)
 	sf.SetBounds(782, 338, 329, 121)
+
 	// constraints := vcl.AsSizeConstraints(sf.Constraints())
 	// constraints.SetMaxWidth(500)
 	// sf.SetConstraints(constraints)
+
 	sf.SetBorderStyle(types.BsSingle)
 	sf.Layout()
 
-	sf.Timer1 = NewTimer()
+	sf.Timer1 = vcl.NewTimer(sf)
 	sf.Timer1.SetInterval(3000)
 	sf.Timer1.SetEnabled(true)
 	sf.Timer1.SetOnTimer(sf.Timer1Timer)
 
 	RemoteClose = false
-	LogMsgList = make([]string, 0)
+	LogMsgList.Data = make([]string, 0)
 
 	conf := vcl.NewIniFile(AppDir + "./Config.ini")
 	if conf != nil {
@@ -77,25 +78,12 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	sf.Memo1.SetText(BaseDir)
 
 	// 初始化UDP组件
-	log.Info(fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
-	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", ServerAddr, ServerPort))
-	if err != nil {
-		vcl.ShowMessage("无法解析地址: " + err.Error())
-		return
-	}
-
-	sf.UdpConn, err = net.ListenUDP("udp", addr)
-	if err != nil {
-		vcl.ShowMessage("无法监听UDP: " + err.Error())
-		return
-	}
-
-	// 启动goroutine来接收UDP消息
-	go sf.UDPDataReceived()
+	sf.Socket = &TUdpSocket{}
+	sf.Socket.ListenUDP(sf, ServerAddr, ServerPort)
 }
 
 func (sf *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
-	LogMsgList = LogMsgList[:0]
+	LogMsgList.Data = LogMsgList.Data[:0]
 }
 
 func (sf *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
@@ -105,30 +93,23 @@ func (sf *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
 		types.MbNo) == types.IdYes
 }
 
-func (sf *TFrmLogData) UDPDataReceived() {
-	buffer := make([]byte, 2048) // 最大2048个字节
-	for {
-		numberBytes, _, err := sf.UdpConn.ReadFromUDP(buffer)
-		if err != nil {
-			vcl.ThreadSync(func() {
-				vcl.ShowMessage("读取UDP数据出错: " + err.Error())
-			})
-			return
-		}
-		message := string(buffer[:numberBytes])
-		LogMsgList = append(LogMsgList, message)
-	}
+func (sf *TFrmLogData) UdpSocketError(socket *TUdpSocket, err error) {
+	vcl.ShowMessage("读取UDP数据出错: " + err.Error())
 }
 
-func (sf *TFrmLogData) Timer1Timer(sender *TTimer) {
+func (sf *TFrmLogData) UdpSocketRead(socket *TUdpSocket, message string) {
+	LogMsgList.Data = append(LogMsgList.Data, message)
+}
+
+func (sf *TFrmLogData) Timer1Timer(sender vcl.IObject) {
 	sf.WriteLogFile()
 }
 
 func (sf *TFrmLogData) WriteLogFile() {
-	LogMsgListMutex.Lock()
-	defer LogMsgListMutex.Unlock()
+	LogMsgList.Mu.Lock()
+	defer LogMsgList.Mu.Unlock()
 
-	if len(LogMsgList) <= 0 {
+	if len(LogMsgList.Data) <= 0 {
 		return
 	}
 
@@ -138,21 +119,19 @@ func (sf *TFrmLogData) WriteLogFile() {
 	hour, min, _ := now.Clock()
 
 	// 构造目录和文件名
-	sLogDir := fmt.Sprintf("%s/%d-%02d-%02d", BaseDir, year, month, day)
-	sLogFile := fmt.Sprintf("%s/Log-%02dh%02dm.txt", sLogDir, hour, (min/10)*2)
+	logDir := fmt.Sprintf("%s/%d-%02d-%02d", BaseDir, year, month, day)
+	logFile := fmt.Sprintf("%s/Log-%02dh%02dm.txt", logDir, hour, (min/10)*2)
 
 	// 显示文件名
-	vcl.ThreadSync(func() {
-		sf.Memo1.SetText(sLogFile)
-	})
+	sf.Memo1.SetText(logFile)
 
 	// 创建目录（如果不存在）
-	if _, err := os.Stat(sLogDir); os.IsNotExist(err) {
-		os.Mkdir(sLogDir, 0755)
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		os.Mkdir(logDir, 0755)
 	}
 
 	// 打开或创建文件
-	fl, err := os.OpenFile(sLogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	fl, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Error("Error opening file: {}", err.Error())
 		return
@@ -160,12 +139,12 @@ func (sf *TFrmLogData) WriteLogFile() {
 	defer fl.Close()
 
 	// 写入日志信息
-	for i := 0; i < len(LogMsgList); i++ {
-		msg := LogMsgList[i]
-		logEntry := fmt.Sprintf("%s\t%s\n", msg, now.Format("2006-01-02 15:04:05"))
+	for i := 0; i < len(LogMsgList.Data); i++ {
+		msg := LogMsgList.Data[i]
+		logEntry := fmt.Sprintf("%s %s\n", msg, now.Format("2006-01-02 15:04:05"))
 		fl.WriteString(logEntry)
 	}
 
 	// 清空logMsgList
-	LogMsgList = LogMsgList[:0]
+	LogMsgList.Data = LogMsgList.Data[:0]
 }

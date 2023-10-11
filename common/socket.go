@@ -53,6 +53,10 @@ type TServerSocket struct {
 	connections       []*TClientSocket
 }
 
+type TUdpSocket struct {
+	*net.UDPConn
+}
+
 // ******************** Interface ********************
 type IServerSocket interface {
 	ServerSocketClientConnect(s *TClientSocket)
@@ -66,6 +70,11 @@ type IClientSocket interface {
 	ClientSocketDisconnect(socket *TClientSocket, err error)
 	ClientSocketError(socket *TClientSocket, err error)
 	ClientSocketRead(socket *TClientSocket, message string)
+}
+
+type IUdpSocket interface {
+	UdpSocketError(socket *TUdpSocket, err error)
+	UdpSocketRead(socket *TUdpSocket, message string)
 }
 
 func IpToInteger(ip net.IP) uint32 {
@@ -126,12 +135,12 @@ func (s *TServerSocket) msgProducer(iSocket IServerSocket, conn *TClientSocket) 
 			s.activeConnections--
 
 			if err != io.EOF {
-				go vcl.ThreadSync(func() {
+				vcl.ThreadSync(func() {
 					iSocket.ServerSocketClientError(conn, err)
 				})
 			} else {
 				conn.Close()
-				go vcl.ThreadSync(func() {
+				vcl.ThreadSync(func() {
 					iSocket.ServerSocketClientDisconnect(conn, err)
 				})
 			}
@@ -148,7 +157,7 @@ func (s *TServerSocket) msgProducer(iSocket IServerSocket, conn *TClientSocket) 
 			if buffer[i] == '$' {
 				reading = false
 				message := dataBuffer.String()
-				go vcl.ThreadSync(func() {
+				vcl.ThreadSync(func() {
 					iSocket.ServerSocketClientRead(conn, message)
 				})
 				dataBuffer.Reset()
@@ -182,7 +191,7 @@ func (s *TServerSocket) sockProducer(iSocket IServerSocket, ch chan *TClientSock
 
 		s.activeConnections++
 		s.connections = append(s.connections, clientSocket)
-		go vcl.ThreadSync(func() {
+		vcl.ThreadSync(func() {
 			iSocket.ServerSocketClientConnect(clientSocket)
 		})
 
@@ -250,12 +259,12 @@ func (c *TClientSocket) msgProducer(iSocket IClientSocket, conn *TClientSocket) 
 		n, err := conn.Read(buffer)
 		if err != nil {
 			if err != io.EOF {
-				go vcl.ThreadSync(func() {
+				vcl.ThreadSync(func() {
 					iSocket.ClientSocketError(conn, err)
 				})
 			} else {
 				conn.Close()
-				go vcl.ThreadSync(func() {
+				vcl.ThreadSync(func() {
 					iSocket.ClientSocketDisconnect(conn, err)
 				})
 			}
@@ -274,7 +283,7 @@ func (c *TClientSocket) msgProducer(iSocket IClientSocket, conn *TClientSocket) 
 				reading = false
 				dataBuffer.WriteByte(buffer[i])
 				message := dataBuffer.String()
-				go vcl.ThreadSync(func() {
+				vcl.ThreadSync(func() {
 					iSocket.ClientSocketRead(conn, message)
 				})
 				dataBuffer.Reset()
@@ -320,4 +329,44 @@ func (c *TClientSocket) Write(message []byte) {
 	if c.TCPConn != nil {
 		c.TCPConn.Write(message)
 	}
+}
+
+func (u *TUdpSocket) msgProducer(iUSocket IUdpSocket) {
+	buffer := make([]byte, 2048) // 最大2048个字节
+	for {
+		numberBytes, _, err := u.ReadFromUDP(buffer)
+		if err != nil {
+			log.Error("读取UDP数据出错: {}", err.Error())
+			vcl.ThreadSync(func() {
+				iUSocket.UdpSocketError(u, err)
+			})
+			return
+		}
+
+		message := string(buffer[:numberBytes])
+		vcl.ThreadSync(func() {
+			iUSocket.UdpSocketRead(u, message)
+		})
+	}
+}
+
+func (u *TUdpSocket) ListenUDP(iUSocket IUdpSocket, serverAddr string, serverPort int32) {
+
+	// 初始化UDP组件
+	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", serverAddr, serverPort))
+	if err != nil {
+		log.Error("无法解析地址: {}", err.Error())
+		return
+	}
+
+	udpConn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		log.Error("无法监听UDP: {}", err.Error())
+		return
+	}
+
+	u.UDPConn = udpConn
+
+	// 接收UDP消息
+	go u.msgProducer(iUSocket)
 }

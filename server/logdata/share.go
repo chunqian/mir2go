@@ -6,6 +6,12 @@ import (
 	"sync"
 )
 
+// ******************** Type ********************
+type TLogData struct {
+	Data []string
+	Mu   sync.Mutex
+}
+
 // ******************** Var ********************
 var (
 	BaseDir     string = AppDir + "./LogBase"
@@ -15,7 +21,6 @@ var (
 	ServerPort  int32  = 10000
 	ServerAddr  string = "127.0.0.1"
 
-	LogMsgList      []string
-	LogMsgListMutex sync.Mutex
-	RemoteClose     bool
+	LogMsgList  TLogData
+	RemoteClose bool
 )
