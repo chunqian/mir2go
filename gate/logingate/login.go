@@ -36,6 +36,7 @@ var (
 	FrmMain *TFrmMain
 )
 
+// ******************** TFrmMain ********************
 func (sf *TFrmMain) SetComponents() {
 
 	sf.MainMenu = NewMainMenu(sf)
@@ -100,7 +101,6 @@ func (sf *TFrmMain) SetComponents() {
 	sf.StatusBar.SetParent(sf)
 }
 
-// ******************** TFrmMain ********************
 func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
 	// 布局

@@ -4,7 +4,6 @@ package main
 
 import "github.com/ying32/govcl/vcl"
 
-// ******************** TPanel ********************
 type TPanel struct {
 	*vcl.TPanel
 
