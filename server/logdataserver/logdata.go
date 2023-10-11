@@ -28,8 +28,8 @@ var (
 	FrmLogData *TFrmLogData
 )
 
-// ******************** Layout ********************
-func (sf *TFrmLogData) Layout() {
+// ******************** TFrmLogData ********************
+func (sf *TFrmLogData) SetComponents() {
 
 	sf.Label3 = vcl.NewLabel(sf)
 	sf.Label3.SetParent(sf)
@@ -42,7 +42,6 @@ func (sf *TFrmLogData) Layout() {
 	sf.Memo1.SetReadOnly(true)
 }
 
-// ******************** TFrmLogData ********************
 func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 
 	// 布局
@@ -55,7 +54,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	// sf.SetConstraints(constraints)
 
 	sf.SetBorderStyle(types.BsSingle)
-	sf.Layout()
+	sf.SetComponents()
 
 	sf.Timer1 = vcl.NewTimer(sf)
 	sf.Timer1.SetInterval(3000)
