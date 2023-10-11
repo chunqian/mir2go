@@ -12,10 +12,9 @@ var (
 
 func main() {
 	vcl.DEBUG = true
-	vcl.Application.Initialize()
-	vcl.Application.SetMainFormOnTaskBar(true)
-	vcl.Application.CreateForm(&FrmMain)
-	vcl.Application.CreateForm(&FrmIPAddrFilter)
-	vcl.Application.CreateForm(&FrmGeneralConfig)
-	vcl.Application.Run()
+	vcl.RunApp(
+		&FrmMain,
+		&FrmIPAddrFilter,
+		&FrmGeneralConfig,
+	)
 }
