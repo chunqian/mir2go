@@ -25,7 +25,7 @@ clear-all: \
 
 # ******************** logdataserver ********************
 build-logdataserver:
-	$(call build-project, bin/logdataserver, server/logdata, logdataserver)
+	$(call build-project, bin/logdataserver, server/logdataserver, logdataserver)
 
 clear-logdataserver:
 	$(call clear-project, bin/logdataserver, logdataserver)
@@ -35,7 +35,7 @@ run-logdataserver:
 
 # ******************** logingate ********************
 build-logingate:
-	$(call build-project, bin/logingate, gate/login, logingate)
+	$(call build-project, bin/logingate, gate/logingate, logingate)
 
 clear-logingate:
 	$(call clear-project, bin/logingate, logingate)

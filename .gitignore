@@ -8,9 +8,11 @@ Makefile
 !/Makefile
 
 logdataserver
+!/server/logdataserver
 !/bin/logdataserver
 
 logingate
+!/gate/logingate
 !/bin/logingate
 
 logdataserver.app
