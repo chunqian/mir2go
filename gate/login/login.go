@@ -110,6 +110,7 @@ func (sf *TFrmMain) Layout() {
 	sf.MemoLog.SetBounds(0, 119, 308, 18)
 	sf.MemoLog.SetWordWrap(false)
 	sf.MemoLog.SetScrollBars(types.SsHorizontal)
+	sf.MemoLog.SetReadOnly(true)
 
 	sf.StatusBar = vcl.NewStatusBar(sf)
 	sf.StatusBar.SetSimplePanel(false)
