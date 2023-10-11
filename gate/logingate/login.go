@@ -31,75 +31,20 @@ type TFrmMain struct {
 	ServerSocket *TServerSocket
 }
 
-type TMainMenu struct {
-	*vcl.TMainMenu
-
-	MenuControl *TMenuControl
-	MenuView    *TMenuView
-	MenuOption  *TMenuOption
-	N3          *TMenuItem3
-}
-
-type TPanel struct {
-	*vcl.TPanel
-
-	Label2 *vcl.TLabel
-	Hold   *vcl.TLabel
-	Lack   *vcl.TLabel
-}
-
-type TMenuControl struct {
-	*vcl.TMenuItem
-
-	MenuControlStart     *vcl.TMenuItem
-	MenuControlStop      *vcl.TMenuItem
-	MenuControlReconnect *vcl.TMenuItem
-	N1                   *vcl.TMenuItem
-	MenuControlClearLog  *vcl.TMenuItem
-	N2                   *vcl.TMenuItem
-	MenuControlExit      *vcl.TMenuItem
-}
-
-type TMenuView struct {
-	*vcl.TMenuItem
-
-	MenuViewLogMsg *vcl.TMenuItem
-}
-
-type TMenuOption struct {
-	*vcl.TMenuItem
-
-	MenuOptionGeneral  *vcl.TMenuItem
-	MenuOptionIpFilter *vcl.TMenuItem
-}
-
-type TMenuItem3 struct {
-	*vcl.TMenuItem
-
-	N4 *vcl.TMenuItem
-}
-
 // ******************** Var ********************
 var (
 	FrmMain *TFrmMain
 )
 
-// ******************** Layout ********************
-func (sf *TFrmMain) Layout() {
+func (sf *TFrmMain) SetComponents() {
 
-	sf.MainMenu = &TMainMenu{
-		TMainMenu: vcl.NewMainMenu(sf),
-	}
-	sf.MainMenu.Layout(sf)
+	sf.MainMenu = NewMainMenu(sf)
 
-	sf.Panel = &TPanel{
-		TPanel: vcl.NewPanel(sf),
-	}
+	sf.Panel = NewPanel(sf)
 	sf.Panel.SetAlign(types.AlTop)
 	sf.Panel.SetBevelOuter(types.BvNone)
 	sf.Panel.SetTabOrder(1)
 	sf.Panel.SetBounds(0, 0, 308, 119)
-	sf.Panel.Layout(sf)
 
 	sf.MemoLog = vcl.NewMemo(sf)
 	sf.MemoLog.SetName("MemoLog")
@@ -155,124 +100,6 @@ func (sf *TFrmMain) Layout() {
 	sf.StatusBar.SetParent(sf)
 }
 
-func (sf *TMainMenu) Layout(sender *TFrmMain) {
-
-	sf.MenuControl = &TMenuControl{
-		TMenuItem: vcl.NewMenuItem(sf),
-	}
-	sf.MenuControl.SetCaption("控制")
-	sf.MenuControl.Layout(sender)
-
-	sf.MenuView = &TMenuView{
-		TMenuItem: vcl.NewMenuItem(sf),
-	}
-	sf.MenuView.SetCaption("查看")
-	sf.MenuView.Layout(sender)
-
-	sf.MenuOption = &TMenuOption{
-		TMenuItem: vcl.NewMenuItem(sf),
-	}
-	sf.MenuOption.SetCaption("选项")
-	sf.MenuOption.Layout(sender)
-
-	sf.N3 = &TMenuItem3{
-		TMenuItem: vcl.NewMenuItem(sf),
-	}
-	sf.N3.SetCaption("帮助")
-	sf.N3.Layout(sender)
-
-	sf.Items().Add(sf.MenuControl)
-	sf.Items().Add(sf.MenuView)
-	sf.Items().Add(sf.MenuOption)
-	sf.Items().Add(sf.N3)
-}
-
-func (sf *TPanel) Layout(sender *TFrmMain) {
-
-	sf.Label2 = vcl.NewLabel(sf)
-	sf.Label2.SetCaption("label2")
-	sf.Label2.SetBounds(199, 11, 42, 13)
-
-	sf.Lack = vcl.NewLabel(sf)
-	sf.Lack.SetCaption("0/0")
-	sf.Lack.SetBounds(195, 33, 21, 13)
-
-	sf.Hold = vcl.NewLabel(sf)
-	sf.Hold.SetCaption("")
-	sf.Hold.SetBounds(106, 10, 7, 13)
-
-	sf.Label2.SetParent(sf)
-	sf.Lack.SetParent(sf)
-	sf.Hold.SetParent(sf)
-}
-
-func (sf *TMenuControl) Layout(sender *TFrmMain) {
-
-	sf.MenuControlStart = vcl.NewMenuItem(sf)
-	sf.MenuControlStart.SetCaption("启动服务")
-	sf.MenuControlStart.SetShortCutFromString("Ctrl+S")
-	sf.MenuControlStart.SetOnClick(sender.MenuControlStartClick)
-
-	sf.MenuControlStop = vcl.NewMenuItem(sf)
-	sf.MenuControlStop.SetCaption("停止服务")
-	sf.MenuControlStop.SetShortCutFromString("Ctrl+T")
-	sf.MenuControlStop.SetOnClick(sender.MenuControlStopClick)
-
-	sf.MenuControlReconnect = vcl.NewMenuItem(sf)
-	sf.MenuControlReconnect.SetCaption("刷新连接")
-	sf.MenuControlReconnect.SetShortCutFromString("Ctrl+R")
-	sf.MenuControlReconnect.SetOnClick(sender.MenuControlReconnectClick)
-
-	sf.MenuControlClearLog = vcl.NewMenuItem(sf)
-	sf.MenuControlClearLog.SetCaption("清除日志")
-	sf.MenuControlClearLog.SetShortCutFromString("Ctrl+C")
-	sf.MenuControlClearLog.SetOnClick(sender.MenuControlClearLogClick)
-
-	sf.MenuControlExit = vcl.NewMenuItem(sf)
-	sf.MenuControlExit.SetCaption("退出")
-	sf.MenuControlExit.SetShortCutFromString("Ctrl+X")
-	sf.MenuControlExit.SetOnClick(sender.MenuControlExitClick)
-
-	sf.Add(sf.MenuControlStart)
-	sf.Add(sf.MenuControlStop)
-	sf.Add(sf.MenuControlReconnect)
-	sf.Add(sf.N1)
-	sf.Add(sf.MenuControlClearLog)
-	sf.Add(sf.N2)
-	sf.Add(sf.MenuControlExit)
-}
-
-func (sf *TMenuView) Layout(sender *TFrmMain) {
-
-	sf.MenuViewLogMsg = vcl.NewMenuItem(sf)
-	sf.MenuViewLogMsg.SetCaption("查看日志")
-
-	sf.Add(sf.MenuViewLogMsg)
-}
-
-func (sf *TMenuOption) Layout(sender *TFrmMain) {
-
-	sf.MenuOptionGeneral = vcl.NewMenuItem(sf)
-	sf.MenuOptionGeneral.SetCaption("基本设置")
-	sf.MenuOptionGeneral.SetOnClick(sender.MenuOptionGeneralClick)
-
-	sf.MenuOptionIpFilter = vcl.NewMenuItem(sf)
-	sf.MenuOptionIpFilter.SetCaption("安全过滤")
-	sf.MenuOptionIpFilter.SetOnClick(sender.MenuOptionIpFilterClick)
-
-	sf.Add(sf.MenuOptionGeneral)
-	sf.Add(sf.MenuOptionIpFilter)
-}
-
-func (sf *TMenuItem3) Layout(sender *TFrmMain) {
-
-	sf.N4 = vcl.NewMenuItem(sf)
-	sf.N4.SetCaption("关于")
-	sf.N4.SetOnClick(sender.N4Click)
-
-	sf.Add(sf.N4)
-}
-
 // ******************** TFrmMain ********************
 func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 
@@ -281,7 +108,7 @@ func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	sf.EnabledMaximize(false)
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetBounds(636, 215, 308, 154)
-	sf.Layout()
+	sf.SetComponents()
 
 	DecodeMsgTime = 0
 	sf.initUserSessionArray()
@@ -784,57 +611,6 @@ func (sf *TFrmMain) MemoLogChange(sender vcl.IObject) {
 	}
 }
 
-func (sf *TFrmMain) MenuControlClearLogClick(sender vcl.IObject) {
-	if vcl.MessageDlg("是否确认清除显示的日志信息?",
-		types.MtConfirmation,
-		types.MbYes,
-		types.MbNo) == types.MrYes {
-		sf.MemoLog.Clear()
-	}
-}
-
-func (sf *TFrmMain) MenuControlExitClick(sender vcl.IObject) {
-	sf.Close()
-}
-
-func (sf *TFrmMain) MenuControlReconnectClick(sender vcl.IObject) {
-	ReConnectServerTick = 0
-}
-
-func (sf *TFrmMain) MenuControlStartClick(sender vcl.IObject) {
-	sf.startService()
-}
-
-func (sf *TFrmMain) MenuControlStopClick(sender vcl.IObject) {
-	if vcl.MessageDlg("是否确认停止服务?",
-		types.MtConfirmation,
-		types.MbYes,
-		types.MbNo) == types.MrYes {
-		sf.stopService()
-	}
-}
-
-func (sf *TFrmMain) MenuOptionGeneralClick(sender vcl.IObject) {
-	//
-	FrmGeneralConfig.ShowModal()
-}
-
-func (sf *TFrmMain) MenuOptionIpFilterClick(sender vcl.IObject) {
-	//
-	FrmIPAddrFilter.ShowModal()
-}
-
-func (sf *TFrmMain) MenuViewLogMsgClick(sender vcl.IObject) {
-	sf.MainMenu.MenuView.MenuViewLogMsg.SetChecked(!sf.MainMenu.MenuView.MenuViewLogMsg.Checked())
-	sf.showLogMsg(sf.MainMenu.MenuView.MenuViewLogMsg.Checked())
-}
-
-func (sf *TFrmMain) N4Click(sender vcl.IObject) {
-	MainLog.AddMsg("引擎版本: 1.5.0 (20020522)")
-	MainLog.AddMsg("更新日期: 2023/09/14")
-	MainLog.AddMsg("程序制作: CHUNQIAN SHEN")
-}
-
 func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	if sf.ServerSocket.Active() {
 		ActiveConnections = sf.ServerSocket.ActiveConnections()
@@ -1017,7 +793,7 @@ func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 		Closed = true
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
-		sf.MenuViewLogMsgClick(sf)
+		sf.MainMenu.MenuView.MenuViewLogMsgClick(sf)
 		Started = true
 		startTimer.SetEnabled(false) // 禁用定时器
 		sf.startService()
