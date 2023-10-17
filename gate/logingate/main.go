@@ -13,8 +13,8 @@ var (
 func main() {
 	vcl.DEBUG = true
 	vcl.RunApp(
-		&FrmMain,
-		&FrmIPAddrFilter,
-		&FrmGeneralConfig,
+		&frmMain,
+		&frmIPAddrFilter,
+		&frmGeneralConfig,
 	)
 }

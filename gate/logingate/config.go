@@ -5,18 +5,21 @@ package main
 import (
 	"github.com/ying32/govcl/vcl"
 	"github.com/ying32/govcl/vcl/types"
+
+	. "github.com/chunqian/mir2go/common"
+	"github.com/chunqian/mir2go/gate/logingate/widget"
 )
 
 type TFrmGeneralConfig struct {
 	*vcl.TForm
 
 	ButtonOK     *vcl.TButton
-	GroupBoxNet  *TGroupBoxNet
-	GroupBoxInfo *TGroupBoxInfo
+	GroupBoxNet  *widget.TGroupBoxNet
+	GroupBoxInfo *widget.TGroupBoxInfo
 }
 
 var (
-	FrmGeneralConfig *TFrmGeneralConfig
+	frmGeneralConfig *TFrmGeneralConfig
 )
 
 // ******************** TFrmGeneralConfig ********************
@@ -28,12 +31,12 @@ func (sf *TFrmGeneralConfig) SetComponents() {
 	sf.ButtonOK.SetBounds(301, 139, 87, 27)
 	sf.ButtonOK.SetParent(sf)
 
-	sf.GroupBoxNet = NewGroupBoxNet(sf)
+	sf.GroupBoxNet = widget.NewGroupBoxNet(sf)
 	sf.GroupBoxNet.SetCaption("网络设置")
 	sf.GroupBoxNet.Font().SetSize(9)
 	sf.GroupBoxNet.SetBounds(9, 9, 200, 122)
 
-	sf.GroupBoxInfo = NewGroupBoxInfo(sf)
+	sf.GroupBoxInfo = widget.NewGroupBoxInfo(sf)
 	sf.GroupBoxInfo.SetCaption("基本参数")
 	sf.GroupBoxInfo.Font().SetSize(9)
 	sf.GroupBoxInfo.SetBounds(217, 9, 174, 122)
@@ -49,4 +52,14 @@ func (sf *TFrmGeneralConfig) OnFormCreate(sender vcl.IObject) {
 	sf.SetBounds(748, 335, 401, 171)
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetComponents()
+
+	// 注册观察者
+	GetSubject("TFrmGeneralConfig").Register(frmGeneralConfig)
+}
+
+func (sf *TFrmGeneralConfig) ObserverNotifyReceived(tag string, data interface{}) {
+	switch tag {
+	case "menuOptionGeneralClick":
+		sf.ShowModal()
+	}
 }

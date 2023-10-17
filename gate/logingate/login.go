@@ -11,15 +11,16 @@ import (
 	"github.com/ying32/govcl/vcl/types/colors"
 
 	. "github.com/chunqian/mir2go/common"
+	"github.com/chunqian/mir2go/gate/logingate/widget"
 	log "github.com/chunqian/tinylog"
 )
 
 type TFrmMain struct {
 	*vcl.TForm
 
-	MainMenu  *TMainMenu
+	MainMenu  *widget.TMainMenu
 	MemoLog   *vcl.TMemo
-	Panel     *TPanel
+	Panel     *widget.TPanel
 	StatusBar *vcl.TStatusBar
 
 	SendTimer   *vcl.TTimer
@@ -33,15 +34,15 @@ type TFrmMain struct {
 
 // ******************** Var ********************
 var (
-	FrmMain *TFrmMain
+	frmMain *TFrmMain
 )
 
 // ******************** TFrmMain ********************
 func (sf *TFrmMain) SetComponents() {
 
-	sf.MainMenu = NewMainMenu(sf)
+	sf.MainMenu = widget.NewMainMenu(sf)
 
-	sf.Panel = NewPanel(sf)
+	sf.Panel = widget.NewPanel(sf)
 	sf.Panel.SetAlign(types.AlTop)
 	sf.Panel.SetBevelOuter(types.BvNone)
 	sf.Panel.SetTabOrder(1)
@@ -109,6 +110,9 @@ func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetBounds(636, 215, 308, 154)
 	sf.SetComponents()
+
+	// 注册观察者
+	GetSubject("TFrmMain").Register(frmMain)
 
 	DecodeMsgTime = 0
 	sf.initUserSessionArray()
@@ -324,8 +328,8 @@ func (sf *TFrmMain) startService() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(true)
-			sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(false)
+			GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
+			GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
 			MainLog.AddLogMsg(fmt.Sprintf("%v", r), 0)
 		}
 	}()
@@ -333,12 +337,13 @@ func (sf *TFrmMain) startService() {
 	// 在这里添加启动服务的逻辑
 	// 初始化变量和状态
 	MainLog.AddLogMsg("正在启动服务...", 3)
+
 	ServiceStart = true
 	GateReady = true
 	ServerReady = false
 	SessionCount = 0
-	sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(false)
-	sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(true)
+	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", false)
+	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", true)
 
 	ReConnectServerTick = GetTickCount() - 25*1000
 	KeepAliveTimeOut = false
@@ -381,8 +386,8 @@ func (sf *TFrmMain) stopService() {
 	MainLog.AddLogMsg("正在停止服务...", 3)
 	ServiceStart = false
 	GateReady = false
-	sf.MainMenu.MenuControl.MenuControlStart.SetEnabled(true)
-	sf.MainMenu.MenuControl.MenuControlStop.SetEnabled(false)
+	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
+	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
 
 	sf.SendTimer.SetEnabled(false)
 
@@ -786,6 +791,7 @@ func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) 
 }
 
 func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
+
 	startTimer := vcl.AsTimer(sender)
 	if Started {
 		startTimer.SetEnabled(false) // 禁用定时器
@@ -793,7 +799,7 @@ func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 		Closed = true
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
-		sf.MainMenu.MenuView.MenuViewLogMsgClick(sf)
+		GetSubject("widget.TMainMenu.TMenuView").Notify("MenuViewLogMsgClick", nil)
 		Started = true
 		startTimer.SetEnabled(false) // 禁用定时器
 		sf.startService()
@@ -830,5 +836,22 @@ func (sf *TFrmMain) TimerTimer(sender vcl.IObject) {
 			sf.StatusBar.Panels().Items(1).SetText("已连接")
 			sf.Panel.Lack.SetCaption(IntToStr(TotalMsgListCount) + "/" + IntToStr(SendMsgCount))
 		}
+	}
+}
+
+func (sf *TFrmMain) ObserverNotifyReceived(tag string, data interface{}) {
+	switch tag {
+	case "menuControlStartClick":
+		sf.startService()
+	case "menuControlStopClick":
+		sf.stopService()
+	case "menuControlReconnectClick":
+		ReConnectServerTick = 0
+	case "menuControlClearLogClick":
+		sf.MemoLog.Clear()
+	case "menuControlExitClick":
+		sf.Close()
+	case "menuViewLogMsgClick":
+		sf.showLogMsg(data.(bool))
 	}
 }

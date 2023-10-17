@@ -1,25 +1,25 @@
 // Copyright (C) 2023 CHUNQIAN SHEN. All rights reserved.
 
-package main
+package widget
 
 import "github.com/ying32/govcl/vcl"
 
 type TListBoxActiveList struct {
 	*vcl.TListBox
 
-	ActiveListPopupMenu *TActiveListPopupMenu
+	activeListPopupMenu *TActiveListPopupMenu
 }
 
 type TListBoxBlockList struct {
 	*vcl.TListBox
 
-	BlockListPopupMenu *TBlockListPopupMenu
+	blockListPopupMenu *TBlockListPopupMenu
 }
 
 type TListBoxTempList struct {
 	*vcl.TListBox
 
-	TempBlockListPopupMenu *TTempBlockListPopupMenu
+	tempBlockListPopupMenu *TTempBlockListPopupMenu
 }
 
 func NewListBoxActiveList(sender vcl.IComponent) *TListBoxActiveList {
@@ -27,9 +27,9 @@ func NewListBoxActiveList(sender vcl.IComponent) *TListBoxActiveList {
 		TListBox: vcl.NewListBox(sender),
 	}
 
-	sf.ActiveListPopupMenu = NewActiveListPopupMenu(sf)
+	sf.activeListPopupMenu = NewActiveListPopupMenu(sf)
 
-	sf.SetPopupMenu(sf.ActiveListPopupMenu)
+	sf.SetPopupMenu(sf.activeListPopupMenu)
 
 	return sf
 }
@@ -39,9 +39,9 @@ func NewListBoxBlockList(sender vcl.IComponent) *TListBoxBlockList {
 		TListBox: vcl.NewListBox(sender),
 	}
 
-	sf.BlockListPopupMenu = NewBlockListPopupMenu(sf)
+	sf.blockListPopupMenu = NewBlockListPopupMenu(sf)
 
-	sf.SetPopupMenu(sf.BlockListPopupMenu)
+	sf.SetPopupMenu(sf.blockListPopupMenu)
 	return sf
 }
 
@@ -50,9 +50,9 @@ func NewListBoxTempList(sender vcl.IComponent) *TListBoxTempList {
 		TListBox: vcl.NewListBox(sender),
 	}
 
-	sf.TempBlockListPopupMenu = NewTempBlockListPopupMenu(sf)
+	sf.tempBlockListPopupMenu = NewTempBlockListPopupMenu(sf)
 
-	sf.SetPopupMenu(sf.TempBlockListPopupMenu)
+	sf.SetPopupMenu(sf.tempBlockListPopupMenu)
 
 	return sf
 }

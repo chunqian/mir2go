@@ -1,6 +1,6 @@
 // Copyright (C) 2023 CHUNQIAN SHEN. All rights reserved.
 
-package main
+package widget
 
 import "github.com/ying32/govcl/vcl"
 
