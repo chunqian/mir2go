@@ -328,6 +328,7 @@ func (sf *TFrmMain) startService() {
 
 	defer func() {
 		if r := recover(); r != nil {
+			// 通知
 			GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
 			GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
 			MainLog.AddLogMsg(fmt.Sprintf("%v", r), 0)
@@ -342,6 +343,7 @@ func (sf *TFrmMain) startService() {
 	GateReady = true
 	ServerReady = false
 	SessionCount = 0
+	// 通知
 	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", false)
 	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", true)
 
@@ -386,6 +388,7 @@ func (sf *TFrmMain) stopService() {
 	MainLog.AddLogMsg("正在停止服务...", 3)
 	ServiceStart = false
 	GateReady = false
+	// 通知
 	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
 	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
 
@@ -799,6 +802,7 @@ func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 		Closed = true
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
+		// 通知
 		GetSubject("widget.TMainMenu.TMenuView").Notify("MenuViewLogMsgClick", nil)
 		Started = true
 		startTimer.SetEnabled(false) // 禁用定时器

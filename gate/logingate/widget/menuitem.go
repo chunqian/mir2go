@@ -135,6 +135,7 @@ func NewMenuItem3(sender vcl.IComponent) *TMenuItem3 {
 }
 
 func (sf *TMenuControl) menuControlStartClick(sender vcl.IObject) {
+	// 通知
 	GetSubject("TFrmMain").Notify("menuControlStartClick", nil)
 }
 
@@ -143,11 +144,13 @@ func (sf *TMenuControl) menuControlStopClick(sender vcl.IObject) {
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.MrYes {
+		// 通知
 		GetSubject("TFrmMain").Notify("menuControlStopClick", nil)
 	}
 }
 
 func (sf *TMenuControl) menuControlReconnectClick(sender vcl.IObject) {
+	// 通知
 	GetSubject("TFrmMain").Notify("menuControlReconnectClick", nil)
 }
 
@@ -156,12 +159,13 @@ func (sf *TMenuControl) menuControlClearLogClick(sender vcl.IObject) {
 		types.MtConfirmation,
 		types.MbYes,
 		types.MbNo) == types.MrYes {
+		// 通知
 		GetSubject("TFrmMain").Notify("menuControlClearLogClick", nil)
 	}
 }
 
 func (sf *TMenuControl) menuControlExitClick(sender vcl.IObject) {
-	// 通知所有观察者
+	// 通知
 	GetSubject("TFrmMain").Notify("menuControlExitClick", nil)
 }
 
@@ -176,6 +180,7 @@ func (sf *TMenuControl) ObserverNotifyReceived(tag string, data interface{}) {
 
 func (sf *TMenuView) menuViewLogMsgClick(sender vcl.IObject) {
 	sf.menuViewLogMsg.SetChecked(!sf.menuViewLogMsg.Checked())
+	// 通知
 	GetSubject("TFrmMain").Notify("menuViewLogMsgClick", sf.menuViewLogMsg.Checked())
 }
 
@@ -187,10 +192,12 @@ func (sf *TMenuView) ObserverNotifyReceived(tag string, data interface{}) {
 }
 
 func (sf *TMenuOption) menuOptionGeneralClick(sender vcl.IObject) {
+	// 通知
 	GetSubject("TFrmGeneralConfig").Notify("menuOptionGeneralClick", nil)
 }
 
 func (sf *TMenuOption) menuOptionIpFilterClick(sender vcl.IObject) {
+	// 通知
 	GetSubject("TFrmIPAddrFilter").Notify("menuOptionIpFilterClick", nil)
 }
 
