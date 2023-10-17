@@ -19,20 +19,20 @@ const (
 
 // ******************** Type ********************
 type TUserSession struct {
-	Socket           *TClientSocket
-	RemoteIPAddr     string
-	SendMsgLen       int
-	SendLock         bool
-	CheckSendLength  int
-	SendAvailable    bool
-	SendCheck        bool
-	SendLockTimeOut  uint32
-	ReceiveLength    int
-	UserTimeOutTick  uint32
-	SocketHandle     uintptr
-	MsgList          []string
-	ConnectCheckTick uint32
-	Mu               sync.Mutex
+	socket           *TClientSocket
+	remoteIPAddr     string
+	sendMsgLen       int
+	sendLock         bool
+	checkSendLength  int
+	sendAvailable    bool
+	sendCheck        bool
+	sendLockTimeOut  uint32
+	receiveLength    int
+	userTimeOutTick  uint32
+	socketHandle     uintptr
+	msgList          []string
+	connectCheckTick uint32
+	mu               sync.Mutex
 }
 
 // ******************** Var ********************

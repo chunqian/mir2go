@@ -3,17 +3,14 @@
 package main
 
 import (
-    "github.com/ying32/govcl/vcl"
+	"github.com/ying32/govcl/vcl"
 )
 
 var (
-    AppDir string = "/Users/tim/Downloads/github/mir2go/bin/dataserver/"
+	AppDir string = "/Users/tim/Downloads/github/mir2go/bin/dataserver/"
 )
 
 func main() {
-    vcl.DEBUG = true
-    vcl.Application.Initialize()
-    vcl.Application.SetMainFormOnTaskBar(true)
-    // vcl.Application.CreateForm(&FrmMain)
-    vcl.Application.Run()
+	vcl.DEBUG = true
+	vcl.RunApp()
 }

@@ -70,7 +70,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	sf.timer1.SetOnTimer(sf.Timer1Timer)
 
 	RemoteClose = false
-	LogMsgList.Data = make([]string, 0)
+	LogMsgList.data = make([]string, 0)
 
 	conf := vcl.NewIniFile(AppDir + "./Config.ini")
 	if conf != nil {
@@ -93,7 +93,7 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 }
 
 func (sf *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
-	LogMsgList.Data = LogMsgList.Data[:0]
+	LogMsgList.data = LogMsgList.data[:0]
 }
 
 func (sf *TFrmLogData) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
@@ -108,7 +108,7 @@ func (sf *TFrmLogData) UdpSocketError(socket *TUdpSocket, err error) {
 }
 
 func (sf *TFrmLogData) UdpSocketRead(socket *TUdpSocket, message string) {
-	LogMsgList.Data = append(LogMsgList.Data, message)
+	LogMsgList.data = append(LogMsgList.data, message)
 }
 
 func (sf *TFrmLogData) Timer1Timer(sender vcl.IObject) {
@@ -116,10 +116,10 @@ func (sf *TFrmLogData) Timer1Timer(sender vcl.IObject) {
 }
 
 func (sf *TFrmLogData) WriteLogFile() {
-	LogMsgList.Mu.Lock()
-	defer LogMsgList.Mu.Unlock()
+	LogMsgList.mu.Lock()
+	defer LogMsgList.mu.Unlock()
 
-	if len(LogMsgList.Data) <= 0 {
+	if len(LogMsgList.data) <= 0 {
 		return
 	}
 
@@ -150,14 +150,14 @@ func (sf *TFrmLogData) WriteLogFile() {
 	defer fl.Close()
 
 	// 写入日志信息
-	for i := 0; i < len(LogMsgList.Data); i++ {
-		msg := LogMsgList.Data[i]
+	for i := 0; i < len(LogMsgList.data); i++ {
+		msg := LogMsgList.data[i]
 		logEntry := fmt.Sprintf("%s %s\n", msg, now.Format("2006-01-02 15:04:05"))
 		fl.WriteString(logEntry)
 	}
 
 	// 清空logMsgList
-	LogMsgList.Data = LogMsgList.Data[:0]
+	LogMsgList.data = LogMsgList.data[:0]
 }
 
 func (sf *TFrmLogData) showMainLogMsg() {

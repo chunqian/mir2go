@@ -13,9 +13,9 @@ import (
 type TFrmGeneralConfig struct {
 	*vcl.TForm
 
-	ButtonOK     *vcl.TButton
-	GroupBoxNet  *widget.TGroupBoxNet
-	GroupBoxInfo *widget.TGroupBoxInfo
+	buttonOK     *vcl.TButton
+	groupBoxNet  *widget.TGroupBoxNet
+	groupBoxInfo *widget.TGroupBoxInfo
 }
 
 var (
@@ -25,25 +25,25 @@ var (
 // ******************** TFrmGeneralConfig ********************
 func (sf *TFrmGeneralConfig) SetComponents() {
 
-	sf.ButtonOK = vcl.NewButton(sf)
-	sf.ButtonOK.SetCaption("确定(&O)")
-	sf.ButtonOK.SetDefault(true)
-	sf.ButtonOK.SetBounds(301, 139, 87, 27)
-	sf.ButtonOK.SetParent(sf)
+	sf.buttonOK = vcl.NewButton(sf)
+	sf.buttonOK.SetCaption("确定(&O)")
+	sf.buttonOK.SetDefault(true)
+	sf.buttonOK.SetBounds(301, 139, 87, 27)
+	sf.buttonOK.SetParent(sf)
 
-	sf.GroupBoxNet = widget.NewGroupBoxNet(sf)
-	sf.GroupBoxNet.SetCaption("网络设置")
-	sf.GroupBoxNet.Font().SetSize(9)
-	sf.GroupBoxNet.SetBounds(9, 9, 200, 122)
+	sf.groupBoxNet = widget.NewGroupBoxNet(sf)
+	sf.groupBoxNet.SetCaption("网络设置")
+	sf.groupBoxNet.Font().SetSize(9)
+	sf.groupBoxNet.SetBounds(9, 9, 200, 122)
 
-	sf.GroupBoxInfo = widget.NewGroupBoxInfo(sf)
-	sf.GroupBoxInfo.SetCaption("基本参数")
-	sf.GroupBoxInfo.Font().SetSize(9)
-	sf.GroupBoxInfo.SetBounds(217, 9, 174, 122)
+	sf.groupBoxInfo = widget.NewGroupBoxInfo(sf)
+	sf.groupBoxInfo.SetCaption("基本参数")
+	sf.groupBoxInfo.Font().SetSize(9)
+	sf.groupBoxInfo.SetBounds(217, 9, 174, 122)
 
-	sf.ButtonOK.SetParent(sf)
-	sf.GroupBoxNet.SetParent(sf)
-	sf.GroupBoxInfo.SetParent(sf)
+	sf.buttonOK.SetParent(sf)
+	sf.groupBoxNet.SetParent(sf)
+	sf.groupBoxInfo.SetParent(sf)
 }
 
 func (sf *TFrmGeneralConfig) OnFormCreate(sender vcl.IObject) {

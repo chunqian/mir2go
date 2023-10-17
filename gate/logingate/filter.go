@@ -13,10 +13,10 @@ import (
 type TFrmIPAddrFilter struct {
 	*vcl.TForm
 
-	ButtonOK       *vcl.TButton
-	GroupBox1      *widget.TGroupBox1
-	GroupBox2      *widget.TGroupBox2
-	GroupBoxActive *widget.TGroupBoxActive
+	buttonOK       *vcl.TButton
+	groupBox1      *widget.TGroupBox1
+	groupBox2      *widget.TGroupBox2
+	groupBoxActive *widget.TGroupBoxActive
 }
 
 var (
@@ -26,30 +26,30 @@ var (
 // ******************** TFrmIPAddrFilter ********************
 func (sf *TFrmIPAddrFilter) SetComponents() {
 
-	sf.ButtonOK = vcl.NewButton(sf)
-	sf.ButtonOK.SetCaption("确定(&O)")
-	sf.ButtonOK.SetDefault(true)
-	sf.ButtonOK.SetBounds(568, 295, 86, 27)
+	sf.buttonOK = vcl.NewButton(sf)
+	sf.buttonOK.SetCaption("确定(&O)")
+	sf.buttonOK.SetDefault(true)
+	sf.buttonOK.SetBounds(568, 295, 86, 27)
 
-	sf.GroupBoxActive = widget.NewGroupBoxActive(sf)
-	sf.GroupBoxActive.SetCaption("当前连接")
-	sf.GroupBoxActive.Font().SetSize(9)
-	sf.GroupBoxActive.SetBounds(9, 9, 148, 313)
+	sf.groupBoxActive = widget.NewGroupBoxActive(sf)
+	sf.groupBoxActive.SetCaption("当前连接")
+	sf.groupBoxActive.Font().SetSize(9)
+	sf.groupBoxActive.SetBounds(9, 9, 148, 313)
 
-	sf.GroupBox1 = widget.NewGroupBox1(sf)
-	sf.GroupBox1.SetCaption("过滤列表")
-	sf.GroupBox1.Font().SetSize(9)
-	sf.GroupBox1.SetBounds(162, 9, 294, 313)
+	sf.groupBox1 = widget.NewGroupBox1(sf)
+	sf.groupBox1.SetCaption("过滤列表")
+	sf.groupBox1.Font().SetSize(9)
+	sf.groupBox1.SetBounds(162, 9, 294, 313)
 
-	sf.GroupBox2 = widget.NewGroupBox2(sf)
-	sf.GroupBox2.SetCaption("攻击保护")
-	sf.GroupBox2.Font().SetSize(9)
-	sf.GroupBox2.SetBounds(464, 9, 201, 274)
+	sf.groupBox2 = widget.NewGroupBox2(sf)
+	sf.groupBox2.SetCaption("攻击保护")
+	sf.groupBox2.Font().SetSize(9)
+	sf.groupBox2.SetBounds(464, 9, 201, 274)
 
-	sf.ButtonOK.SetParent(sf)
-	sf.GroupBoxActive.SetParent(sf)
-	sf.GroupBox1.SetParent(sf)
-	sf.GroupBox2.SetParent(sf)
+	sf.buttonOK.SetParent(sf)
+	sf.groupBoxActive.SetParent(sf)
+	sf.groupBox1.SetParent(sf)
+	sf.groupBox2.SetParent(sf)
 }
 
 func (sf *TFrmIPAddrFilter) OnFormCreate(sender vcl.IObject) {

@@ -137,8 +137,8 @@ func (sf *TFrmMain) OnFormCloseQuery(sender vcl.IObject, canClose *bool) {
 func (sf *TFrmMain) closeSocket(socketHandle uintptr) {
 	for i := range SessionArray {
 		userSession := SessionArray[i]
-		if userSession.Socket != nil && userSession.SocketHandle == socketHandle {
-			userSession.Socket.Close()
+		if userSession.socket != nil && userSession.socketHandle == socketHandle {
+			userSession.socket.Close()
 			break
 		}
 	}
@@ -147,17 +147,17 @@ func (sf *TFrmMain) closeSocket(socketHandle uintptr) {
 func (sf *TFrmMain) initUserSessionArray() {
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := TUserSession{}
-		userSession.Socket = nil
-		userSession.RemoteIPAddr = ""
-		userSession.SendMsgLen = 0
-		userSession.SendLock = false
-		userSession.SendAvailable = true
-		userSession.SendCheck = false
-		userSession.CheckSendLength = 0
-		userSession.ReceiveLength = 0
-		userSession.UserTimeOutTick = GetTickCount()
-		userSession.SocketHandle = uintptr(0)
-		userSession.MsgList = make([]string, 0)
+		userSession.socket = nil
+		userSession.remoteIPAddr = ""
+		userSession.sendMsgLen = 0
+		userSession.sendLock = false
+		userSession.sendAvailable = true
+		userSession.sendCheck = false
+		userSession.checkSendLength = 0
+		userSession.receiveLength = 0
+		userSession.userTimeOutTick = GetTickCount()
+		userSession.socketHandle = uintptr(0)
+		userSession.msgList = make([]string, 0)
 		SessionArray[i] = &userSession
 	}
 }
@@ -249,37 +249,37 @@ func (sf *TFrmMain) loadConfig() {
 func (sf *TFrmMain) resUserSessionArray() {
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := SessionArray[i]
-		userSession.Socket = nil
-		userSession.RemoteIPAddr = ""
-		userSession.SocketHandle = uintptr(0)
-		userSession.MsgList = userSession.MsgList[:0]
+		userSession.socket = nil
+		userSession.remoteIPAddr = ""
+		userSession.socketHandle = uintptr(0)
+		userSession.msgList = userSession.msgList[:0]
 	}
 }
 
 func (sf *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
 	result := -1
-	if userSession.Socket != nil {
-		if !userSession.SendLock {
-			if userSession.SendAvailable && GetTickCount() > userSession.SendLockTimeOut {
-				userSession.SendAvailable = true
-				userSession.CheckSendLength = 0
+	if userSession.socket != nil {
+		if !userSession.sendLock {
+			if userSession.sendAvailable && GetTickCount() > userSession.sendLockTimeOut {
+				userSession.sendAvailable = true
+				userSession.checkSendLength = 0
 				SendHoldTimeOut = true
 				SendHoldTick = GetTickCount()
 			}
-			if userSession.SendAvailable {
-				if userSession.CheckSendLength >= 250 {
-					if !userSession.SendCheck {
-						userSession.SendCheck = true
+			if userSession.sendAvailable {
+				if userSession.checkSendLength >= 250 {
+					if !userSession.sendCheck {
+						userSession.sendCheck = true
 						sendMsg = "*" + sendMsg
 					}
-					if userSession.CheckSendLength >= 512 {
-						userSession.SendAvailable = false
-						userSession.SendLockTimeOut = GetTickCount() + 3*1000
+					if userSession.checkSendLength >= 512 {
+						userSession.sendAvailable = false
+						userSession.sendLockTimeOut = GetTickCount() + 3*1000
 					}
 				}
-				userSession.Socket.Write([]byte(sendMsg))
-				userSession.SendMsgLen += len(sendMsg)
-				userSession.CheckSendLength += len(sendMsg)
+				userSession.socket.Write([]byte(sendMsg))
+				userSession.sendMsgLen += len(sendMsg)
+				userSession.checkSendLength += len(sendMsg)
 				result = 1
 			}
 		} else {
@@ -395,8 +395,8 @@ func (sf *TFrmMain) stopService() {
 	sf.sendTimer.SetEnabled(false)
 
 	for i := 0; i < GATEMAXSESSION; i++ {
-		if SessionArray[i].Socket != nil {
-			SessionArray[i].Socket.Close()
+		if SessionArray[i].socket != nil {
+			SessionArray[i].socket.Close()
 		}
 	}
 
@@ -444,12 +444,12 @@ func (sf *TFrmMain) ClientSocketDisconnect(socket *TClientSocket, err error) {
 	log.Info("ClientSocketDisconnect: {}", err.Error())
 	for i := 0; i < GATEMAXSESSION; i++ {
 		userSession := SessionArray[i]
-		if userSession.Socket != nil {
-			userSession.Socket.Close()
+		if userSession.socket != nil {
+			userSession.socket.Close()
 		}
-		userSession.Socket = nil
-		userSession.RemoteIPAddr = ""
-		userSession.SocketHandle = uintptr(0)
+		userSession.socket = nil
+		userSession.remoteIPAddr = ""
+		userSession.socketHandle = uintptr(0)
 	}
 
 	sf.resUserSessionArray()
@@ -519,8 +519,8 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 				continue
 			}
 			for i := 0; i < GATEMAXSESSION; i++ {
-				if SessionArray[i].Socket.SocketHandle() == socketHandle {
-					SessionArray[i].MsgList = append(SessionArray[i].MsgList, socketMsg)
+				if SessionArray[i].socket.SocketHandle() == socketHandle {
+					SessionArray[i].msgList = append(SessionArray[i].msgList, socketMsg)
 					break
 				}
 			}
@@ -535,15 +535,15 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 	TotalMsgListCount = 0
 
 	for i := 0; i < GATEMAXSESSION; i++ {
-		if SessionArray[i].SocketHandle <= 0 {
+		if SessionArray[i].socketHandle <= 0 {
 			continue
 		}
 		// 踢除超时无数据传输连接
-		if GetTickCount()-SessionArray[i].ConnectCheckTick > uint32(KeepConnectTimeOut) {
-			remoteIPAddr := SessionArray[i].RemoteIPAddr
+		if GetTickCount()-SessionArray[i].connectCheckTick > uint32(KeepConnectTimeOut) {
+			remoteIPAddr := SessionArray[i].remoteIPAddr
 			switch BlockMethod {
 			case Disconnect:
-				SessionArray[i].Socket.Close()
+				SessionArray[i].socket.Close()
 			case Block:
 				ip := net.ParseIP(remoteIPAddr)
 				sockAddr := TSockAddr{}
@@ -562,32 +562,32 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 		}
 
 		for {
-			if len(SessionArray[i].MsgList) <= 0 {
+			if len(SessionArray[i].msgList) <= 0 {
 				break
 			}
 			userSession := SessionArray[i]
 
-			sendRetCode := sf.sendUserMsg(userSession, userSession.MsgList[0])
+			sendRetCode := sf.sendUserMsg(userSession, userSession.msgList[0])
 			if sendRetCode >= 0 {
 				if sendRetCode == 1 {
-					userSession.ConnectCheckTick = GetTickCount()
-					userSession.MsgList = userSession.MsgList[1:]
+					userSession.connectCheckTick = GetTickCount()
+					userSession.msgList = userSession.msgList[1:]
 					continue
 				}
-				if len(userSession.MsgList) > 100 {
+				if len(userSession.msgList) > 100 {
 					msgCount := 0
 					for msgCount != 51 {
-						userSession.MsgList = userSession.MsgList[1:]
+						userSession.msgList = userSession.msgList[1:]
 						msgCount++
 					}
 				}
-				TotalMsgListCount += len(userSession.MsgList)
-				MainLog.AddLogMsg(userSession.RemoteIPAddr+" : "+IntToStr(len(userSession.MsgList)), 5)
+				TotalMsgListCount += len(userSession.msgList)
+				MainLog.AddLogMsg(userSession.remoteIPAddr+" : "+IntToStr(len(userSession.msgList)), 5)
 				SendMsgCount++
 			} else {
-				userSession.SocketHandle = uintptr(0)
-				userSession.Socket = nil
-				userSession.MsgList = userSession.MsgList[:0]
+				userSession.socketHandle = uintptr(0)
+				userSession.socket = nil
+				userSession.msgList = userSession.msgList[:0]
 			}
 		}
 	}
@@ -637,13 +637,13 @@ func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	if GateReady && !KeepAliveTimeOut {
 		for i := 0; i < GATEMAXSESSION; i++ {
 			userSession := SessionArray[i]
-			if userSession.Socket != nil {
-				if GetTickCount()-userSession.UserTimeOutTick > 60*60*1000 {
-					userSession.Socket.Close()
-					userSession.Socket = nil
-					userSession.SocketHandle = uintptr(0)
-					userSession.MsgList = userSession.MsgList[:0]
-					userSession.RemoteIPAddr = ""
+			if userSession.socket != nil {
+				if GetTickCount()-userSession.userTimeOutTick > 60*60*1000 {
+					userSession.socket.Close()
+					userSession.socket = nil
+					userSession.socketHandle = uintptr(0)
+					userSession.msgList = userSession.msgList[:0]
+					userSession.remoteIPAddr = ""
 				}
 			}
 		}
@@ -698,19 +698,19 @@ func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	if GateReady {
 		for i := 0; i < GATEMAXSESSION; i++ {
 			userSession := SessionArray[i]
-			if userSession.Socket == nil {
-				userSession.Socket = socket
-				userSession.RemoteIPAddr = remoteIPAddr
-				userSession.SendMsgLen = 0
-				userSession.SendLock = false
-				userSession.ConnectCheckTick = GetTickCount()
-				userSession.SendAvailable = true
-				userSession.SendCheck = false
-				userSession.CheckSendLength = 0
-				userSession.ReceiveLength = 0
-				userSession.UserTimeOutTick = GetTickCount()
-				userSession.SocketHandle = socket.SocketHandle()
-				userSession.MsgList = make([]string, 0)
+			if userSession.socket == nil {
+				userSession.socket = socket
+				userSession.remoteIPAddr = remoteIPAddr
+				userSession.sendMsgLen = 0
+				userSession.sendLock = false
+				userSession.connectCheckTick = GetTickCount()
+				userSession.sendAvailable = true
+				userSession.sendCheck = false
+				userSession.checkSendLength = 0
+				userSession.receiveLength = 0
+				userSession.userTimeOutTick = GetTickCount()
+				userSession.socketHandle = socket.SocketHandle()
+				userSession.msgList = make([]string, 0)
 
 				socket.Index = i
 				SessionCount++
@@ -752,10 +752,10 @@ func (sf *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error)
 
 	if sockIndex >= 0 && sockIndex < GATEMAXSESSION {
 		userSession := SessionArray[sockIndex]
-		userSession.Socket = nil
-		userSession.RemoteIPAddr = ""
-		userSession.SocketHandle = uintptr(0)
-		userSession.MsgList = userSession.MsgList[:0]
+		userSession.socket = nil
+		userSession.remoteIPAddr = ""
+		userSession.socketHandle = uintptr(0)
+		userSession.msgList = userSession.msgList[:0]
 		SessionCount--
 		if GateReady {
 			message := fmt.Sprintf("%%X%d$", conn.SocketHandle())
@@ -776,15 +776,15 @@ func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) 
 	if sockIndex >= 0 && sockIndex < GATEMAXSESSION {
 		userSession := SessionArray[sockIndex]
 		if ServerReady {
-			userSession.SendAvailable = true
-			userSession.SendCheck = false
-			userSession.CheckSendLength = 0
+			userSession.sendAvailable = true
+			userSession.sendCheck = false
+			userSession.checkSendLength = 0
 			if GateReady && !KeepAliveTimeOut {
-				userSession.ConnectCheckTick = GetTickCount()
-				if (GetTickCount() - userSession.UserTimeOutTick) < 1000 {
-					userSession.ReceiveLength += len(message)
+				userSession.connectCheckTick = GetTickCount()
+				if (GetTickCount() - userSession.userTimeOutTick) < 1000 {
+					userSession.receiveLength += len(message)
 				} else {
-					userSession.ReceiveLength = len(message)
+					userSession.receiveLength = len(message)
 				}
 				message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle(), message)
 				sf.clientSocket.Write([]byte(message))

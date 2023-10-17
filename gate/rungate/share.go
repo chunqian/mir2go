@@ -16,33 +16,33 @@ const (
 
 // ******************** Type ********************
 type TSessionInfo struct {
-	Socket           *TClientSocket
-	SocData          string
-	SendData         string
-	UserListIndex    int
-	PacketIdx        int
-	PacketErrCount   int
-	StartLogon       bool
-	SendLock         bool
-	OverNomSize      bool
-	OverNomSizeCount int8
-	SendLatestTime   uint32
-	CheckSendLength  int
-	SendAvailable    bool
-	SendCheck        bool
-	TimeOutTime      uint32
-	ReceiveLength    int
-	ReceiveTick      uint32
-	SckHandle        int
-	RemoteAddr       string
-	SayMsgTick       uint32
-	HitTick          uint32
+	socket           *TClientSocket
+	socData          string
+	sendData         string
+	userListIndex    int
+	packetIdx        int
+	packetErrCount   int
+	startLogon       bool
+	sendLock         bool
+	overNomSize      bool
+	overNomSizeCount int8
+	sendLatestTime   uint32
+	checkSendLength  int
+	sendAvailable    bool
+	sendCheck        bool
+	timeOutTime      uint32
+	receiveLength    int
+	receiveTick      uint32
+	sckHandle        int
+	remoteAddr       string
+	sayMsgTick       uint32
+	hitTick          uint32
 }
 
 type TSendUserData struct {
-	SocketIdx    int
-	SocketHandle int
-	Msg          string
+	socketIdx    int
+	socketHandle int
+	msg          string
 }
 
 // ******************** Var ********************

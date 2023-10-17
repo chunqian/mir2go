@@ -8,8 +8,8 @@ import (
 
 // ******************** Type ********************
 type TLogData struct {
-	Data []string
-	Mu   sync.Mutex
+	data []string
+	mu   sync.Mutex
 }
 
 // ******************** Var ********************
