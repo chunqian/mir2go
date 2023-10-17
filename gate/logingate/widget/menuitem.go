@@ -172,9 +172,9 @@ func (sf *TMenuControl) menuControlExitClick(sender vcl.IObject) {
 func (sf *TMenuControl) ObserverNotifyReceived(tag string, data interface{}) {
 	switch tag {
 	case "SetMenuControlStart":
-		sf.SetEnabled(data.(bool))
+		sf.menuControlStart.SetEnabled(data.(bool))
 	case "SetMenuControlStop":
-		sf.SetEnabled(data.(bool))
+		sf.menuControlStop.SetEnabled(data.(bool))
 	}
 }
 
