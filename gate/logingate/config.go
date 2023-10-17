@@ -53,7 +53,7 @@ func (sf *TFrmGeneralConfig) OnFormCreate(sender vcl.IObject) {
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetComponents()
 
-	// 注册观察者
+	// 注册Observer
 	ObserverGetTopic("TFrmGeneralConfig").AddObserver(frmGeneralConfig)
 }
 

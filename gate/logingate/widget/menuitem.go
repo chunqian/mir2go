@@ -78,7 +78,7 @@ func NewMenuControl(sender vcl.IComponent) *TMenuControl {
 	sf.Add(sf.n2)
 	sf.Add(sf.menuControlExit)
 
-	// 注册观察者
+	// 注册Observer
 	ObserverGetTopic("widget.TMainMenu.TMenuControl").AddObserver(sf)
 
 	return sf
@@ -95,7 +95,7 @@ func NewMenuView(sender vcl.IComponent) *TMenuView {
 
 	sf.Add(sf.menuViewLogMsg)
 
-	// 注册观察者
+	// 注册Observer
 	ObserverGetTopic("widget.TMainMenu.TMenuView").AddObserver(sf)
 
 	return sf

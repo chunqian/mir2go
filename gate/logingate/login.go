@@ -111,7 +111,7 @@ func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	sf.SetBounds(636, 215, 308, 154)
 	sf.SetComponents()
 
-	// 注册观察者
+	// 注册Observer
 	ObserverGetTopic("TFrmMain").AddObserver(frmMain)
 
 	DecodeMsgTime = 0

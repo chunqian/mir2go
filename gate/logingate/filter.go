@@ -59,7 +59,7 @@ func (sf *TFrmIPAddrFilter) OnFormCreate(sender vcl.IObject) {
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetComponents()
 
-	// 注册观察者
+	// 注册Observer
 	ObserverGetTopic("TFrmIPAddrFilter").AddObserver(frmIPAddrFilter)
 }
 
