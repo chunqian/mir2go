@@ -17,29 +17,31 @@ import (
 type TFrmLogData struct {
 	*vcl.TForm
 
-	Label3 *vcl.TLabel
-	Memo1  *vcl.TMemo
-	Socket *TUdpSocket
-	Timer1 *vcl.TTimer
+	label3 *vcl.TLabel
+	memo1  *vcl.TMemo
+	socket *TUdpSocket
+	timer1 *vcl.TTimer
 }
 
 // ******************** Var ********************
 var (
-	FrmLogData *TFrmLogData
+	frmLogData *TFrmLogData
 )
 
 // ******************** TFrmLogData ********************
 func (sf *TFrmLogData) SetComponents() {
 
-	sf.Label3 = vcl.NewLabel(sf)
-	sf.Label3.SetParent(sf)
-	sf.Label3.SetCaption("当前日志文件:")
-	sf.Label3.SetBounds(9, 9, 85, 13)
+	sf.label3 = vcl.NewLabel(sf)
+	sf.label3.SetParent(sf)
+	sf.label3.SetCaption("当前日志文件:")
+	sf.label3.SetBounds(9, 9, 85, 13)
 
-	sf.Memo1 = vcl.NewMemo(sf)
-	sf.Memo1.SetParent(sf)
-	sf.Memo1.SetBounds(11, 30, 303, 75)
-	sf.Memo1.SetReadOnly(true)
+	sf.memo1 = vcl.NewMemo(sf)
+	sf.memo1.SetParent(sf)
+	sf.memo1.SetBounds(11, 30, 303, 75)
+	sf.memo1.SetWordWrap(false)
+	sf.memo1.SetScrollBars(types.SsHorizontal)
+	sf.memo1.SetReadOnly(true)
 }
 
 func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
@@ -56,10 +58,10 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	sf.SetBorderStyle(types.BsSingle)
 	sf.SetComponents()
 
-	sf.Timer1 = vcl.NewTimer(sf)
-	sf.Timer1.SetInterval(3000)
-	sf.Timer1.SetEnabled(true)
-	sf.Timer1.SetOnTimer(sf.Timer1Timer)
+	sf.timer1 = vcl.NewTimer(sf)
+	sf.timer1.SetInterval(3000)
+	sf.timer1.SetEnabled(true)
+	sf.timer1.SetOnTimer(sf.Timer1Timer)
 
 	RemoteClose = false
 	LogMsgList.Data = make([]string, 0)
@@ -74,11 +76,11 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	}
 
 	sf.SetCaption(Caption + " - " + ServerName)
-	sf.Memo1.SetText(BaseDir)
+	sf.memo1.SetText(BaseDir)
 
 	// 初始化UDP组件
-	sf.Socket = &TUdpSocket{}
-	sf.Socket.ListenUDP(sf, ServerAddr, ServerPort)
+	sf.socket = &TUdpSocket{}
+	sf.socket.ListenUDP(sf, ServerAddr, ServerPort)
 }
 
 func (sf *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
@@ -122,7 +124,7 @@ func (sf *TFrmLogData) WriteLogFile() {
 	logFile := fmt.Sprintf("%s/Log-%02dh%02dm.txt", logDir, hour, (min/10)*2)
 
 	// 显示文件名
-	sf.Memo1.SetText(logFile)
+	sf.memo1.SetText(logFile)
 
 	// 创建目录（如果不存在）
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {

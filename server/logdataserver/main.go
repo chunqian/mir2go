@@ -12,5 +12,5 @@ var (
 
 func main() {
 	vcl.DEBUG = true
-	vcl.RunApp(&FrmLogData)
+	vcl.RunApp(&frmLogData)
 }

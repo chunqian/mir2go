@@ -18,18 +18,18 @@ import (
 type TFrmMain struct {
 	*vcl.TForm
 
-	MainMenu  *widget.TMainMenu
-	MemoLog   *vcl.TMemo
-	Panel     *widget.TPanel
-	StatusBar *vcl.TStatusBar
+	mainMenu  *widget.TMainMenu
+	memoLog   *vcl.TMemo
+	panel     *widget.TPanel
+	statusBar *vcl.TStatusBar
 
-	SendTimer   *vcl.TTimer
-	StartTimer  *vcl.TTimer
-	DecodeTimer *vcl.TTimer
-	Timer       *vcl.TTimer
+	sendTimer   *vcl.TTimer
+	startTimer  *vcl.TTimer
+	decodeTimer *vcl.TTimer
+	timer       *vcl.TTimer
 
-	ClientSocket *TClientSocket
-	ServerSocket *TServerSocket
+	clientSocket *TClientSocket
+	serverSocket *TServerSocket
 }
 
 // ******************** Var ********************
@@ -40,66 +40,66 @@ var (
 // ******************** TFrmMain ********************
 func (sf *TFrmMain) SetComponents() {
 
-	sf.MainMenu = widget.NewMainMenu(sf)
+	sf.mainMenu = widget.NewMainMenu(sf)
 
-	sf.Panel = widget.NewPanel(sf)
-	sf.Panel.SetAlign(types.AlTop)
-	sf.Panel.SetBevelOuter(types.BvNone)
-	sf.Panel.SetTabOrder(1)
-	sf.Panel.SetBounds(0, 0, 308, 119)
+	sf.panel = widget.NewPanel(sf)
+	sf.panel.SetAlign(types.AlTop)
+	sf.panel.SetBevelOuter(types.BvNone)
+	sf.panel.SetTabOrder(1)
+	sf.panel.SetBounds(0, 0, 308, 119)
 
-	sf.MemoLog = vcl.NewMemo(sf)
-	sf.MemoLog.SetName("MemoLog")
-	sf.MemoLog.SetAlign(types.AlClient)
-	sf.MemoLog.SetText("")
-	sf.MemoLog.SetColor(colors.ClMenuText)
-	sf.MemoLog.Font().SetColor(colors.ClLimegreen)
-	sf.MemoLog.SetBounds(0, 119, 308, 18)
-	sf.MemoLog.SetWordWrap(false)
-	sf.MemoLog.SetScrollBars(types.SsHorizontal)
-	sf.MemoLog.SetReadOnly(true)
+	sf.memoLog = vcl.NewMemo(sf)
+	sf.memoLog.SetName("MemoLog")
+	sf.memoLog.SetAlign(types.AlClient)
+	sf.memoLog.SetText("")
+	sf.memoLog.SetColor(colors.ClMenuText)
+	sf.memoLog.Font().SetColor(colors.ClLimegreen)
+	sf.memoLog.SetBounds(0, 119, 308, 18)
+	sf.memoLog.SetWordWrap(false)
+	sf.memoLog.SetScrollBars(types.SsHorizontal)
+	sf.memoLog.SetReadOnly(true)
 
-	sf.StatusBar = vcl.NewStatusBar(sf)
-	sf.StatusBar.SetSimplePanel(false)
-	sf.StatusBar.SetBounds(0, 137, 308, 17)
-	spanel := sf.StatusBar.Panels().Add()
+	sf.statusBar = vcl.NewStatusBar(sf)
+	sf.statusBar.SetSimplePanel(false)
+	sf.statusBar.SetBounds(0, 137, 308, 17)
+	spanel := sf.statusBar.Panels().Add()
 	spanel.SetAlignment(types.TaCenter)
 	spanel.SetText("7100")
 	spanel.SetWidth(50)
-	spanel = sf.StatusBar.Panels().Add()
+	spanel = sf.statusBar.Panels().Add()
 	spanel.SetAlignment(types.TaCenter)
 	spanel.SetText("未连接")
 	spanel.SetWidth(60)
-	spanel = sf.StatusBar.Panels().Add()
+	spanel = sf.statusBar.Panels().Add()
 	spanel.SetAlignment(types.TaCenter)
 	spanel.SetText("0/0")
 	spanel.SetWidth(70)
-	spanel = sf.StatusBar.Panels().Add()
+	spanel = sf.statusBar.Panels().Add()
 	spanel.SetWidth(50)
 
-	sf.StartTimer = vcl.NewTimer(sf)
-	sf.StartTimer.SetInterval(200)
-	sf.StartTimer.SetEnabled(true)
-	sf.StartTimer.SetOnTimer(sf.StartTimerTimer)
+	sf.startTimer = vcl.NewTimer(sf)
+	sf.startTimer.SetInterval(200)
+	sf.startTimer.SetEnabled(true)
+	sf.startTimer.SetOnTimer(sf.StartTimerTimer)
 
-	sf.DecodeTimer = vcl.NewTimer(sf)
-	sf.DecodeTimer.SetInterval(3)
-	sf.DecodeTimer.SetEnabled(false)
-	sf.DecodeTimer.SetOnTimer(sf.DecodeTimerTimer)
+	sf.decodeTimer = vcl.NewTimer(sf)
+	sf.decodeTimer.SetInterval(3)
+	sf.decodeTimer.SetEnabled(false)
+	sf.decodeTimer.SetOnTimer(sf.DecodeTimerTimer)
 
-	sf.SendTimer = vcl.NewTimer(sf)
-	sf.SendTimer.SetInterval(3000)
-	sf.SendTimer.SetEnabled(false)
-	sf.SendTimer.SetOnTimer(sf.SendTimerTimer)
+	sf.sendTimer = vcl.NewTimer(sf)
+	sf.sendTimer.SetInterval(3000)
+	sf.sendTimer.SetEnabled(false)
+	sf.sendTimer.SetOnTimer(sf.SendTimerTimer)
 
-	sf.Timer = vcl.NewTimer(sf)
-	sf.Timer.SetInterval(1000)
-	sf.Timer.SetEnabled(false)
-	sf.Timer.SetOnTimer(sf.TimerTimer)
+	sf.timer = vcl.NewTimer(sf)
+	sf.timer.SetInterval(1000)
+	sf.timer.SetEnabled(false)
+	sf.timer.SetOnTimer(sf.TimerTimer)
 
-	sf.Panel.SetParent(sf)
-	sf.MemoLog.SetParent(sf)
-	sf.StatusBar.SetParent(sf)
+	sf.panel.SetParent(sf)
+	sf.memoLog.SetParent(sf)
+	sf.statusBar.SetParent(sf)
 }
 
 func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
@@ -294,14 +294,14 @@ func (sf *TFrmMain) sendUserMsg(userSession *TUserSession, sendMsg string) int {
 func (sf *TFrmMain) showLogMsg(flag bool) {
 	var height int32
 	if flag {
-		height = sf.Panel.Height()
-		sf.Panel.SetHeight(0)
-		sf.MemoLog.SetHeight(height)
-		sf.MemoLog.SetTop(sf.Panel.Top())
+		height = sf.panel.Height()
+		sf.panel.SetHeight(0)
+		sf.memoLog.SetHeight(height)
+		sf.memoLog.SetTop(sf.panel.Top())
 	} else {
-		height = sf.MemoLog.Height()
-		sf.MemoLog.SetHeight(0)
-		sf.Panel.SetHeight(height)
+		height = sf.memoLog.Height()
+		sf.memoLog.SetHeight(0)
+		sf.panel.SetHeight(height)
 	}
 }
 
@@ -370,15 +370,15 @@ func (sf *TFrmMain) startService() {
 		sf.SetCaption(GateName)
 	}
 
-	sf.ClientSocket = &TClientSocket{}
-	sf.ClientSocket.Dial(sf, ServerAddr, ServerPort)
+	sf.clientSocket = &TClientSocket{}
+	sf.clientSocket.Dial(sf, ServerAddr, ServerPort)
 
-	sf.ServerSocket = &TServerSocket{}
-	sf.ServerSocket.Listen(sf, GateAddr, GatePort)
+	sf.serverSocket = &TServerSocket{}
+	sf.serverSocket.Listen(sf, GateAddr, GatePort)
 
-	sf.DecodeTimer.SetEnabled(true)
-	sf.SendTimer.SetEnabled(true)
-	sf.Timer.SetEnabled(true)
+	sf.decodeTimer.SetEnabled(true)
+	sf.sendTimer.SetEnabled(true)
+	sf.timer.SetEnabled(true)
 
 	MainLog.AddLogMsg("启动服务完成...", 3)
 }
@@ -392,7 +392,7 @@ func (sf *TFrmMain) stopService() {
 	ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
 	ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
 
-	sf.SendTimer.SetEnabled(false)
+	sf.sendTimer.SetEnabled(false)
 
 	for i := 0; i < GATEMAXSESSION; i++ {
 		if SessionArray[i].Socket != nil {
@@ -402,8 +402,8 @@ func (sf *TFrmMain) stopService() {
 
 	SaveBlockIPList()
 
-	sf.ServerSocket.Close()
-	sf.ClientSocket.Close()
+	sf.serverSocket.Close()
+	sf.clientSocket.Close()
 
 	CurrIPAddrList = CurrIPAddrList[:0]
 	BlockIPList = BlockIPList[:0]
@@ -414,13 +414,13 @@ func (sf *TFrmMain) stopService() {
 }
 
 func (sf *TFrmMain) CloseConnect(ipAddr string) {
-	if sf.ServerSocket.Active() {
+	if sf.serverSocket.Active() {
 		for {
 			check := false
-			for i := 0; i < sf.ServerSocket.ActiveConnections(); i++ {
-				remoteAddr := GetAddrHost(sf.ServerSocket.Connections()[i].RemoteAddr())
+			for i := 0; i < sf.serverSocket.ActiveConnections(); i++ {
+				remoteAddr := GetAddrHost(sf.serverSocket.Connections()[i].RemoteAddr())
 				if ipAddr == remoteAddr {
-					sf.ServerSocket.Connections()[i].Close()
+					sf.serverSocket.Connections()[i].Close()
 					check = true
 					break
 				}
@@ -595,13 +595,13 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 	if GetTickCount()-SendKeepAliveTick > 2*1000 {
 		SendKeepAliveTick = GetTickCount()
 		if GateReady {
-			sf.ClientSocket.Write([]byte("%--$"))
+			sf.clientSocket.Write([]byte("%--$"))
 		}
 	}
 
 	if GetTickCount()-KeepAliveTick > 10*1000 {
 		KeepAliveTimeOut = true
-		sf.ClientSocket.Close()
+		sf.clientSocket.Close()
 	}
 
 	decodeTime := GetTickCount() - decodeTick
@@ -614,24 +614,24 @@ func (sf *TFrmMain) DecodeTimerTimer(sender vcl.IObject) {
 }
 
 func (sf *TFrmMain) MemoLogChange(sender vcl.IObject) {
-	if sf.MemoLog.Lines().Count() > 200 {
-		sf.MemoLog.Clear()
+	if sf.memoLog.Lines().Count() > 200 {
+		sf.memoLog.Clear()
 	}
 }
 
 func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
-	if sf.ServerSocket.Active() {
-		ActiveConnections = sf.ServerSocket.ActiveConnections()
+	if sf.serverSocket.Active() {
+		ActiveConnections = sf.serverSocket.ActiveConnections()
 	}
 
 	// 更新UI
 	if SendHoldTimeOut {
-		sf.Panel.Hold.SetCaption(IntToStr(ActiveConnections) + "#")
+		sf.panel.Hold.SetCaption(IntToStr(ActiveConnections) + "#")
 		if GetTickCount()-SendHoldTick > 3*1000 {
 			SendHoldTimeOut = false
 		}
 	} else {
-		sf.Panel.Hold.SetCaption(IntToStr(ActiveConnections))
+		sf.panel.Hold.SetCaption(IntToStr(ActiveConnections))
 	}
 
 	if GateReady && !KeepAliveTimeOut {
@@ -651,7 +651,7 @@ func (sf *TFrmMain) SendTimerTimer(sender vcl.IObject) {
 	if !GateReady && ServiceStart {
 		if GetTickCount()-ReConnectServerTick > 1000 /* 30*1000 */ {
 			ReConnectServerTick = GetTickCount()
-			sf.ClientSocket.Dial(sf, ServerAddr, ServerPort)
+			sf.clientSocket.Dial(sf, ServerAddr, ServerPort)
 		}
 	}
 }
@@ -664,7 +664,7 @@ func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 	remoteIPAddr = GetAddrHost(socket.RemoteAddr())
 
 	if DynamicIPDisMode {
-		localIPAddr = GetAddrHost(sf.ClientSocket.RemoteAddr())
+		localIPAddr = GetAddrHost(sf.clientSocket.RemoteAddr())
 	} else {
 		localIPAddr = GetAddrHost(socket.LocalAddr())
 	}
@@ -721,7 +721,7 @@ func (sf *TFrmMain) ServerSocketClientConnect(socket *TClientSocket) {
 		if socket.Index >= 0 {
 			// 发送字符串
 			message := fmt.Sprintf("%%O%d/%s/%s$", socket.SocketHandle(), remoteIPAddr, localIPAddr)
-			sf.ClientSocket.Write([]byte(message))
+			sf.clientSocket.Write([]byte(message))
 			MainLog.AddLogMsg("Connect: "+remoteIPAddr, 5)
 		} else {
 			socket.Close()
@@ -759,7 +759,7 @@ func (sf *TFrmMain) ServerSocketClientDisconnect(conn *TClientSocket, err error)
 		SessionCount--
 		if GateReady {
 			message := fmt.Sprintf("%%X%d$", conn.SocketHandle())
-			sf.ClientSocket.Write([]byte(message))
+			sf.clientSocket.Write([]byte(message))
 			MainLog.AddLogMsg("DisConnect: "+remoteIPAddr, 5)
 		}
 	}
@@ -787,7 +787,7 @@ func (sf *TFrmMain) ServerSocketClientRead(conn *TClientSocket, message string) 
 					userSession.ReceiveLength = len(message)
 				}
 				message := fmt.Sprintf("%%A%d/%s$", conn.SocketHandle(), message)
-				sf.ClientSocket.Write([]byte(message))
+				sf.clientSocket.Write([]byte(message))
 			}
 		}
 	}
@@ -814,31 +814,31 @@ func (sf *TFrmMain) TimerTimer(sender vcl.IObject) {
 	var port string
 
 	// 更新UI
-	if sf.ServerSocket.Active() {
-		port = GetAddrPort(sf.ServerSocket.Addr())
-		sf.StatusBar.Panels().Items(0).SetText(port)
+	if sf.serverSocket.Active() {
+		port = GetAddrPort(sf.serverSocket.Addr())
+		sf.statusBar.Panels().Items(0).SetText(port)
 		if SendHoldTimeOut {
-			sf.StatusBar.Panels().Items(2).SetText(
-				IntToStr(SessionCount) + "/#" + IntToStr(sf.ServerSocket.ActiveConnections()),
+			sf.statusBar.Panels().Items(2).SetText(
+				IntToStr(SessionCount) + "/#" + IntToStr(sf.serverSocket.ActiveConnections()),
 			)
 		} else {
-			sf.StatusBar.Panels().Items(2).SetText(
-				IntToStr(SessionCount) + "/" + IntToStr(sf.ServerSocket.ActiveConnections()),
+			sf.statusBar.Panels().Items(2).SetText(
+				IntToStr(SessionCount) + "/" + IntToStr(sf.serverSocket.ActiveConnections()),
 			)
 		}
 	} else {
-		sf.StatusBar.Panels().Items(0).SetText("????")
-		sf.StatusBar.Panels().Items(2).SetText("????")
+		sf.statusBar.Panels().Items(0).SetText("????")
+		sf.statusBar.Panels().Items(2).SetText("????")
 	}
-	sf.Panel.Label2.SetCaption(IntToStr(int(DecodeMsgTime)))
+	sf.panel.Label2.SetCaption(IntToStr(int(DecodeMsgTime)))
 	if !GateReady {
-		sf.StatusBar.Panels().Items(1).SetText("未连接")
+		sf.statusBar.Panels().Items(1).SetText("未连接")
 	} else {
 		if KeepAliveTimeOut {
-			sf.StatusBar.Panels().Items(1).SetText("超时")
+			sf.statusBar.Panels().Items(1).SetText("超时")
 		} else {
-			sf.StatusBar.Panels().Items(1).SetText("已连接")
-			sf.Panel.Lack.SetCaption(IntToStr(TotalMsgListCount) + "/" + IntToStr(SendMsgCount))
+			sf.statusBar.Panels().Items(1).SetText("已连接")
+			sf.panel.Lack.SetCaption(IntToStr(TotalMsgListCount) + "/" + IntToStr(SendMsgCount))
 		}
 	}
 }
@@ -852,7 +852,7 @@ func (sf *TFrmMain) ObserverNotifyReceived(tag string, data interface{}) {
 	case "menuControlReconnectClick":
 		ReConnectServerTick = 0
 	case "menuControlClearLogClick":
-		sf.MemoLog.Clear()
+		sf.memoLog.Clear()
 	case "menuControlExitClick":
 		sf.Close()
 	case "menuViewLogMsgClick":
