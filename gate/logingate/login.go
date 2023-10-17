@@ -313,7 +313,7 @@ func (sf *TFrmMain) showMainLogMsg() {
 	ShowMainLogTick = GetTickCount()
 
 	// 获取主日志列表, 在 GUI 中显示日志
-	memoLog := vcl.AsMemo(sf.FindComponent("MemoLog"))
+	memoLog := vcl.AsMemo(sf.FindComponent("memoLog"))
 
 	// 更新UI
 	for _, logMsg := range MainLog.MsgList() {

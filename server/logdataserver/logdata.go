@@ -8,6 +8,7 @@ import (
 	"time"
 
 	. "github.com/chunqian/mir2go/common"
+	"github.com/chunqian/mir2go/server/logdataserver/widget"
 	log "github.com/chunqian/tinylog"
 	"github.com/ying32/govcl/vcl"
 	"github.com/ying32/govcl/vcl/types"
@@ -17,10 +18,11 @@ import (
 type TFrmLogData struct {
 	*vcl.TForm
 
-	label3 *vcl.TLabel
-	memo1  *vcl.TMemo
-	socket *TUdpSocket
-	timer1 *vcl.TTimer
+	mainMenu *widget.TMainMenu
+	label3   *vcl.TLabel
+	memo1    *vcl.TMemo
+	socket   *TUdpSocket
+	timer1   *vcl.TTimer
 }
 
 // ******************** Var ********************
@@ -31,17 +33,21 @@ var (
 // ******************** TFrmLogData ********************
 func (sf *TFrmLogData) SetComponents() {
 
+	sf.mainMenu = widget.NewMainMenu(sf)
+
 	sf.label3 = vcl.NewLabel(sf)
-	sf.label3.SetParent(sf)
 	sf.label3.SetCaption("当前日志文件:")
 	sf.label3.SetBounds(9, 9, 85, 13)
 
 	sf.memo1 = vcl.NewMemo(sf)
-	sf.memo1.SetParent(sf)
+	sf.memo1.SetName("memoLog")
 	sf.memo1.SetBounds(11, 30, 303, 75)
 	sf.memo1.SetWordWrap(false)
 	sf.memo1.SetScrollBars(types.SsHorizontal)
 	sf.memo1.SetReadOnly(true)
+
+	sf.label3.SetParent(sf)
+	sf.memo1.SetParent(sf)
 }
 
 func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
@@ -81,6 +87,9 @@ func (sf *TFrmLogData) OnFormCreate(sender vcl.IObject) {
 	// 初始化UDP组件
 	sf.socket = &TUdpSocket{}
 	sf.socket.ListenUDP(sf, ServerAddr, ServerPort)
+
+	// 注册Observer
+	ObserverGetTopic("TFrmLogData").AddObserver(frmLogData)
 }
 
 func (sf *TFrmLogData) OnFormDestroy(sender vcl.IObject) {
@@ -124,7 +133,8 @@ func (sf *TFrmLogData) WriteLogFile() {
 	logFile := fmt.Sprintf("%s/Log-%02dh%02dm.txt", logDir, hour, (min/10)*2)
 
 	// 显示文件名
-	sf.memo1.SetText(logFile)
+	MainLog.AddLogMsg(logFile, 3)
+	sf.showMainLogMsg()
 
 	// 创建目录（如果不存在）
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
@@ -148,4 +158,27 @@ func (sf *TFrmLogData) WriteLogFile() {
 
 	// 清空logMsgList
 	LogMsgList.Data = LogMsgList.Data[:0]
+}
+
+func (sf *TFrmLogData) showMainLogMsg() {
+	// 获取主日志列表, 在 GUI 中显示日志
+	memoLog := vcl.AsMemo(sf.FindComponent("memoLog"))
+
+	// 更新UI
+	for _, logMsg := range MainLog.MsgList() {
+		memoLog.Lines().Add(logMsg)
+	}
+
+	// 清空主日志列表
+	MainLog.ClearMsgList()
+}
+
+func (sf *TFrmLogData) ObserverNotifyReceived(tag string, data interface{}) {
+	switch tag {
+	case "showMainLogMsg":
+		sf.showMainLogMsg()
+	case "menuControlClearLogClick":
+		sf.memo1.Clear()
+		sf.memo1.SetText(BaseDir)
+	}
 }
