@@ -17,11 +17,13 @@ endef
 
 build-all: \
 	build-logdataserver \
-	build-logingate
+	build-logingate \
+	build-rungate
 
 clear-all: \
 	clear-logdataserver \
-	clear-logingate
+	clear-logingate \
+	clear-rungate
 
 # ******************** logdataserver ********************
 build-logdataserver:
@@ -42,3 +44,13 @@ clear-logingate:
 
 run-logingate:
 	$(call run-project, bin/logingate, logingate)
+
+# ******************** rungate ********************
+build-rungate:
+	$(call build-project, bin/rungate, gate/rungate, rungate)
+
+clear-rungate:
+	$(call clear-project, bin/rungate, rungate)
+
+run-rungate:
+	$(call run-project, bin/rungate, rungate)

@@ -15,8 +15,13 @@ logingate
 !/gate/logingate
 !/bin/logingate
 
+rungate
+!/gate/rungate
+!/bin/rungate
+
 logdataserver.app
 logingate.app
+rungate.app
 
 liblcl.dylib
 

@@ -12,5 +12,5 @@ var (
 
 func main() {
 	vcl.DEBUG = true
-	vcl.RunApp()
+	vcl.RunApp(&frmMain)
 }
