@@ -7,47 +7,47 @@ type IObserver interface {
 	ObserverNotifyReceived(tag string, data interface{})
 }
 
-type ISubject interface {
-	Register(observer IObserver)
-	Unregister(observer IObserver)
+type ITopic interface {
+	AddObserver(observer IObserver)
+	RemoveObserver(observer IObserver)
 	Notify(tag string, data interface{})
 }
 
 // ******************** Struct ********************
-type TSubject struct {
+type TTopic struct {
 	observers []IObserver
 }
 
-func (s *TSubject) Register(observer IObserver) {
-	s.observers = append(s.observers, observer)
+func (tc *TTopic) AddObserver(observer IObserver) {
+	tc.observers = append(tc.observers, observer)
 }
 
-func (s *TSubject) Unregister(observer IObserver) {
+func (tc *TTopic) RemoveObserver(observer IObserver) {
 	var observers []IObserver
-	for _, obs := range s.observers {
+	for _, obs := range tc.observers {
 		if obs != observer {
 			observers = append(observers, obs)
 		}
 	}
-	s.observers = observers
+	tc.observers = observers
 }
 
-func (s *TSubject) Notify(tag string, data interface{}) {
-	for _, observer := range s.observers {
+func (tc *TTopic) Notify(tag string, data interface{}) {
+	for _, observer := range tc.observers {
 		observer.ObserverNotifyReceived(tag, data)
 	}
 }
 
 // ******************** Var ********************
 var (
-	subjects = make(map[string]*TSubject, 0)
+	topicMap = make(map[string]*TTopic, 0)
 )
 
-func GetSubject(id string) *TSubject {
-	subject := subjects[id]
-	if subject == nil {
-		subject = &TSubject{}
-		subjects[id] = subject
+func ObserverGetTopic(id string) *TTopic {
+	topic := topicMap[id]
+	if topic == nil {
+		topic = &TTopic{}
+		topicMap[id] = topic
 	}
-	return subject
+	return topic
 }

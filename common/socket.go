@@ -113,7 +113,7 @@ func GetTickCount() uint32 {
 	return uint32(time.Now().UnixNano() / 1e6)
 }
 
-func (s *TServerSocket) msgProducer(iSocket IServerSocket, conn *TClientSocket) {
+func (s *TServerSocket) messageProducer(iSocket IServerSocket, conn *TClientSocket) {
 	defer conn.Close()
 
 	buffer := make([]byte, 1024)
@@ -171,7 +171,7 @@ func (s *TServerSocket) msgProducer(iSocket IServerSocket, conn *TClientSocket) 
 	}
 }
 
-func (s *TServerSocket) sockProducer(iSocket IServerSocket, ch chan *TClientSocket) {
+func (s *TServerSocket) socketProducer(iSocket IServerSocket, ch chan *TClientSocket) {
 	for {
 		conn, err := s.Accept()
 		if err != nil {
@@ -199,13 +199,13 @@ func (s *TServerSocket) sockProducer(iSocket IServerSocket, ch chan *TClientSock
 	}
 }
 
-func (s *TServerSocket) sockConsumer(iSocket IServerSocket, ch chan *TClientSocket) {
+func (s *TServerSocket) socketConsumer(iSocket IServerSocket, ch chan *TClientSocket) {
 	for {
 		select {
 		case sock := <-ch:
-			go s.msgProducer(iSocket, sock)
+			go s.messageProducer(iSocket, sock)
 			// default:
-			// 	log.Error("Could not read from sockChan")
+			// 	log.Error("Could not read from socketChan")
 		}
 	}
 }
@@ -222,14 +222,14 @@ func (s *TServerSocket) Listen(iSocket IServerSocket, addr string, port int32) {
 		return
 	}
 
-	sockChan := make(chan *TClientSocket)
+	socketChan := make(chan *TClientSocket)
 
 	s.TCPListener = listener
 	s.active = true
 	s.activeConnections = 0
 
-	go s.sockProducer(iSocket, sockChan)
-	go s.sockConsumer(iSocket, sockChan)
+	go s.socketProducer(iSocket, socketChan)
+	go s.socketConsumer(iSocket, socketChan)
 }
 
 func (s *TServerSocket) Active() bool {
@@ -248,7 +248,7 @@ func (c *TClientSocket) SocketHandle() uintptr {
 	return c.socketHandle
 }
 
-func (c *TClientSocket) msgProducer(iSocket IClientSocket, conn *TClientSocket) {
+func (c *TClientSocket) messageProducer(iSocket IClientSocket, conn *TClientSocket) {
 	defer conn.Close()
 
 	buffer := make([]byte, 1024)
@@ -316,7 +316,7 @@ func (c *TClientSocket) Dial(iSocket IClientSocket, addr string, port int32) {
 		iSocket.ClientSocketConnect(c)
 	})
 
-	go c.msgProducer(iSocket, c)
+	go c.messageProducer(iSocket, c)
 }
 
 func (c *TClientSocket) Close() {
@@ -331,7 +331,7 @@ func (c *TClientSocket) Write(message []byte) {
 	}
 }
 
-func (u *TUdpSocket) msgProducer(iUSocket IUdpSocket) {
+func (u *TUdpSocket) messageProducer(iUSocket IUdpSocket) {
 	buffer := make([]byte, 2048) // 最大2048个字节
 	for {
 		numberBytes, _, err := u.ReadFromUDP(buffer)
@@ -368,5 +368,5 @@ func (u *TUdpSocket) ListenUDP(iUSocket IUdpSocket, serverAddr string, serverPor
 	u.UDPConn = udpConn
 
 	// 接收UDP消息
-	go u.msgProducer(iUSocket)
+	go u.messageProducer(iUSocket)
 }

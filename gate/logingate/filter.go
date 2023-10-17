@@ -60,7 +60,7 @@ func (sf *TFrmIPAddrFilter) OnFormCreate(sender vcl.IObject) {
 	sf.SetComponents()
 
 	// 注册观察者
-	GetSubject("TFrmIPAddrFilter").Register(frmIPAddrFilter)
+	ObserverGetTopic("TFrmIPAddrFilter").AddObserver(frmIPAddrFilter)
 }
 
 func (sf *TFrmIPAddrFilter) ObserverNotifyReceived(tag string, data interface{}) {

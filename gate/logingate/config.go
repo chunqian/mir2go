@@ -54,7 +54,7 @@ func (sf *TFrmGeneralConfig) OnFormCreate(sender vcl.IObject) {
 	sf.SetComponents()
 
 	// 注册观察者
-	GetSubject("TFrmGeneralConfig").Register(frmGeneralConfig)
+	ObserverGetTopic("TFrmGeneralConfig").AddObserver(frmGeneralConfig)
 }
 
 func (sf *TFrmGeneralConfig) ObserverNotifyReceived(tag string, data interface{}) {

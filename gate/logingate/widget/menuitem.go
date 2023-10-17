@@ -79,7 +79,7 @@ func NewMenuControl(sender vcl.IComponent) *TMenuControl {
 	sf.Add(sf.menuControlExit)
 
 	// 注册观察者
-	GetSubject("widget.TMainMenu.TMenuControl").Register(sf)
+	ObserverGetTopic("widget.TMainMenu.TMenuControl").AddObserver(sf)
 
 	return sf
 }
@@ -96,7 +96,7 @@ func NewMenuView(sender vcl.IComponent) *TMenuView {
 	sf.Add(sf.menuViewLogMsg)
 
 	// 注册观察者
-	GetSubject("widget.TMainMenu.TMenuView").Register(sf)
+	ObserverGetTopic("widget.TMainMenu.TMenuView").AddObserver(sf)
 
 	return sf
 }
@@ -136,7 +136,7 @@ func NewMenuItem3(sender vcl.IComponent) *TMenuItem3 {
 
 func (sf *TMenuControl) menuControlStartClick(sender vcl.IObject) {
 	// 通知
-	GetSubject("TFrmMain").Notify("menuControlStartClick", nil)
+	ObserverGetTopic("TFrmMain").Notify("menuControlStartClick", nil)
 }
 
 func (sf *TMenuControl) menuControlStopClick(sender vcl.IObject) {
@@ -145,13 +145,13 @@ func (sf *TMenuControl) menuControlStopClick(sender vcl.IObject) {
 		types.MbYes,
 		types.MbNo) == types.MrYes {
 		// 通知
-		GetSubject("TFrmMain").Notify("menuControlStopClick", nil)
+		ObserverGetTopic("TFrmMain").Notify("menuControlStopClick", nil)
 	}
 }
 
 func (sf *TMenuControl) menuControlReconnectClick(sender vcl.IObject) {
 	// 通知
-	GetSubject("TFrmMain").Notify("menuControlReconnectClick", nil)
+	ObserverGetTopic("TFrmMain").Notify("menuControlReconnectClick", nil)
 }
 
 func (sf *TMenuControl) menuControlClearLogClick(sender vcl.IObject) {
@@ -160,13 +160,13 @@ func (sf *TMenuControl) menuControlClearLogClick(sender vcl.IObject) {
 		types.MbYes,
 		types.MbNo) == types.MrYes {
 		// 通知
-		GetSubject("TFrmMain").Notify("menuControlClearLogClick", nil)
+		ObserverGetTopic("TFrmMain").Notify("menuControlClearLogClick", nil)
 	}
 }
 
 func (sf *TMenuControl) menuControlExitClick(sender vcl.IObject) {
 	// 通知
-	GetSubject("TFrmMain").Notify("menuControlExitClick", nil)
+	ObserverGetTopic("TFrmMain").Notify("menuControlExitClick", nil)
 }
 
 func (sf *TMenuControl) ObserverNotifyReceived(tag string, data interface{}) {
@@ -181,7 +181,7 @@ func (sf *TMenuControl) ObserverNotifyReceived(tag string, data interface{}) {
 func (sf *TMenuView) menuViewLogMsgClick(sender vcl.IObject) {
 	sf.menuViewLogMsg.SetChecked(!sf.menuViewLogMsg.Checked())
 	// 通知
-	GetSubject("TFrmMain").Notify("menuViewLogMsgClick", sf.menuViewLogMsg.Checked())
+	ObserverGetTopic("TFrmMain").Notify("menuViewLogMsgClick", sf.menuViewLogMsg.Checked())
 }
 
 func (sf *TMenuView) ObserverNotifyReceived(tag string, data interface{}) {
@@ -193,12 +193,12 @@ func (sf *TMenuView) ObserverNotifyReceived(tag string, data interface{}) {
 
 func (sf *TMenuOption) menuOptionGeneralClick(sender vcl.IObject) {
 	// 通知
-	GetSubject("TFrmGeneralConfig").Notify("menuOptionGeneralClick", nil)
+	ObserverGetTopic("TFrmGeneralConfig").Notify("menuOptionGeneralClick", nil)
 }
 
 func (sf *TMenuOption) menuOptionIpFilterClick(sender vcl.IObject) {
 	// 通知
-	GetSubject("TFrmIPAddrFilter").Notify("menuOptionIpFilterClick", nil)
+	ObserverGetTopic("TFrmIPAddrFilter").Notify("menuOptionIpFilterClick", nil)
 }
 
 func (sf *TMenuItem3) n4Click(sender vcl.IObject) {

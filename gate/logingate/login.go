@@ -112,7 +112,7 @@ func (sf *TFrmMain) OnFormCreate(sender vcl.IObject) {
 	sf.SetComponents()
 
 	// 注册观察者
-	GetSubject("TFrmMain").Register(frmMain)
+	ObserverGetTopic("TFrmMain").AddObserver(frmMain)
 
 	DecodeMsgTime = 0
 	sf.initUserSessionArray()
@@ -329,8 +329,8 @@ func (sf *TFrmMain) startService() {
 	defer func() {
 		if r := recover(); r != nil {
 			// 通知
-			GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
-			GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
+			ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
+			ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
 			MainLog.AddLogMsg(fmt.Sprintf("%v", r), 0)
 		}
 	}()
@@ -344,8 +344,8 @@ func (sf *TFrmMain) startService() {
 	ServerReady = false
 	SessionCount = 0
 	// 通知
-	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", false)
-	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", true)
+	ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", false)
+	ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", true)
 
 	ReConnectServerTick = GetTickCount() - 25*1000
 	KeepAliveTimeOut = false
@@ -389,8 +389,8 @@ func (sf *TFrmMain) stopService() {
 	ServiceStart = false
 	GateReady = false
 	// 通知
-	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
-	GetSubject("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
+	ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStart", true)
+	ObserverGetTopic("widget.TMainMenu.TMenuControl").Notify("SetMenuControlStop", false)
 
 	sf.SendTimer.SetEnabled(false)
 
@@ -803,7 +803,7 @@ func (sf *TFrmMain) StartTimerTimer(sender vcl.IObject) {
 		vcl.Application.Terminate() // 关闭应用程序
 	} else {
 		// 通知
-		GetSubject("widget.TMainMenu.TMenuView").Notify("MenuViewLogMsgClick", nil)
+		ObserverGetTopic("widget.TMainMenu.TMenuView").Notify("MenuViewLogMsgClick", nil)
 		Started = true
 		startTimer.SetEnabled(false) // 禁用定时器
 		sf.startService()
