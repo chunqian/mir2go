@@ -22,7 +22,7 @@ type TSessionInfo struct {
 	userListIndex    int
 	packetIdx        int
 	packetErrCount   int
-	startLogon       bool
+	startLogin       bool
 	sendLock         bool
 	overNomSize      bool
 	overNomSizeCount int8
@@ -47,8 +47,6 @@ type TSendUserData struct {
 
 // ******************** Var ********************
 var (
-	MainLogMsgList         []string
-	ShowLogLevel           int32    = 3
 	GateClass                       = "Setup"
 	GateName                        = "游戏网关"
 	TitleName                       = "热血传奇"
@@ -74,8 +72,8 @@ var (
 	CurrConnCount    int32
 	SendHoldTimeOut  bool
 	SendHoldTick     uint32
-	n45AA80          int32
-	n45AA84          int32
+	N45AA80          int32
+	N45AA84          int32
 	CheckRecviceTick uint32
 	CheckRecviceMin  uint32
 	CheckRecviceMax  uint32
@@ -98,7 +96,7 @@ var (
 	MaxOverNomSizeCount       int32    = 2
 	MaxClientMsgCount         int32    = 15
 	BlockMethod                        = Disconnect
-	kickOverPacketSize                 = true
+	KickOverPacketSize                 = true
 
 	ClientSendBlockSize int32  = 1000 // 发送给客户端数据包大小限制
 	ClientTimeOutTime   uint32 = 5000 // 客户端连接会话超时(指定时间内未有数据传输)
